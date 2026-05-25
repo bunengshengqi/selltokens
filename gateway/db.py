@@ -91,6 +91,56 @@ class Database:
                     "avg_latency_ms": 220,
                     "error_rate": 0.0,
                 },
+                # chhai 聚合商（token.chhai.cn），初期主力上游
+                {
+                    "slug": "chhai",
+                    "name": "chhai",
+                    "base_url": "https://token.chhai.cn/v1",
+                    "api_key_env": "CHHAI_API_KEY",
+                    "type": "openai",
+                    "status": "active",
+                    "priority": 8,
+                    "balance": 999.0,
+                    "avg_latency_ms": 500,
+                    "error_rate": 0.0,
+                },
+                # 御三家直连上游（有 API Key 时可启用）
+                {
+                    "slug": "openai-direct",
+                    "name": "OpenAI Direct",
+                    "base_url": "https://api.openai.com/v1",
+                    "api_key_env": "OPENAI_API_KEY",
+                    "type": "openai",
+                    "status": "disabled",
+                    "priority": 5,
+                    "balance": 0.0,
+                    "avg_latency_ms": 600,
+                    "error_rate": 0.0,
+                },
+                {
+                    "slug": "anthropic-direct",
+                    "name": "Anthropic Direct",
+                    "base_url": "https://api.anthropic.com",
+                    "api_key_env": "ANTHROPIC_API_KEY",
+                    "type": "anthropic",
+                    "status": "disabled",
+                    "priority": 5,
+                    "balance": 0.0,
+                    "avg_latency_ms": 700,
+                    "error_rate": 0.0,
+                },
+                {
+                    "slug": "google-ai",
+                    "name": "Google AI Direct",
+                    "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/",
+                    "api_key_env": "GOOGLE_API_KEY",
+                    "type": "openai",
+                    "status": "disabled",
+                    "priority": 5,
+                    "balance": 0.0,
+                    "avg_latency_ms": 400,
+                    "error_rate": 0.0,
+                },
                 {
                     "slug": "apimart",
                     "name": "APIMart",
@@ -128,8 +178,10 @@ class Database:
                     "api_key_env": "POLOAPI_API_KEY",
                     "type": "openai",
                     "status": "disabled",
-                    "priority": 18,
+                    "priority": 10,
                     "balance": 0.0,
+                    "avg_latency_ms": 520,
+                    "error_rate": 0.0,
                 },
                 {
                     "slug": "weelinking",
@@ -138,8 +190,10 @@ class Database:
                     "api_key_env": "WEELINKING_API_KEY",
                     "type": "openai",
                     "status": "disabled",
-                    "priority": 16,
+                    "priority": 12,
                     "balance": 0.0,
+                    "avg_latency_ms": 420,
+                    "error_rate": 0.0,
                 },
                 {
                     "slug": "siliconflow",
@@ -216,6 +270,14 @@ class Database:
                 )
 
             model_prices = [
+                # 御三家标准模型名
+                ("gpt-4o", "GPT-4o", "stable", 22.0, 88.0, 0.20, "OpenAI GPT-4o flagship model."),
+                ("gpt-4o-mini", "GPT-4o Mini", "economy", 1.4, 5.6, 0.20, "OpenAI GPT-4o Mini — fast and affordable."),
+                ("claude-sonnet-4-5", "Claude Sonnet 4.5", "stable", 28.0, 140.0, 0.20, "Anthropic Claude Sonnet 4.5 — balanced performance."),
+                ("claude-haiku-3-5", "Claude Haiku 3.5", "economy", 3.0, 15.0, 0.20, "Anthropic Claude Haiku 3.5 — fast and cheap."),
+                ("gemini-2.5-flash", "Gemini 2.5 Flash", "economy", 1.4, 5.6, 0.20, "Google Gemini 2.5 Flash — very fast, free tier available."),
+                ("gemini-2.5-pro", "Gemini 2.5 Pro", "stable", 18.0, 72.0, 0.20, "Google Gemini 2.5 Pro — premium quality."),
+                # 兼容旧路由别名（保留，供老用户迁移）
                 ("claude-sonnet-economy", "Claude Sonnet Economy", "economy", 4.2, 20.0, 0.15, "Claude-like low-cost line for AI coding."),
                 ("claude-sonnet-stable", "Claude Sonnet Stable", "stable", 5.6, 26.0, 0.25, "Claude-like stable line with failover."),
                 ("gpt-economy", "GPT Economy", "economy", 2.8, 12.0, 0.15, "GPT-compatible economy line."),
@@ -292,6 +354,49 @@ class Database:
                     )
 
             real_provider_mappings = {
+                "chhai": {
+                    # 御三家标准名
+                    "gpt-4o": "gpt-4o",
+                    "gpt-4o-mini": "gpt-4o-mini",
+                    "claude-sonnet-4-5": "claude-sonnet-4-5-20250929",
+                    "claude-haiku-3-5": "claude-haiku-3-5-20251001",
+                    "gemini-2.5-flash": "gemini-2.5-flash",
+                    "gemini-2.5-pro": "gemini-2.5-pro",
+                    # 旧别名兼容
+                    "claude-sonnet-economy": "claude-haiku-3-5-20251001",
+                    "claude-sonnet-stable": "claude-sonnet-4-5-20250929",
+                    "gpt-economy": "gpt-4o-mini",
+                    "gpt-stable": "gpt-4o",
+                    "gemini-flash": "gemini-2.5-flash",
+                    "deepseek-chat": "deepseek-chat",
+                    "deepseek-reasoner": "deepseek-reasoner",
+                    "yu-code-auto": "claude-sonnet-4-5-20250929",
+                    "yu-chat-auto": "gpt-4o-mini",
+                    "yu-json": "gpt-4o-mini",
+                },
+                "openai-direct": {
+                    "gpt-4o": "gpt-4o",
+                    "gpt-4o-mini": "gpt-4o-mini",
+                    "gpt-economy": "gpt-4o-mini",
+                    "gpt-stable": "gpt-4o",
+                    "yu-chat-auto": "gpt-4o-mini",
+                    "yu-code-auto": "gpt-4o",
+                    "yu-json": "gpt-4o-mini",
+                },
+                "anthropic-direct": {
+                    "claude-sonnet-4-5": "claude-sonnet-4-5-20250929",
+                    "claude-haiku-3-5": "claude-haiku-3-5-20251001",
+                    "claude-sonnet-economy": "claude-haiku-3-5-20251001",
+                    "claude-sonnet-stable": "claude-sonnet-4-5-20250929",
+                    "yu-code-auto": "claude-sonnet-4-5-20250929",
+                    "yu-chat-auto": "claude-haiku-3-5-20251001",
+                },
+                "google-ai": {
+                    "gemini-2.5-flash": "gemini-2.5-flash",
+                    "gemini-2.5-pro": "gemini-2.5-pro",
+                    "gemini-flash": "gemini-2.5-flash",
+                    "yu-chat-auto": "gemini-2.5-flash",
+                },
                 "deepseek": {
                     "deepseek-chat": "deepseek-chat",
                     "deepseek-reasoner": "deepseek-reasoner",
@@ -332,26 +437,43 @@ class Database:
                     "yu-chat-auto": "gpt-5.2",
                 },
                 "poloapi": {
+                    # 御三家标准名
+                    "gpt-4o": "gpt-4o",
+                    "gpt-4o-mini": "gpt-4o-mini",
+                    "claude-sonnet-4-5": "claude-sonnet-4-5-20250929",
+                    "claude-haiku-3-5": "claude-haiku-3-5",
+                    "gemini-2.5-flash": "gemini-2.5-flash",
+                    "gemini-2.5-pro": "gemini-2.5-pro",
+                    # 旧别名
                     "claude-sonnet-economy": "claude-sonnet-4-5-20250929",
                     "claude-sonnet-stable": "claude-sonnet-4-5-20250929",
-                    "gpt-economy": "gpt-5",
-                    "gpt-stable": "gpt-5",
+                    "gpt-economy": "gpt-4o-mini",
+                    "gpt-stable": "gpt-4o",
                     "gemini-flash": "gemini-2.5-flash",
                     "deepseek-chat": "deepseek-chat",
                     "deepseek-reasoner": "deepseek-reasoner",
                     "qwen-plus": "qwen-plus",
                     "qwen-coder": "qwen-coder-plus",
                     "yu-code-auto": "claude-sonnet-4-5-20250929",
-                    "yu-chat-auto": "gpt-5",
+                    "yu-chat-auto": "gpt-4o-mini",
+                    "yu-json": "gpt-4o-mini",
                 },
                 "weelinking": {
+                    # 御三家标准名
+                    "gpt-4o": "gpt-4o",
+                    "gpt-4o-mini": "gpt-4o-mini",
+                    "claude-sonnet-4-5": "claude-sonnet-4",
+                    "claude-haiku-3-5": "claude-haiku-3-5",
+                    "gemini-2.5-flash": "gemini-2.5-flash",
+                    # 旧别名
                     "claude-sonnet-economy": "claude-sonnet-4",
                     "claude-sonnet-stable": "claude-sonnet-4",
                     "gpt-economy": "gpt-4o-mini",
-                    "gpt-stable": "gpt-5",
+                    "gpt-stable": "gpt-4o",
                     "gemini-flash": "gemini-2.5-flash",
                     "yu-code-auto": "claude-sonnet-4",
                     "yu-chat-auto": "gpt-4o-mini",
+                    "yu-json": "gpt-4o-mini",
                 },
                 "siliconflow": {
                     "deepseek-chat": "deepseek-ai/DeepSeek-V3",
@@ -365,8 +487,15 @@ class Database:
                 },
             }
             for slug, mappings in real_provider_mappings.items():
-                provider_id = conn.execute("SELECT id FROM providers WHERE slug = ?", (slug,)).fetchone()["id"]
+                row = conn.execute("SELECT id FROM providers WHERE slug = ?", (slug,)).fetchone()
+                if row is None:
+                    continue
+                provider_id = row["id"]
                 profile = {
+                    "chhai": (0.70, 90.0, 500),
+                    "openai-direct": (0.72, 95.0, 600),
+                    "anthropic-direct": (0.72, 95.0, 700),
+                    "google-ai": (0.72, 94.0, 400),
                     "rightcode-codex": (0.36, 72.0, 1500),
                     "poloapi": (0.68, 90.0, 520),
                     "weelinking": (0.76, 92.0, 420),

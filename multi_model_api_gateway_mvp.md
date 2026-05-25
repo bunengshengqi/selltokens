@@ -1311,6 +1311,7 @@ REGISTER_URL=https://app.yourdomain.com/register
 ADMIN_CONSOLE_URL=https://app.yourdomain.com/admin
 NEWAPI_BASE_URL=https://app.yourdomain.com
 ADMIN_TOKEN=替换成长随机字符串
+ALLOW_DEFAULT_ADMIN_ON_LOCALHOST=false
 CORS_ALLOW_ORIGIN=https://www.yourdomain.com
 DEMO_PORTAL_ENABLED=false
 BILLING_CURRENCY=CNY
@@ -1338,6 +1339,7 @@ DEMO_PORTAL_ENABLED=false
 
 生产环境必须替换默认 ADMIN_TOKEN。
 设置真实 ADMIN_TOKEN 后，本项目 /admin 和 /newapi 需要通过 ?token=... 或 X-Admin-Token 访问。
+默认开发 token 只允许 localhost 预览，生产建议显式设置 ALLOW_DEFAULT_ADMIN_ON_LOCALHOST=false。
 
 生产环境不要使用 sk-yu-demo-local。
 公开文档使用 YOUR_API_KEY 占位，真实 Key 只从 New API 后台生成。

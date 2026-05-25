@@ -1,0 +1,69 @@
+services:
+
+  # ── 1. Yu Gateway（官网 + API 网关）────────────────────────────────────────
+  yu-gateway:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: yu-gateway
+    restart: unless-stopped
+    command: python app.py --init-db --seed --host 0.0.0.0 --port 8001
+    env_file: ../.env
+    volumes:
+      - ../data:/app/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/api/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ── 2. New API（用户中心 + 支付 + 渠道管理）──────────────────────────────────
+  new-api:
+    image: calciumion/new-api:latest
+    container_name: new-api
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      # 上线前必须修改为随机长字符串！
+      # 生成方法：openssl rand -hex 32
+      SESSION_SECRET: ${NEW_API_SESSION_SECRET:-replace-with-a-long-random-string}
+      CRYPTO_SECRET: ${NEW_API_CRYPTO_SECRET:-replace-with-another-long-random-string}
+      ERROR_LOG_ENABLED: "true"
+      # 生产上线后建议迁移到 MySQL（并发更好）：
+      # SQL_DSN: root:password@tcp(mysql:3306)/newapi
+    volumes:
+      - ../data/new-api:/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ── 3. Nginx（HTTPS 反向代理）───────────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # SSL 证书目录（用 certbot 获取后挂载）
+      # 目录结构：../certs/yourdomain.com/fullchain.pem  privkey.pem
+      - ../certs:/etc/nginx/certs:ro
+    networks:
+      - internal
+    depends_on:
+      - yu-gateway
+      - new-api
+
+networks:
+  internal:
+    driver: bridge

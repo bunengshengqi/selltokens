@@ -28,6 +28,7 @@ class Settings:
     admin_console_url: str
     cors_allow_origin: str
     demo_portal_enabled: bool
+    allow_default_admin_on_localhost: bool
     request_timeout_seconds: int
     upstream_connect_timeout_seconds: int
     seed_demo_data: bool
@@ -51,6 +52,7 @@ class Settings:
             admin_console_url=os.getenv("ADMIN_CONSOLE_URL", "/admin"),
             cors_allow_origin=os.getenv("CORS_ALLOW_ORIGIN", "*"),
             demo_portal_enabled=_bool("DEMO_PORTAL_ENABLED", True),
+            allow_default_admin_on_localhost=_bool("ALLOW_DEFAULT_ADMIN_ON_LOCALHOST", True),
             request_timeout_seconds=int(os.getenv("REQUEST_TIMEOUT_SECONDS", "90")),
             upstream_connect_timeout_seconds=int(os.getenv("UPSTREAM_CONNECT_TIMEOUT_SECONDS", "10")),
             seed_demo_data=_bool("SEED_DEMO_DATA", False),

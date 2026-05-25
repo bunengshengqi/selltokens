@@ -7,6 +7,7 @@ from pathlib import Path
 from gateway.config import Settings
 from gateway.db import Database
 from gateway.router import AppError, GatewayRouter
+from gateway.server import _is_http_url
 
 
 class GatewayRouterTest(unittest.TestCase):
@@ -26,6 +27,7 @@ class GatewayRouterTest(unittest.TestCase):
             admin_console_url="/admin",
             cors_allow_origin="*",
             demo_portal_enabled=True,
+            allow_default_admin_on_localhost=True,
             request_timeout_seconds=5,
             upstream_connect_timeout_seconds=2,
             seed_demo_data=False,
@@ -59,6 +61,14 @@ class GatewayRouterTest(unittest.TestCase):
                 },
             )
         self.assertEqual(ctx.exception.status_code, 404)
+
+
+class ServerSafetyTest(unittest.TestCase):
+    def test_detects_external_auth_urls(self) -> None:
+        self.assertTrue(_is_http_url("https://app.example.com/login"))
+        self.assertTrue(_is_http_url("http://127.0.0.1:3000/login"))
+        self.assertFalse(_is_http_url("/login"))
+        self.assertFalse(_is_http_url(""))
 
 
 if __name__ == "__main__":

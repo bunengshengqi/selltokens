@@ -12,8 +12,8 @@ def home_page(settings: Settings, models: Iterable[dict[str, Any]]) -> str:
     mix_cards = _provider_mix_cards()
     category_cards = _model_category_cards()
     return layout(
-        "Models",
-        "models",
+        "首页",
+        "home",
         f"""
         <section class="landing-hero">
           <div>
@@ -1009,7 +1009,7 @@ def layout(
         actions = ""
     else:
         nav = [
-            ("models", "/", "模型"),
+            ("home", "/", "首页"),
             ("pricing", "/pricing", "价格"),
             ("docs", "/docs", "文档"),
             ("claude", "/claude-code", "Claude Code"),

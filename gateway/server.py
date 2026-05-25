@@ -77,8 +77,14 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 providers = [dict(row) for row in self.database.list_providers()]
                 self._send_html(status_page(providers))
             elif path == "/login":
+                if self._external_auth_redirect_enabled(self.app_settings.login_url):
+                    self._redirect(self.app_settings.login_url)
+                    return
                 self._send_html(login_page(self.app_settings))
             elif path == "/register":
+                if self._external_auth_redirect_enabled(self.app_settings.register_url):
+                    self._redirect(self.app_settings.register_url)
+                    return
                 self._send_html(register_page(self.app_settings))
             elif path == "/newapi":
                 if not self._admin_allowed(query):
@@ -271,7 +277,7 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
     def _admin_allowed(self, query: dict[str, list[str]]) -> bool:
         if self.app_settings.admin_token == "change-me-admin-token":
-            return True
+            return self.app_settings.allow_default_admin_on_localhost and self._is_local_request()
         header_token = self.headers.get("X-Admin-Token") or ""
         query_token = query.get("token", [""])[0]
         return secrets_equal(header_token, self.app_settings.admin_token) or secrets_equal(
@@ -281,6 +287,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
 
     def _demo_portal_allowed(self) -> bool:
         return self.app_settings.demo_portal_enabled
+
+    def _external_auth_redirect_enabled(self, target_url: str) -> bool:
+        return not self.app_settings.demo_portal_enabled and _is_http_url(target_url)
+
+    def _is_local_request(self) -> bool:
+        host = (self.headers.get("Host") or "").split(":", 1)[0].strip("[]").lower()
+        return host in {"localhost", "127.0.0.1", "::1"}
 
     def _send_json(self, payload: dict[str, Any], status: int = 200, headers: dict[str, str] | None = None) -> None:
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
@@ -347,6 +360,11 @@ def main(argv: list[str] | None = None) -> None:
         demo_key = db.seed_demo()
         print(f"Seeded demo API key: {demo_key}")
     run(args.host, args.port, db, settings)
+
+
+def _is_http_url(value: str) -> bool:
+    parsed = urlparse(value)
+    return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
 
 
 if __name__ == "__main__":

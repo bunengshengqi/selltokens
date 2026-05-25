@@ -290,6 +290,8 @@ docker compose -f ops/docker-compose.yml up -d --build
 - 接入微信/支付宝、兑换码、人工充值兜底
 - 关闭或保护本地模拟后台
 - 生产环境设置 `DEMO_PORTAL_ENABLED=false`
+- 生产环境设置 `LOGIN_URL`、`REGISTER_URL`、`APP_BASE_URL` 指向 NewAPI 用户后台，官网 `/login`、`/register` 会直接跳转
 - 生产环境设置强随机 `ADMIN_TOKEN`，访问本项目 `/admin` 时使用 `?token=...` 或反代到内网
+- 生产环境设置 `ALLOW_DEFAULT_ADMIN_ON_LOCALHOST=false`，默认开发 token 只允许本机预览
 - 生产环境设置 `CORS_ALLOW_ORIGIN=https://www.yourdomain.com`
 - 用 Cherry Studio、Claude Code、Cursor、curl 小范围测试 3-5 个用户

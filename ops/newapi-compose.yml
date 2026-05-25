@@ -1,0 +1,16 @@
+services:
+  new-api:
+    image: calciumion/new-api:latest
+    container_name: new-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      TZ: Asia/Shanghai
+      SESSION_SECRET: replace-with-a-long-random-string
+      CRYPTO_SECRET: replace-with-another-long-random-string
+      # For launch speed, SQLite works. Switch to MySQL/PostgreSQL before heavy traffic.
+      # SQL_DSN: root:password@tcp(mysql:3306)/oneapi
+      ERROR_LOG_ENABLED: "true"
+    volumes:
+      - ../data/new-api:/data

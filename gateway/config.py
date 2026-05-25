@@ -1,0 +1,64 @@
+from __future__ import annotations
+
+import os
+from dataclasses import dataclass
+from pathlib import Path
+
+
+ROOT_DIR = Path(__file__).resolve().parent.parent
+
+
+def _bool(name: str, default: bool) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+@dataclass(frozen=True)
+class Settings:
+    database_path: Path
+    admin_token: str
+    public_api_base: str
+    site_name: str
+    app_base_url: str
+    login_url: str
+    register_url: str
+    newapi_base_url: str
+    admin_console_url: str
+    cors_allow_origin: str
+    demo_portal_enabled: bool
+    request_timeout_seconds: int
+    upstream_connect_timeout_seconds: int
+    seed_demo_data: bool
+    save_prompt_excerpt: bool
+    billing_currency: str = "CNY"
+    billing_symbol: str = "¥"
+    min_recharge_amount: float = 10.0
+
+    @classmethod
+    def from_env(cls) -> "Settings":
+        database_path = Path(os.getenv("DATABASE_PATH", ROOT_DIR / "data" / "gateway.sqlite3"))
+        return cls(
+            database_path=database_path,
+            admin_token=os.getenv("ADMIN_TOKEN", "change-me-admin-token"),
+            public_api_base=os.getenv("PUBLIC_API_BASE", "http://127.0.0.1:8001"),
+            site_name=os.getenv("SITE_NAME", "Yu Gateway"),
+            app_base_url=os.getenv("APP_BASE_URL", "/dashboard"),
+            login_url=os.getenv("LOGIN_URL", "/login"),
+            register_url=os.getenv("REGISTER_URL", "/register"),
+            newapi_base_url=os.getenv("NEWAPI_BASE_URL", ""),
+            admin_console_url=os.getenv("ADMIN_CONSOLE_URL", "/admin"),
+            cors_allow_origin=os.getenv("CORS_ALLOW_ORIGIN", "*"),
+            demo_portal_enabled=_bool("DEMO_PORTAL_ENABLED", True),
+            request_timeout_seconds=int(os.getenv("REQUEST_TIMEOUT_SECONDS", "90")),
+            upstream_connect_timeout_seconds=int(os.getenv("UPSTREAM_CONNECT_TIMEOUT_SECONDS", "10")),
+            seed_demo_data=_bool("SEED_DEMO_DATA", False),
+            save_prompt_excerpt=_bool("SAVE_PROMPT_EXCERPT", False),
+            billing_currency=(os.getenv("BILLING_CURRENCY", "CNY") or "CNY").strip().upper(),
+            billing_symbol=os.getenv("BILLING_SYMBOL", "¥") or "¥",
+            min_recharge_amount=float(os.getenv("MIN_RECHARGE_AMOUNT", "10")),
+        )
+
+
+settings = Settings.from_env()

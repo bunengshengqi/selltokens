@@ -11,6 +11,7 @@ def home_page(settings: Settings, models: Iterable[dict[str, Any]]) -> str:
     cards = "".join(_model_card(model, settings, featured=index < 6) for index, model in enumerate(model_list[:9]))
     mix_cards = _provider_mix_cards()
     category_cards = _model_category_cards()
+    funnel_cards = _growth_funnel_cards(settings)
     return layout(
         "首页",
         "home",
@@ -42,6 +43,14 @@ def home_page(settings: Settings, models: Iterable[dict[str, Any]]) -> str:
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -d '{{"model":"yu-chat-auto","messages":[{{"role":"user","content":"你好"}}]}}'</pre>
           </div>
+        </section>
+        <section class="conversion-strip">
+          <div>
+            <p class="eyebrow">Growth Funnel</p>
+            <h1>先试用，再充值，再邀请</h1>
+            <p>新用户注册即送体验额度，优先体验 DeepSeek、Qwen、豆包等低成本模型；充值保持微信支付不变，套餐和邀请奖励负责提升转化和复购。</p>
+          </div>
+          <div class="conversion-grid">{funnel_cards}</div>
         </section>
         <section class="center-head compact">
           <p class="eyebrow">Models</p>
@@ -82,6 +91,8 @@ def pricing_page(models: Iterable[dict[str, Any]], settings: Settings) -> str:
     plan_cards = _pricing_plan_cards(settings)
     rate_rows = _pricing_rate_rows(settings)
     capacity_cards = _capacity_cards()
+    ladder_rows = _pricing_ladder_table(settings)
+    referral_rules = _referral_rules(settings)
     rows = []
     for model in models:
         rows.append(
@@ -124,8 +135,24 @@ def pricing_page(models: Iterable[dict[str, Any]], settings: Settings) -> str:
         </section>
         <section class="pricing-note">
           <strong>计费说明</strong>
-          <p>套餐负责额度、通道优先级和服务支持；模型实际扣费仍按 NewAPI 的模型倍率和分组价格计算。上线后充值、套餐购买、兑换码和人工补单统一交给 NewAPI 支付系统。</p>
+          <p>套餐负责额度、通道优先级和服务支持；模型实际扣费仍按 NewAPI 的模型倍率和分组价格计算。第一版支付方式保持微信支付，兑换码和人工补单作为兜底。</p>
           <a class="text-link" href="{escape(settings.register_url)}">进入控制台购买套餐 →</a>
+        </section>
+        <section class="funnel-panel">
+          <div>
+            <p class="eyebrow">Recharge Ladder</p>
+            <h2>阶梯收费标准</h2>
+            <p>按量充值用于小额尝试和日常补余额；月卡用于锁定复购。Claude / GPT / Gemini 最新模型走通用余额，低成本模型包只开放 DeepSeek、Qwen、豆包等低风险线路。</p>
+          </div>
+          <div class="ladder-table">{ladder_rows}</div>
+        </section>
+        <section class="referral-panel">
+          <div>
+            <p class="eyebrow">Referral</p>
+            <h2>邀请裂变规则</h2>
+            <p>先用固定额度奖励快速上线，等真实订单稳定后再接首充返佣。这样能控制薅羊毛风险，同时让 Cursor / Claude Code 社群传播更快。</p>
+          </div>
+          <div class="referral-rules">{referral_rules}</div>
         </section>
         <section class="rate-panel">
           <div>
@@ -262,7 +289,7 @@ def recharge_page(
           <div>
             <p class="eyebrow">Billing</p>
             <h1>账户充值</h1>
-            <p>第一版账户按 {currency} 计费，最低 {_money(min_amount, settings, decimals=2)}；本地页面只做演示，上线后由 NewAPI 支付系统处理支付宝、微信、兑换码和人工充值。</p>
+            <p>第一版账户按 {currency} 计费，最低 {_money(min_amount, settings, decimals=2)}；本地页面只做演示，上线后由 NewAPI 支付系统处理微信支付、兑换码和人工充值。</p>
           </div>
           <div class="balance-pill">余额 {_money(user['balance'], settings, decimals=4)}</div>
         </section>
@@ -712,49 +739,49 @@ def _pricing_plan_cards(settings: Settings) -> str:
         {
             "name": "Free",
             "price": 0,
-            "yearly": "免费体验",
+            "yearly": "注册即送 ¥5 体验额度",
             "badge": "",
             "class": "",
-            "tagline": "简单尝鲜，验证工具能不能跑通。",
-            "rights": ["赠送少量体验额度", "适合首次接入测试", "不承诺高峰期优先级"],
+            "tagline": "先让用户跑通工具，降低注册后流失。",
+            "rights": ["¥5 等值体验额度", "优先体验低成本模型", "高峰期不承诺优先级"],
             "support": ["全天可用", "社区支持", "公开文档和示例"],
-            "rates": [("Claude", "按量"), ("Codex", "按量"), ("国产模型", "按量")],
+            "rates": [("Claude", "按量"), ("Codex", "按量"), ("国产模型", "试用优先")],
             "cta": "免费体验",
         },
         {
-            "name": "Pro",
-            "price": 39,
-            "yearly": "年付 ¥390",
+            "name": "Starter",
+            "price": 29,
+            "yearly": "月含 ¥35 等值额度",
             "badge": "",
             "class": "",
-            "tagline": "每天 4-5 小时中度使用，适合个人开发者。",
-            "rights": ["共享稳定通道", "适合 Cursor / Cline 日常写代码", "小额套餐优先推荐"],
-            "support": ["全天可用", "工单优先处理", "异常订单人工补单"],
-            "rates": [("Claude", "1.60x"), ("Codex", "1.50x"), ("国产模型", "1.00x")],
+            "tagline": "给小白和轻度 Cursor 用户一个低门槛月卡。",
+            "rights": ["低成本模型优先", "适合日常问答和轻量代码", "微信支付即可开通"],
+            "support": ["全天可用", "工单处理", "异常订单人工补单"],
+            "rates": [("Claude", "按量"), ("Codex", "按量"), ("国产模型", "低价包")],
             "cta": "立即购买",
         },
         {
-            "name": "Max",
-            "price": 99,
-            "yearly": "年付 ¥990",
+            "name": "Builder",
+            "price": 69,
+            "yearly": "月含 ¥90 等值额度",
             "badge": "推荐",
             "class": "featured",
-            "tagline": "每天 8 小时高强度使用，适合 Claude Code 主力用户。",
-            "rights": ["高优先级稳定通道", "Claude / GPT / Gemini 多上游 failover", "适合长上下文和工具调用"],
-            "support": ["全天可用", "优先排障", "可协助配置 Claude Code / Cursor"],
-            "rates": [("Claude", "1.35x"), ("Codex", "1.30x"), ("国产模型", "0.90x")],
+            "tagline": "主推套餐，覆盖大多数 AI 编程和 Agent 测试。",
+            "rights": ["更高通用额度", "适合 Claude Code / Cursor 日常开发", "热门模型自动路由"],
+            "support": ["全天可用", "优先排障", "协助配置 Claude Code / Cursor"],
+            "rates": [("Claude", "标准按量"), ("Codex", "标准按量"), ("国产模型", "折扣优先")],
             "cta": "立即购买",
         },
         {
-            "name": "Ultra",
-            "price": 299,
-            "yearly": "年付 ¥2990",
+            "name": "Team",
+            "price": 199,
+            "yearly": "月含 ¥280 等值额度",
             "badge": "顶级",
             "class": "top-tier",
-            "tagline": "工作室、RPA、Agent 批量调用和团队共享。",
-            "rights": ["独享 API Key 和高速通道", "可配置团队额度", "支持专属模型白名单"],
+            "tagline": "工作室、RPA、Agent 批量调用和小团队共享。",
+            "rights": ["团队额度池", "更高 RPM / TPM", "支持专属模型白名单"],
             "support": ["专属人工支持", "上线接入协助", "异常调用优先处理"],
-            "rates": [("Claude", "1.15x"), ("Codex", "1.15x"), ("国产模型", "0.80x")],
+            "rates": [("Claude", "优先通道"), ("Codex", "优先通道"), ("国产模型", "最低档")],
             "cta": "联系开通",
         },
     ]
@@ -799,6 +826,84 @@ def _pricing_plan_cards(settings: Settings) -> str:
             """
         )
     return "".join(cards)
+
+
+def _growth_funnel_cards(settings: Settings) -> str:
+    items = [
+        (
+            "免费试用",
+            "注册即送 ¥5",
+            "只推荐 DeepSeek、Qwen、豆包等低成本模型，先让用户跑通 yu-code-auto / Cursor / Claude Code 接入。",
+        ),
+        (
+            "充值转化",
+            "¥10 起充，主推 ¥29 月卡",
+            "支付方式保持微信支付；按量充值做兜底，月卡负责复购和稳定现金流。",
+        ),
+        (
+            "邀请裂变",
+            "被邀额外 ¥3，邀请人 ¥5",
+            "第一版用额度奖励快速上线；订单稳定后再做首充 15% 返佣。",
+        ),
+    ]
+    return "".join(
+        f"""
+        <div class="conversion-card">
+          <span>{escape(label)}</span>
+          <strong>{escape(metric)}</strong>
+          <p>{escape(desc)}</p>
+        </div>
+        """
+        for label, metric, desc in items
+    )
+
+
+def _pricing_ladder_table(settings: Settings) -> str:
+    rows = [
+        ("免费体验", "¥0", "¥5 体验额度", "注册即送；限低成本模型优先体验"),
+        ("小额充值", "¥10", "¥10 到账", "验证支付和 API Key，适合首单"),
+        ("入门月卡", "¥29/月", "¥35 等值额度", "主推小白转化，适合轻度 Cursor 使用"),
+        ("开发者月卡", "¥69/月", "¥90 等值额度", "主推套餐，适合日常 Claude Code / Agent 测试"),
+        ("专业月卡", "¥129/月", "¥180 等值额度", "适合高频调用和长上下文调试"),
+        ("团队月卡", "¥299/月", "¥450 等值额度", "适合工作室共享额度池和优先支持"),
+        ("大额充值", "¥500", "¥625 等值额度", "仅建议熟客/团队使用，人工风控"),
+    ]
+    rendered = [
+        "<div class='ladder-row head'><span>档位</span><span>用户支付</span><span>到账/权益</span><span>定位</span></div>"
+    ]
+    rendered.extend(
+        "<div class='ladder-row'>"
+        f"<span><strong>{escape(name)}</strong></span>"
+        f"<span>{escape(price)}</span>"
+        f"<span>{escape(value)}</span>"
+        f"<span>{escape(note)}</span>"
+        "</div>"
+        for name, price, value, note in rows
+    )
+    rendered.append(
+        f"<div class='rate-foot'>按量充值最低 {_money(settings.min_recharge_amount, settings, decimals=2)}；月卡额度不建议覆盖 Claude / GPT / Gemini 最新模型的亏本调用。</div>"
+    )
+    return "".join(rendered)
+
+
+def _referral_rules(settings: Settings) -> str:
+    rows = [
+        ("新用户", "注册即送 ¥5", "无需支付，降低试用门槛。"),
+        ("被邀请人", "额外 +¥3", "使用邀请链接注册后叠加，总体验额度 ¥8。"),
+        ("邀请人", "成功邀请 +¥5", "第一版固定额度，避免首期开发复杂度过高。"),
+        ("首充返佣", "建议 15%", "第二阶段接订单回调；首充返佣上限 ¥50/人，防刷。"),
+        ("风控", "同设备/同 IP 限制", "异常注册不发放奖励，可转人工审核。"),
+    ]
+    return "".join(
+        f"""
+        <div class="referral-rule">
+          <strong>{escape(role)}</strong>
+          <span>{escape(reward)}</span>
+          <p>{escape(note)}</p>
+        </div>
+        """
+        for role, reward, note in rows
+    )
 
 
 def _pricing_rate_rows(settings: Settings) -> str:
@@ -1110,6 +1215,24 @@ def layout(
     .rate-row.head {{ background: #f1f5f9; color: var(--ink); font-size: 12px; font-weight: 900; text-transform: uppercase; }}
     .rate-row strong {{ color: var(--ink); }}
     .rate-foot {{ padding: 13px 14px; color: var(--muted); font-weight: 700; }}
+    .conversion-strip, .funnel-panel, .referral-panel {{ margin: 18px 0 30px; border: 1px solid var(--line); border-radius: 16px; padding: 24px; background: #fff; box-shadow: var(--shadow); }}
+    .conversion-strip {{ display: grid; grid-template-columns: .78fr 1.22fr; gap: 18px; align-items: start; }}
+    .conversion-strip p, .funnel-panel p, .referral-panel p {{ color: var(--muted); line-height: 1.7; }}
+    .conversion-grid {{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }}
+    .conversion-card {{ min-height: 190px; border: 1px solid var(--line); border-radius: 12px; padding: 18px; background: var(--wash); }}
+    .conversion-card span {{ display: inline-flex; margin-bottom: 12px; color: var(--blue-dark); font-size: 13px; font-weight: 900; }}
+    .conversion-card strong {{ display: block; font-size: 24px; line-height: 1.2; }}
+    .conversion-card p {{ margin: 12px 0 0; font-size: 14px; }}
+    .funnel-panel, .referral-panel {{ display: grid; grid-template-columns: .72fr 1.28fr; gap: 18px; align-items: start; }}
+    .ladder-table {{ border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: #fff; }}
+    .ladder-row {{ display: grid; grid-template-columns: .8fr .7fr .9fr 1.5fr; gap: 12px; padding: 13px 14px; border-bottom: 1px solid var(--line); align-items: center; color: var(--muted); }}
+    .ladder-row.head {{ background: #f1f5f9; color: var(--ink); font-size: 12px; font-weight: 900; text-transform: uppercase; }}
+    .ladder-row strong {{ color: var(--ink); }}
+    .referral-rules {{ display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }}
+    .referral-rule {{ border: 1px solid var(--line); border-radius: 12px; padding: 15px; background: var(--wash); }}
+    .referral-rule strong {{ display: block; margin-bottom: 8px; }}
+    .referral-rule span {{ display: block; color: var(--blue-dark); font-size: 18px; font-weight: 900; }}
+    .referral-rule p {{ margin: 10px 0 0; font-size: 13px; }}
     .landing-hero {{ display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(340px, .95fr); gap: 32px; align-items: center; padding: 46px 0 54px; }}
     .landing-hero h1 {{ font-size: 44px; max-width: 760px; }}
     .landing-hero p {{ color: var(--muted); font-size: 17px; line-height: 1.75; max-width: 720px; }}
@@ -1205,9 +1328,9 @@ def layout(
     @media (max-width: 980px) {{
       header {{ align-items: flex-start; flex-direction: column; }}
       nav {{ justify-content: flex-start; }}
-      .landing-hero, .plan-grid, .capacity-panel, .capacity-grid, .rate-panel, .model-grid, .quickstart, .docs-grid, .tool-grid, .two, .steps, .feature-grid {{ grid-template-columns: 1fr; }}
+      .landing-hero, .conversion-strip, .conversion-grid, .funnel-panel, .referral-panel, .referral-rules, .plan-grid, .capacity-panel, .capacity-grid, .rate-panel, .model-grid, .quickstart, .docs-grid, .tool-grid, .two, .steps, .feature-grid {{ grid-template-columns: 1fr; }}
       .plan-card {{ min-height: 0; }}
-      .rate-row {{ grid-template-columns: 1fr; }}
+      .rate-row, .ladder-row {{ grid-template-columns: 1fr; }}
       .metrics, .action-grid, .pay-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
       .page-title {{ align-items: flex-start; flex-direction: column; }}
       .landing-hero h1 {{ font-size: 34px; }}

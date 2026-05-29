@@ -20,9 +20,13 @@ class Database:
     @contextmanager
     def connect(self) -> Iterable[sqlite3.Connection]:
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        conn = sqlite3.connect(self.path)
+        conn = sqlite3.connect(self.path, timeout=30.0)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON")
+        # WAL 允许读写并发，busy_timeout 避免高并发下直接抛 "database is locked"
+        conn.execute("PRAGMA journal_mode = WAL")
+        conn.execute("PRAGMA synchronous = NORMAL")
+        conn.execute("PRAGMA busy_timeout = 5000")
         try:
             yield conn
             conn.commit()
@@ -528,7 +532,7 @@ class Database:
                     "google-ai": (0.72, 94.0, 400),
                     "rightcode-codex": (0.36, 72.0, 1500),
                     "ismaque": (0.68, 88.0, 480),
-                "poloapi": (0.68, 90.0, 520),
+                    "poloapi": (0.68, 90.0, 520),
                     "weelinking": (0.76, 92.0, 420),
                     "siliconflow": (0.42, 94.0, 360),
                     "deepseek": (0.48, 88.0, 680),
@@ -748,6 +752,8 @@ class Database:
                     api_keys.id AS api_key_id,
                     api_keys.name AS api_key_name,
                     api_keys.status AS api_key_status,
+                    api_keys.rpm_limit,
+                    api_keys.tpm_limit,
                     users.id AS user_id,
                     users.username,
                     users.email,
@@ -880,6 +886,16 @@ class Database:
                 (charge, utc_now_iso(), user_id, charge),
             )
             return cursor.rowcount == 1
+
+    def adjust_balance(self, user_id: int, amount: float) -> None:
+        """无条件调整余额（amount 为正表示退款/入账，为负表示补扣）。用于流式请求结束后的对账。"""
+        if amount == 0:
+            return
+        with self.connect() as conn:
+            conn.execute(
+                "UPDATE users SET balance = balance + ?, updated_at = ? WHERE id = ?",
+                (amount, utc_now_iso(), user_id),
+            )
 
     def save_log(
         self,

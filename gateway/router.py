@@ -16,6 +16,7 @@ from .pricing import (
     prompt_excerpt,
     usage_from_response,
 )
+from .ratelimit import RateLimiter
 from .upstreams import ProviderError, chat_completion, stream_chat_completion
 
 
@@ -43,12 +44,14 @@ class GatewayRouter:
     def __init__(self, db: Database, settings: Settings):
         self.db = db
         self.settings = settings
+        self.rate_limiter = RateLimiter()
 
     def route_chat_completion(self, authorization: str, payload: dict[str, Any]) -> RouteResult:
         auth = self._authenticate(authorization)
         model = self._model(payload)
         model_row = self._resolve_model(model)
         estimated_usage = estimate_usage_from_request(payload)
+        self._enforce_rate_limit(auth, estimated_usage)
         candidates = self._rank_candidates(
             model,
             model_row["line_type"],
@@ -155,6 +158,7 @@ class GatewayRouter:
         model = self._model(payload)
         model_row = self._resolve_model(model)
         estimated_usage = estimate_usage_from_request(payload)
+        self._enforce_rate_limit(auth, estimated_usage)
         candidates = self._rank_candidates(
             model,
             model_row["line_type"],
@@ -166,19 +170,26 @@ class GatewayRouter:
             raise AppError(503, "No streaming provider with positive margin", "no_provider")
 
         candidate = candidates[0]
-        cost = self._cost(candidate, estimated_usage)
-        charge = self._charge(candidate, estimated_usage)
-        if not self.db.deduct_balance(auth["user_id"], charge):
+        # 先按估算额度做"预扣"（hold），避免并发请求透支；流结束后再按真实用量对账。
+        hold = self._charge(candidate, estimated_usage)
+        if not self.db.deduct_balance(auth["user_id"], hold):
             self._log_failure(auth, model, "Insufficient balance")
             raise AppError(402, "Insufficient balance", "insufficient_balance")
 
         upstream_payload = dict(payload)
         upstream_payload["model"] = candidate["provider_model"]
         upstream_payload["stream"] = True
+        # 让 OpenAI 兼容上游在最后一帧返回真实 usage，便于精确扣费。
+        provider_type = (candidate.get("type") or "openai").lower()
+        if provider_type not in {"mock", "anthropic"}:
+            options = dict(upstream_payload.get("stream_options") or {})
+            options.setdefault("include_usage", True)
+            upstream_payload["stream_options"] = options
 
         def generate() -> Iterator[bytes]:
             started = time.perf_counter()
-            latency_ms = 0
+            captured_usage: dict[str, Any] | None = None
+            output_chars = 0
             try:
                 for chunk in stream_chat_completion(
                     candidate,
@@ -186,7 +197,18 @@ class GatewayRouter:
                     timeout=(self.settings.upstream_connect_timeout_seconds, self.settings.request_timeout_seconds),
                 ):
                     yield chunk
+                    usage, chars = _inspect_stream_chunk(chunk)
+                    if usage:
+                        captured_usage = usage
+                    output_chars += chars
                 latency_ms = int((time.perf_counter() - started) * 1000)
+
+                actual_usage = self._actual_stream_usage(captured_usage, estimated_usage, output_chars)
+                actual_cost = self._cost(candidate, actual_usage)
+                actual_charge = self._charge(candidate, actual_usage)
+                # 对账：之前预扣了 hold，补足差额（actual_charge - hold）。
+                self.db.adjust_balance(auth["user_id"], hold - actual_charge)
+
                 self.db.mark_provider_success(candidate["provider_id"], latency_ms)
                 self.db.save_log(
                     user_id=auth["user_id"],
@@ -194,16 +216,18 @@ class GatewayRouter:
                     request_model=model,
                     actual_provider=candidate["slug"],
                     actual_model=candidate["provider_model"],
-                    input_tokens=estimated_usage.input_tokens,
-                    output_tokens=estimated_usage.output_tokens,
-                    cost=cost,
-                    charge=charge,
-                    status="success_stream_estimated",
+                    input_tokens=actual_usage.input_tokens,
+                    output_tokens=actual_usage.output_tokens,
+                    cost=actual_cost,
+                    charge=actual_charge,
+                    status="success_stream",
                     latency_ms=latency_ms,
                     prompt_excerpt=self._prompt_excerpt(payload),
                 )
             except ProviderError as exc:
                 latency_ms = int((time.perf_counter() - started) * 1000)
+                # 上游失败：全额退还预扣，不向用户收费。
+                self.db.adjust_balance(auth["user_id"], hold)
                 self.db.mark_provider_error(candidate["provider_id"], str(exc), exc.status_code)
                 self.db.save_log(
                     user_id=auth["user_id"],
@@ -213,8 +237,8 @@ class GatewayRouter:
                     actual_model=candidate["provider_model"],
                     input_tokens=estimated_usage.input_tokens,
                     output_tokens=0,
-                    cost=cost,
-                    charge=charge,
+                    cost=0,
+                    charge=0,
                     status="failed_stream",
                     error_message=str(exc),
                     latency_ms=latency_ms,
@@ -235,10 +259,29 @@ class GatewayRouter:
             headers={
                 "X-Gateway-Provider": candidate["slug"],
                 "X-Gateway-Model": candidate["provider_model"],
-                "X-Gateway-Charge": f"{charge:.8f}",
-                "X-Gateway-Cost": f"{cost:.8f}",
+                "X-Gateway-Charge-Hold": f"{hold:.8f}",
             },
         )
+
+    def _actual_stream_usage(
+        self,
+        captured_usage: dict[str, Any] | None,
+        estimated_usage: Usage,
+        output_chars: int,
+    ) -> Usage:
+        if captured_usage:
+            input_tokens = (
+                captured_usage.get("prompt_tokens")
+                or captured_usage.get("input_tokens")
+                or estimated_usage.input_tokens
+            )
+            output_tokens = (
+                captured_usage.get("completion_tokens")
+                or captured_usage.get("output_tokens")
+                or max(1, output_chars // 4)
+            )
+            return Usage(input_tokens=int(input_tokens), output_tokens=int(output_tokens))
+        return Usage(input_tokens=estimated_usage.input_tokens, output_tokens=max(1, output_chars // 4))
 
     def _authenticate(self, authorization: str) -> Row:
         token = _bearer_token(authorization)
@@ -283,7 +326,10 @@ class GatewayRouter:
                 continue
             if _is_in_cooldown(row.get("cooldown_until"), now):
                 continue
-            if float(row.get("provider_balance") or 0) < 20:
+            # balance<=0 视为"未跟踪余额"（多数聚合商不暴露余额，seed 默认 0），不据此过滤；
+            # 仅当余额被明确跟踪（>0）且低于阈值时才跳过，避免配置好的真实上游被静默排除。
+            provider_balance = float(row.get("provider_balance") or 0)
+            if 0 < provider_balance < 20:
                 continue
             if float(row.get("provider_error_rate") or 0) > 30:
                 continue
@@ -306,7 +352,8 @@ class GatewayRouter:
             latency = float(row.get("provider_avg_latency_ms") or row.get("avg_latency_ms") or 1000)
             speed_score = max(0.0, 100.0 - min(100.0, latency / 100.0))
             balance = float(row.get("provider_balance") or 0)
-            balance_multiplier = 1.0 if balance >= 100 else 0.85
+            # balance<=0 视为未跟踪余额，不做惩罚；明确跟踪且偏低时轻微降权。
+            balance_multiplier = 1.0 if balance <= 0 or balance >= 100 else 0.85
             priority_bonus = max(0.0, 5.0 - (float(row.get("priority") or 100) / 50.0))
             row["_score"] = (
                 price_score * weights["price"]
@@ -332,6 +379,24 @@ class GatewayRouter:
             candidate["output_cost"],
         )
 
+    def _enforce_rate_limit(self, auth: Row, estimated_usage: Usage) -> None:
+        try:
+            api_key_id = int(auth["api_key_id"])
+            rpm_limit = int(auth["rpm_limit"] or 0)
+            tpm_limit = int(auth["tpm_limit"] or 0)
+        except (KeyError, TypeError, ValueError):
+            return
+        breach = self.rate_limiter.check_and_reserve(
+            api_key_id,
+            rpm_limit,
+            tpm_limit,
+            estimated_usage.total_tokens,
+        )
+        if breach == "rpm":
+            raise AppError(429, f"Rate limit exceeded: {rpm_limit} requests/min", "rate_limited")
+        if breach == "tpm":
+            raise AppError(429, f"Rate limit exceeded: {tpm_limit} tokens/min", "rate_limited")
+
     def _log_failure(self, auth: Row | None, model: str, message: str) -> None:
         self.db.save_log(
             user_id=auth["user_id"] if auth else None,
@@ -351,6 +416,37 @@ class GatewayRouter:
         if not self.settings.save_prompt_excerpt:
             return ""
         return prompt_excerpt(payload)
+
+
+def _inspect_stream_chunk(chunk: bytes) -> tuple[dict[str, Any] | None, int]:
+    """从 SSE chunk 中提取 usage（若存在）与本帧输出文本字符数，用于流式精确计费。"""
+    try:
+        text = chunk.decode("utf-8")
+    except UnicodeDecodeError:
+        return None, 0
+    usage: dict[str, Any] | None = None
+    chars = 0
+    for line in text.splitlines():
+        line = line.strip()
+        if not line.startswith("data:"):
+            continue
+        data_str = line[5:].strip()
+        if not data_str or data_str == "[DONE]":
+            continue
+        try:
+            event = json.loads(data_str)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(event.get("usage"), dict):
+            usage = event["usage"]
+        for choice in event.get("choices", []) or []:
+            if not isinstance(choice, dict):
+                continue
+            delta = choice.get("delta") or {}
+            content = delta.get("content")
+            if isinstance(content, str):
+                chars += len(content)
+    return usage, chars
 
 
 def _bearer_token(authorization: str) -> str:

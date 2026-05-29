@@ -398,6 +398,10 @@ def docs_page(settings: Settings) -> str:
           <h1>接入文档</h1>
           <p>兼容 OpenAI Chat Completions。Cursor、Cline、Claude Code 可以直接走 OpenAI-compatible 配置。</p>
         </section>
+        <section class="action-grid">
+          <a class="action-card" href="/docs/cursor"><strong>Cursor 接入教程 →</strong><span>图形界面，覆盖 Base URL 即可调用平台模型。</span></a>
+          <a class="action-card" href="/docs/claude-code-cli"><strong>Claude Code CLI 接入教程 →</strong><span>命令行 Agent 编码，环境变量一键接入。</span></a>
+        </section>
         <section class="docs-grid">
           <article>
             <h2>OpenAI SDK</h2>
@@ -491,7 +495,275 @@ export ANTHROPIC_MODEL=claude-sonnet-economy</pre>
     )
 
 
+def cursor_guide_page(settings: Settings) -> str:
+    base = escape(settings.public_api_base)
+    register = escape(settings.register_url)
+    steps = [
+        ("1", "注册并获取 API Key", "注册账户后进入控制台 → API Keys，创建一个 Key（只在创建时显示一次，请妥善保存）。"),
+        ("2", "打开 Cursor 模型设置", "Cursor → Settings → Cursor Settings → Models，找到 “OpenAI API Key” 区域。"),
+        ("3", "填入 Key 并覆盖 Base URL", "勾选 OpenAI API Key 填入你的 Key，展开 “Override OpenAI Base URL”，填入下方平台地址。"),
+        ("4", "添加平台模型名", "在模型列表点 “Add model”，添加 yu-code-auto、claude-sonnet-4-5 等平台模型名，再点 Verify 验证。"),
+    ]
+    step_html = "".join(
+        f"<div><strong>{escape(num)}</strong><h2>{escape(title)}</h2><p>{escape(desc)}</p></div>"
+        for num, title, desc in steps
+    )
+    models = [
+        ("yu-code-auto", "AI 编程自动路由，按价格/稳定性自动选 Claude/GPT/Qwen/DeepSeek"),
+        ("claude-sonnet-4-5", "Claude Sonnet 4.5，复杂重构、长上下文主力"),
+        ("gpt-4o", "OpenAI GPT-4o，通用对话与代码"),
+        ("deepseek-chat", "DeepSeek，低成本日常问答与脚本"),
+    ]
+    model_rows = "".join(
+        f"<tr><td><code>{escape(name)}</code></td><td>{escape(desc)}</td></tr>"
+        for name, desc in models
+    )
+    faqs = [
+        ("Tab 补全 / Agent 还能用吗？", "覆盖 Base URL 后，自定义模型主要作用于 Chat。Cursor 的 Tab 补全和部分 Composer 能力仍走 Cursor 官方，不受影响。"),
+        ("提示 model not found？", "确认在模型列表里添加的名字是平台支持的模型名（如 yu-code-auto），不要填 Cursor 默认的 claude-3.5-sonnet 之类。"),
+        ("Verify 失败？", "检查 Base URL 是否以 /v1 结尾、Key 是否有效且账户有余额，必要时在控制台用量记录查看错误原因。"),
+        ("如何控制成本？", "默认用 yu-code-auto 让平台自动选低成本上游；重活再切 claude-sonnet-4-5。"),
+    ]
+    faq_html = "".join(
+        f"<div><h2>{escape(q)}</h2><p>{escape(a)}</p></div>" for q, a in faqs
+    )
+    return layout(
+        "Cursor 接入",
+        "docs",
+        f"""
+        <section class="page-title">
+          <div>
+            <p class="eyebrow">Guide · Cursor</p>
+            <h1>在 Cursor 接入 996 Tokens API</h1>
+            <p>用 OpenAI 兼容方式把 Cursor 的对话模型切到本平台，一个 Key 调用 Claude / GPT / Gemini / 国产模型。</p>
+          </div>
+          <a class="button primary" href="{register}">获取 API Key</a>
+        </section>
+        <section class="steps">{step_html}</section>
+        <section class="docs-grid">
+          <article>
+            <h2>推荐配置</h2>
+            <pre>API Provider: OpenAI Compatible
+Override Base URL: {base}/v1
+API Key: YOUR_API_KEY
+Model: yu-code-auto</pre>
+          </article>
+          <article>
+            <h2>验证调用</h2>
+            <pre>curl {base}/v1/chat/completions \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{{"model":"yu-code-auto","messages":[{{"role":"user","content":"你好"}}]}}'</pre>
+          </article>
+        </section>
+        <section class="table-wrap">
+          <h2>常用模型</h2>
+          <table>
+            <thead><tr><th>模型名</th><th>说明</th></tr></thead>
+            <tbody>{model_rows}</tbody>
+          </table>
+        </section>
+        <section class="center-head compact">
+          <p class="eyebrow">FAQ</p>
+          <h1>常见问题</h1>
+        </section>
+        <section class="feature-grid">{faq_html}</section>
+        <section class="pricing-note">
+          <strong>下一步</strong>
+          <p>如果你更习惯命令行，试试 Claude Code CLI 接入，体验完整的 Agent 编码。</p>
+          <a class="text-link" href="/docs/claude-code-cli">Claude Code CLI 接入教程 →</a>
+        </section>
+        """,
+        settings=settings,
+        variant="public",
+    )
+
+
+def claude_code_cli_page(settings: Settings) -> str:
+    base = escape(settings.public_api_base)
+    register = escape(settings.register_url)
+    settings_json = """{
+  "env": {
+    "ANTHROPIC_BASE_URL": "%s",
+    "ANTHROPIC_AUTH_TOKEN": "YOUR_API_KEY",
+    "ANTHROPIC_MODEL": "claude-sonnet-4-5",
+    "ANTHROPIC_SMALL_FAST_MODEL": "claude-haiku-3-5"
+  }
+}""" % settings.public_api_base
+    settings_json = escape(settings_json)
+    steps = [
+        ("1", "安装 Claude Code CLI", "需要 Node.js 18+，全局安装官方 CLI。"),
+        ("2", "获取 API Key", "在控制台 → API Keys 创建 Key，并确保账户有余额。"),
+        ("3", "配置环境变量", "把平台地址、Key 和模型名写入环境变量（或写进 ~/.claude/settings.json 持久化）。"),
+        ("4", "启动并验证", "在项目目录运行 claude，用 /status 或 /model 确认接入成功。"),
+    ]
+    step_html = "".join(
+        f"<div><strong>{escape(num)}</strong><h2>{escape(title)}</h2><p>{escape(desc)}</p></div>"
+        for num, title, desc in steps
+    )
+    models = [
+        ("claude-sonnet-4-5", "主力模型（ANTHROPIC_MODEL），复杂任务与长上下文"),
+        ("claude-haiku-3-5", "快速小模型（ANTHROPIC_SMALL_FAST_MODEL），用于标题/补全等轻量调用"),
+        ("yu-code-auto", "平台自动路由，按成本与稳定性自动选上游"),
+    ]
+    model_rows = "".join(
+        f"<tr><td><code>{escape(name)}</code></td><td>{escape(desc)}</td></tr>"
+        for name, desc in models
+    )
+    faqs = [
+        ("ANTHROPIC_BASE_URL 要不要带 /v1？", "不要。Claude Code 走 Anthropic 协议，Base URL 填到域名根（不带 /v1），平台会自动转发 /v1/messages。"),
+        ("AUTH_TOKEN 和 API_KEY 区别？", "用 ANTHROPIC_AUTH_TOKEN 填平台的 Key 即可；若客户端只认 ANTHROPIC_API_KEY，填同一个 Key 也可以。"),
+        ("提示余额不足 / 402？", "去控制台充值；账户余额为 0 时网关会直接拒绝请求。"),
+        ("如何省钱？", "把 ANTHROPIC_SMALL_FAST_MODEL 设为 claude-haiku-3-5，大量轻量调用走便宜模型。"),
+    ]
+    faq_html = "".join(
+        f"<div><h2>{escape(q)}</h2><p>{escape(a)}</p></div>" for q, a in faqs
+    )
+    return layout(
+        "Claude Code CLI 接入",
+        "docs",
+        f"""
+        <section class="page-title">
+          <div>
+            <p class="eyebrow">Guide · Claude Code CLI</p>
+            <h1>在 Claude Code 命令行接入 996 Tokens API</h1>
+            <p>通过环境变量把官方 Claude Code CLI 指向本平台，人民币计费、多上游冗余，享受完整 Agent 编码体验。</p>
+          </div>
+          <a class="button primary" href="{register}">获取 API Key</a>
+        </section>
+        <section class="steps">{step_html}</section>
+        <section class="docs-grid">
+          <article>
+            <h2>安装 CLI</h2>
+            <pre>npm install -g @anthropic-ai/claude-code
+
+claude --version</pre>
+          </article>
+          <article>
+            <h2>临时环境变量</h2>
+            <pre>export ANTHROPIC_BASE_URL={base}
+export ANTHROPIC_AUTH_TOKEN=YOUR_API_KEY
+export ANTHROPIC_MODEL=claude-sonnet-4-5
+export ANTHROPIC_SMALL_FAST_MODEL=claude-haiku-3-5
+
+claude</pre>
+          </article>
+          <article>
+            <h2>持久化（写入 shell 配置）</h2>
+            <pre>echo 'export ANTHROPIC_BASE_URL={base}' >> ~/.zshrc
+echo 'export ANTHROPIC_AUTH_TOKEN=YOUR_API_KEY' >> ~/.zshrc
+echo 'export ANTHROPIC_MODEL=claude-sonnet-4-5' >> ~/.zshrc
+source ~/.zshrc</pre>
+          </article>
+          <article>
+            <h2>或写入 ~/.claude/settings.json</h2>
+            <pre>{settings_json}</pre>
+          </article>
+        </section>
+        <section class="table-wrap">
+          <h2>推荐模型</h2>
+          <table>
+            <thead><tr><th>模型名</th><th>用途</th></tr></thead>
+            <tbody>{model_rows}</tbody>
+          </table>
+        </section>
+        <section class="center-head compact">
+          <p class="eyebrow">FAQ</p>
+          <h1>常见问题</h1>
+        </section>
+        <section class="feature-grid">{faq_html}</section>
+        <section class="pricing-note">
+          <strong>下一步</strong>
+          <p>更喜欢图形界面？看看在 Cursor 里接入的教程。</p>
+          <a class="text-link" href="/docs/cursor">Cursor 接入教程 →</a>
+        </section>
+        """,
+        settings=settings,
+        variant="public",
+    )
+
+
+def about_page(settings: Settings) -> str:
+    base = escape(settings.public_api_base)
+    features = [
+        ("🔀", "多上游自动路由", "同一模型保留 2–3 个渠道，按价格、延迟、成功率评分后自动选路，单点挂掉自动切换。"),
+        ("💰", "毛利保护", "每次请求都会验证售价 vs 成本是否满足最低毛利率，避免高频调用亏本。"),
+        ("🇨🇳", "人民币计费", "账户余额以 CNY 计算，微信支付充值，按量扣费，告别汇率换算。"),
+        ("⚡", "流式输出", "完整支持 SSE streaming，Claude Code / Cursor 打字机效果无卡顿。"),
+        ("🔌", "OpenAI 兼容", "接口格式 100% OpenAI Chat Completions，不需要修改现有代码，换一行 Base URL 即可。"),
+        ("🛡️", "熔断 & 冷却", "上游连续出错后自动进入冷却，恢复后再放流量，保护用户体验和平台口碑。"),
+    ]
+    upstreams = [
+        ("御三家直连 / 聚合商", "Claude、GPT-4o、Gemini — 稳定渠道高权重，低价渠道做补充和利润优化。"),
+        ("SiliconFlow 国产主力", "DeepSeek、Qwen、豆包、GLM、Embedding — 低成本、高速度、利润核心。"),
+        ("全能补充渠道", "图像、视频、备用模型 — APIMart / jiekou.ai / token.chhai 等做模型丰富度。"),
+    ]
+    feature_html = "".join(
+        f"<div><h2>{escape(icon)} {escape(title)}</h2><p>{escape(desc)}</p></div>"
+        for icon, title, desc in features
+    )
+    upstream_html = "".join(
+        f"<div><h2>{escape(name)}</h2><p>{escape(desc)}</p></div>"
+        for name, desc in upstreams
+    )
+    return layout(
+        "About",
+        "about",
+        f"""
+        <section class="about-hero">
+          <p class="eyebrow">About 996 Tokens</p>
+          <h1>面向 AI 编程的多模型 API 网关</h1>
+          <p>996 Tokens 是为 Claude Code、Cursor、Cline 和 AI Agent 开发者设计的 API 分发平台。<br>
+          一个 API Key，统一接入 Claude、GPT、Gemini、DeepSeek、Qwen、豆包，人民币计费，无需备案。</p>
+          <div class="hero-actions">
+            <a class="button primary" href="{escape(settings.register_url)}">免费注册体验</a>
+            <a class="button" href="/docs">查看接入文档</a>
+          </div>
+        </section>
+        <section class="center-head compact">
+          <p class="eyebrow">Features</p>
+          <h1>核心能力</h1>
+        </section>
+        <section class="feature-grid about-features">{feature_html}</section>
+        <section class="about-stack">
+          <div>
+            <p class="eyebrow">Architecture</p>
+            <h2>技术架构</h2>
+            <p>官网（Yu Gateway）负责获客、文档和 API 路由；New API 后台负责用户管理、充值、Key 和渠道；Nginx 做 HTTPS 反代和域名分流。</p>
+            <pre>用户请求
+  → Nginx HTTPS 反代
+    ├─ www.996tokens.com  → Yu Gateway（官网 + 路由层）
+    ├─ api.996tokens.com  → New API（用户 / 充值 / Key）
+    └─ app.996tokens.com  → New API（控制台）
+         ↓
+    多上游候选池（评分路由 + 熔断）
+         ↓
+    Claude / GPT / Gemini / 国产模型上游</pre>
+          </div>
+          <div class="upstream-stack">
+            <p class="eyebrow">Upstreams</p>
+            <h2>上游策略</h2>
+            {upstream_html}
+          </div>
+        </section>
+        <section class="about-contact">
+          <p class="eyebrow">Contact</p>
+          <h2>联系我们</h2>
+          <p>有问题或想合作，欢迎通过以下方式联系：</p>
+          <div class="contact-grid">
+            <div><strong>微信客服</strong><p>扫码添加，或在控制台提交工单。</p></div>
+            <div><strong>接入文档</strong><p><a class="text-link" href="/docs" style="margin-top:0">www.996tokens.com/docs →</a></p></div>
+            <div><strong>API Base URL</strong><p><code>{base}/v1</code></p></div>
+          </div>
+        </section>
+        """,
+        settings=settings,
+        variant="public",
+    )
+
+
 def status_page(providers: Iterable[dict[str, Any]]) -> str:
+
     rows = []
     for provider in providers:
         public_status = "online" if provider["status"] == "active" else "standby"
@@ -1119,6 +1391,7 @@ def layout(
             ("docs", "/docs", "文档"),
             ("claude", "/claude-code", "Claude Code"),
             ("status", "/status", "状态"),
+            ("about", "/about", "关于"),
         ]
         actions = (
             f"<a class='button ghost' href='{escape(cfg.login_url)}'>登录</a>"
@@ -1319,16 +1592,32 @@ def layout(
     th {{ color: var(--muted); font-size: 12px; background: #f1f5f9; }}
     td small {{ display: block; color: var(--muted); margin-top: 4px; line-height: 1.45; }}
     .status {{ font-weight: 900; color: var(--amber); }}
-    .status.active, .status.success, .status.success_stream_estimated, .status.paid {{ color: var(--green); }}
+    .status.active, .status.success, .status.success_stream, .status.success_stream_estimated, .status.paid {{ color: var(--green); }}
     .status.disabled, .status.failed, .status.failed_stream {{ color: var(--red); }}
     .empty {{ text-align: center; color: var(--muted); padding: 32px; }}
     .two {{ display: grid; grid-template-columns: .8fr 1.2fr; gap: 16px; align-items: start; }}
     .risk-note {{ margin-top: 24px; border: 1px solid #fed7aa; background: #fff7ed; color: #7c2d12; border-radius: 12px; padding: 18px 20px; }}
     .risk-note p {{ margin: 8px 0 0; line-height: 1.6; }}
+    .about-hero {{ text-align: center; padding: 54px 0 48px; max-width: 820px; margin: 0 auto; }}
+    .about-hero h1 {{ font-size: 40px; margin-bottom: 18px; }}
+    .about-hero p {{ color: var(--muted); font-size: 17px; line-height: 1.75; margin: 0 auto 24px; }}
+    .about-features {{ grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 0; }}
+    .about-stack {{ display: grid; grid-template-columns: 1.1fr .9fr; gap: 28px; margin: 34px 0; border: 1px solid var(--line); border-radius: 16px; padding: 28px; background: #fff; box-shadow: var(--shadow); }}
+    .about-stack p {{ color: var(--muted); line-height: 1.7; }}
+    .upstream-stack {{ display: grid; gap: 14px; align-content: start; }}
+    .upstream-stack div {{ border: 1px solid var(--line); border-radius: 12px; padding: 16px; background: var(--wash); }}
+    .upstream-stack h2 {{ font-size: 17px; margin-bottom: 6px; }}
+    .upstream-stack p {{ margin: 0; font-size: 14px; }}
+    .about-contact {{ margin: 28px 0; border: 1px solid var(--line); border-radius: 16px; padding: 28px; background: var(--wash); }}
+    .about-contact p {{ color: var(--muted); line-height: 1.65; }}
+    .contact-grid {{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }}
+    .contact-grid div {{ border: 1px solid var(--line); border-radius: 12px; padding: 18px; background: #fff; }}
+    .contact-grid strong {{ display: block; margin-bottom: 8px; }}
+    .contact-grid p {{ margin: 0; font-size: 14px; }}
     @media (max-width: 980px) {{
       header {{ align-items: flex-start; flex-direction: column; }}
       nav {{ justify-content: flex-start; }}
-      .landing-hero, .conversion-strip, .conversion-grid, .funnel-panel, .referral-panel, .referral-rules, .plan-grid, .capacity-panel, .capacity-grid, .rate-panel, .model-grid, .quickstart, .docs-grid, .tool-grid, .two, .steps, .feature-grid {{ grid-template-columns: 1fr; }}
+      .landing-hero, .conversion-strip, .conversion-grid, .funnel-panel, .referral-panel, .referral-rules, .plan-grid, .capacity-panel, .capacity-grid, .rate-panel, .model-grid, .quickstart, .docs-grid, .tool-grid, .two, .steps, .feature-grid, .about-stack, .about-features, .contact-grid {{ grid-template-columns: 1fr; }}
       .plan-card {{ min-height: 0; }}
       .rate-row, .ladder-row {{ grid-template-columns: 1fr; }}
       .metrics, .action-grid, .pay-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}

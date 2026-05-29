@@ -34,6 +34,13 @@ services:
       ERROR_LOG_ENABLED: "true"
       # 生产上线后建议迁移到 MySQL（并发更好）：
       # SQL_DSN: root:password@tcp(mysql:3306)/newapi
+      # ── 品牌定制：覆盖 New API 默认的 docs.newapi.pro 链接 ──
+      # 将「帮助文档」链接指向自己的文档页
+      DOCUMENTATION_LINK: "https://www.996tokens.com/docs"
+      # 将 About / 关于页面重定向到主站 about 页
+      ABOUT_LINK: "https://www.996tokens.com/about"
+      # 页脚 HTML：隐藏 New API 品牌，改为 996 Tokens 版权
+      FOOTER_HTML: "<p style='text-align:center;color:#888;font-size:13px'>© 2025 <a href='https://www.996tokens.com' style='color:#2563eb;text-decoration:none'>996 Tokens</a> &nbsp;·&nbsp; <a href='https://www.996tokens.com/docs' style='color:#2563eb;text-decoration:none'>接入文档</a></p>"
     volumes:
       - ../data/new-api:/data
     networks:

@@ -9,8 +9,11 @@ from urllib.parse import parse_qs, urlencode, urlparse
 from .config import Settings, settings
 from .db import Database
 from .pages import (
+    about_page,
     admin_page,
+    claude_code_cli_page,
     claude_code_page,
+    cursor_guide_page,
     dashboard_page,
     docs_page,
     home_page,
@@ -69,8 +72,14 @@ class GatewayHandler(BaseHTTPRequestHandler):
             elif path == "/pricing":
                 models = [dict(row) for row in self.database.list_models()]
                 self._send_html(pricing_page(models, self.app_settings))
+            elif path == "/about":
+                self._send_html(about_page(self.app_settings))
             elif path == "/docs":
                 self._send_html(docs_page(self.app_settings))
+            elif path == "/docs/cursor":
+                self._send_html(cursor_guide_page(self.app_settings))
+            elif path == "/docs/claude-code-cli":
+                self._send_html(claude_code_cli_page(self.app_settings))
             elif path == "/claude-code":
                 self._send_html(claude_code_page(self.app_settings))
             elif path == "/status":
@@ -157,7 +166,10 @@ class GatewayHandler(BaseHTTPRequestHandler):
             else:
                 self._send_error(404, "Not found", "not_found")
         except Exception as exc:
-            self._send_error(500, str(exc), "server_error")
+            if path.startswith("/api") or path.startswith("/v1"):
+                self._send_error(500, str(exc), "server_error")
+            else:
+                self._send_error_page(500, "服务暂时不可用", str(exc))
 
     def do_POST(self) -> None:
         path = urlparse(self.path).path
@@ -323,6 +335,24 @@ class GatewayHandler(BaseHTTPRequestHandler):
         self._cors_headers()
         self.end_headers()
         self.wfile.write(body)
+
+    def _send_error_page(self, status: int, title: str, detail: str) -> None:
+        from html import escape
+
+        html = (
+            "<!doctype html><html lang=\"zh-CN\"><head><meta charset=\"utf-8\">"
+            "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
+            f"<title>{escape(title)}</title>"
+            "<style>body{margin:0;min-height:100vh;display:grid;place-items:center;"
+            "font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;background:#f8fafc;color:#111827}"
+            ".box{max-width:520px;padding:40px;text-align:center}"
+            "h1{font-size:48px;margin:0 0 8px;color:#2563eb}p{color:#526071;line-height:1.7}"
+            "a{display:inline-block;margin-top:18px;color:#2563eb;font-weight:700;text-decoration:none}</style>"
+            f"</head><body><div class=\"box\"><h1>{status}</h1><p>{escape(title)}</p>"
+            f"<p style=\"font-size:13px;color:#94a3b8\">{escape(detail[:200])}</p>"
+            "<a href=\"/\">返回首页</a></div></body></html>"
+        )
+        self._send_html(html, status=status)
 
     def _send_error(self, status: int, message: str, code: str) -> None:
         self._send_json(

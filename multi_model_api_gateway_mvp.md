@@ -307,8 +307,8 @@ yu-video          视频生成
 平台模型名：允许自动路由，但要在说明里写清楚
 ```
 
-不要偷偷把 `claude-sonnet` 换成 DeepSeek。  
-可以做 `yu-code-auto`，明确写“平台自动选择 Claude / GPT / Qwen / DeepSeek”。
+不要偷偷把 `claude-sonnet` 换成其他模型。
+第一版不做自动路由别名，只开放明确模型名。
 
 ---
 
@@ -364,9 +364,9 @@ gemini-stable
 示例：
 
 ```text
-yu-code-auto
-yu-chat-auto
-yu-agent-auto
+claude-sonnet-4-6
+claude-haiku-4-5
+gemini-3.5-flash
 ```
 
 ---
@@ -645,19 +645,13 @@ DeepSeek
 ### 11.3 第一晚上架模型
 
 ```text
-claude-sonnet-economy
-claude-sonnet-stable
-gpt-economy
-gpt-stable
-gemini-flash
-deepseek-chat
-deepseek-reasoner
-qwen-plus
-qwen-coder
-doubao-fast
-yu-code-auto
-yu-chat-auto
-yu-json
+claude-opus-4-7
+claude-sonnet-4-6
+claude-haiku-4-5
+gpt-5.5
+gpt-5.4
+gpt-5.4-mini
+gemini-3.5-flash
 ```
 
 ---
@@ -675,7 +669,7 @@ client = OpenAI(
 )
 
 resp = client.chat.completions.create(
-    model="yu-chat-auto",
+    model="claude-haiku-4-5",
     messages=[
         {"role": "user", "content": "你好，帮我写一个 Python 爬虫"}
     ]
@@ -691,7 +685,7 @@ curl https://api.yourdomain.com/v1/chat/completions \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "yu-chat-auto",
+    "model": "claude-haiku-4-5",
     "messages": [
       {"role": "user", "content": "你好"}
     ]
@@ -704,7 +698,7 @@ curl https://api.yourdomain.com/v1/chat/completions \
 API Provider：OpenAI Compatible
 Base URL：https://api.yourdomain.com/v1
 API Key：你的平台 Key
-Model：yu-code-auto 或 claude-sonnet-economy
+Model：claude-sonnet-4-6 或 claude-haiku-4-5
 ```
 
 ### 12.4 Claude Code
@@ -995,18 +989,13 @@ def route_request(user, request):
 ### 18.4 模型配置
 
 ```text
-[ ] claude-sonnet-economy
-[ ] claude-sonnet-stable
-[ ] gpt-economy
-[ ] gemini-flash
-[ ] deepseek-chat
-[ ] deepseek-reasoner
-[ ] qwen-plus
-[ ] qwen-coder
-[ ] doubao-fast
-[ ] yu-code-auto
-[ ] yu-chat-auto
-[ ] yu-json
+[ ] claude-opus-4-7
+[ ] claude-sonnet-4-6
+[ ] claude-haiku-4-5
+[ ] gpt-5.5
+[ ] gpt-5.4
+[ ] gpt-5.4-mini
+[ ] gemini-3.5-flash
 ```
 
 ### 18.5 测试
@@ -1423,7 +1412,7 @@ DeepSeek / Qwen / 豆包：SiliconFlow 主，官方直连或 PoloAPI 备用
 ```text
 御三家：初期加价 25%-60%，先保守积累用户
 国产模型：成本低，可承担更高毛利
-免费试用：用于降低小白用户试错成本
+注册不送：必须充值后才加赠，降低爬虫薅羊毛
 充值套餐：自定义金额 + 月卡 + 季卡 + 团队包
 ```
 

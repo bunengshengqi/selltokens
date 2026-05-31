@@ -7,6 +7,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterable
 
+from .policy import model_price_rows
 from .security import generate_api_key, hash_secret, key_prefix, utc_now_iso
 
 
@@ -285,29 +286,7 @@ class Database:
                     },
                 )
 
-            model_prices = [
-                # 御三家标准模型名
-                ("gpt-4o", "GPT-4o", "stable", 22.0, 88.0, 0.20, "OpenAI GPT-4o flagship model."),
-                ("gpt-4o-mini", "GPT-4o Mini", "economy", 1.4, 5.6, 0.20, "OpenAI GPT-4o Mini — fast and affordable."),
-                ("claude-sonnet-4-5", "Claude Sonnet 4.5", "stable", 28.0, 140.0, 0.20, "Anthropic Claude Sonnet 4.5 — balanced performance."),
-                ("claude-haiku-3-5", "Claude Haiku 3.5", "economy", 3.0, 15.0, 0.20, "Anthropic Claude Haiku 3.5 — fast and cheap."),
-                ("gemini-2.5-flash", "Gemini 2.5 Flash", "economy", 1.4, 5.6, 0.20, "Google Gemini 2.5 Flash — very fast, free tier available."),
-                ("gemini-2.5-pro", "Gemini 2.5 Pro", "stable", 18.0, 72.0, 0.20, "Google Gemini 2.5 Pro — premium quality."),
-                # 兼容旧路由别名（保留，供老用户迁移）
-                ("claude-sonnet-economy", "Claude Sonnet Economy", "economy", 4.2, 20.0, 0.15, "Claude-like low-cost line for AI coding."),
-                ("claude-sonnet-stable", "Claude Sonnet Stable", "stable", 5.6, 26.0, 0.25, "Claude-like stable line with failover."),
-                ("gpt-economy", "GPT Economy", "economy", 2.8, 12.0, 0.15, "GPT-compatible economy line."),
-                ("gpt-stable", "GPT Stable", "stable", 4.5, 18.0, 0.25, "GPT-compatible stable line."),
-                ("gemini-flash", "Gemini Flash", "economy", 0.9, 3.6, 0.20, "Fast Gemini-compatible route."),
-                ("deepseek-chat", "DeepSeek Chat", "economy", 0.6, 1.8, 0.40, "Low-cost Chinese and general chat."),
-                ("deepseek-reasoner", "DeepSeek Reasoner", "stable", 1.2, 4.8, 0.40, "Reasoning route."),
-                ("qwen-plus", "Qwen Plus", "stable", 0.7, 2.2, 0.40, "Qwen stable Chinese route."),
-                ("qwen-coder", "Qwen Coder", "stable", 0.8, 2.6, 0.40, "Coding route via Qwen Coder."),
-                ("doubao-fast", "Doubao Fast", "economy", 0.5, 1.5, 0.40, "Fast Chinese route."),
-                ("yu-code-auto", "Yu Code Auto", "auto", 2.2, 8.8, 0.30, "Automatic coding route across Claude/GPT/Qwen/DeepSeek."),
-                ("yu-chat-auto", "Yu Chat Auto", "auto", 1.6, 5.5, 0.30, "Automatic chat route with margin protection."),
-                ("yu-json", "Yu JSON", "auto", 0.8, 2.4, 0.50, "Structured output route."),
-            ]
+            model_prices = model_price_rows()
             for model in model_prices:
                 conn.execute(
                     """
@@ -331,25 +310,14 @@ class Database:
                 )
 
             model_names = [row[0] for row in model_prices]
+            placeholders = ",".join("?" for _ in model_names)
+            conn.execute(
+                f"UPDATE model_prices SET enabled = 0, updated_at = ? WHERE internal_model NOT IN ({placeholders})",
+                (now, *model_names),
+            )
             mock_provider_models = {
-                "mock-fast": {
-                    "claude-sonnet-economy": "mock-claude-sonnet-fast",
-                    "claude-sonnet-stable": "mock-claude-sonnet-fast",
-                    "gpt-economy": "mock-gpt-fast",
-                    "gpt-stable": "mock-gpt-fast",
-                    "gemini-flash": "mock-gemini-flash",
-                    "deepseek-chat": "mock-deepseek-chat",
-                    "deepseek-reasoner": "mock-deepseek-reasoner",
-                    "qwen-plus": "mock-qwen-plus",
-                    "qwen-coder": "mock-qwen-coder",
-                    "doubao-fast": "mock-doubao-fast",
-                    "yu-code-auto": "mock-qwen-coder",
-                    "yu-chat-auto": "mock-deepseek-chat",
-                    "yu-json": "mock-json",
-                },
-                "mock-stable": {
-                    name: f"mock-stable-{name}" for name in model_names
-                },
+                "mock-fast": {name: f"mock-fast-{name}" for name in model_names},
+                "mock-stable": {name: f"mock-stable-{name}" for name in model_names},
             }
             for slug, mappings in mock_provider_models.items():
                 provider_id = conn.execute("SELECT id FROM providers WHERE slug = ?", (slug,)).fetchone()["id"]
@@ -369,156 +337,21 @@ class Database:
                         avg_latency_ms=220 if slug == "mock-stable" else 120,
                     )
 
+            all_launch_models = {name: name for name in model_names}
+            claude_models = {name: name for name in model_names if name.startswith("claude-")}
+            gpt_models = {name: name for name in model_names if name.startswith("gpt-")}
+            gemini_models = {name: name for name in model_names if name.startswith("gemini-")}
             real_provider_mappings = {
-                "chhai": {
-                    # 御三家标准名
-                    "gpt-4o": "gpt-4o",
-                    "gpt-4o-mini": "gpt-4o-mini",
-                    "claude-sonnet-4-5": "claude-sonnet-4-5-20250929",
-                    "claude-haiku-3-5": "claude-haiku-3-5-20251001",
-                    "gemini-2.5-flash": "gemini-2.5-flash",
-                    "gemini-2.5-pro": "gemini-2.5-pro",
-                    # 旧别名兼容
-                    "claude-sonnet-economy": "claude-haiku-3-5-20251001",
-                    "claude-sonnet-stable": "claude-sonnet-4-5-20250929",
-                    "gpt-economy": "gpt-4o-mini",
-                    "gpt-stable": "gpt-4o",
-                    "gemini-flash": "gemini-2.5-flash",
-                    "deepseek-chat": "deepseek-chat",
-                    "deepseek-reasoner": "deepseek-reasoner",
-                    "yu-code-auto": "claude-sonnet-4-5-20250929",
-                    "yu-chat-auto": "gpt-4o-mini",
-                    "yu-json": "gpt-4o-mini",
-                },
-                "openai-direct": {
-                    "gpt-4o": "gpt-4o",
-                    "gpt-4o-mini": "gpt-4o-mini",
-                    "gpt-economy": "gpt-4o-mini",
-                    "gpt-stable": "gpt-4o",
-                    "yu-chat-auto": "gpt-4o-mini",
-                    "yu-code-auto": "gpt-4o",
-                    "yu-json": "gpt-4o-mini",
-                },
-                "anthropic-direct": {
-                    "claude-sonnet-4-5": "claude-sonnet-4-5-20250929",
-                    "claude-haiku-3-5": "claude-haiku-3-5-20251001",
-                    "claude-sonnet-economy": "claude-haiku-3-5-20251001",
-                    "claude-sonnet-stable": "claude-sonnet-4-5-20250929",
-                    "yu-code-auto": "claude-sonnet-4-5-20250929",
-                    "yu-chat-auto": "claude-haiku-3-5-20251001",
-                },
-                "google-ai": {
-                    "gemini-2.5-flash": "gemini-2.5-flash",
-                    "gemini-2.5-pro": "gemini-2.5-pro",
-                    "gemini-flash": "gemini-2.5-flash",
-                    "yu-chat-auto": "gemini-2.5-flash",
-                },
-                "deepseek": {
-                    "deepseek-chat": "deepseek-chat",
-                    "deepseek-reasoner": "deepseek-reasoner",
-                    "yu-chat-auto": "deepseek-chat",
-                    "yu-code-auto": "deepseek-chat",
-                    "yu-json": "deepseek-chat",
-                },
-                "qwen": {
-                    "qwen-plus": "qwen-plus",
-                    "qwen-coder": "qwen-coder-plus",
-                    "yu-chat-auto": "qwen-plus",
-                    "yu-code-auto": "qwen-coder-plus",
-                    "yu-json": "qwen-plus",
-                },
-                "doubao": {
-                    "doubao-fast": "doubao-seed-1-6-flash",
-                    "yu-chat-auto": "doubao-seed-1-6-flash",
-                    "yu-json": "doubao-seed-1-6-flash",
-                },
-                "apimart": {
-                    "claude-sonnet-economy": "claude-sonnet",
-                    "claude-sonnet-stable": "claude-sonnet",
-                    "gpt-economy": "gpt-4o-mini",
-                    "gpt-stable": "gpt-4.1",
-                    "gemini-flash": "gemini-flash",
-                    "yu-code-auto": "claude-sonnet",
-                    "yu-chat-auto": "gpt-4o-mini",
-                },
-                "jiekou": {
-                    "claude-sonnet-economy": "claude-sonnet",
-                    "claude-sonnet-stable": "claude-sonnet",
-                    "yu-code-auto": "claude-sonnet",
-                },
-                "rightcode-codex": {
-                    "gpt-economy": "gpt-5.2-low",
-                    "gpt-stable": "gpt-5.2-medium",
-                    "yu-code-auto": "gpt-5.2-codex-medium",
-                    "yu-chat-auto": "gpt-5.2",
-                },
-                "ismaque": {
-                    "gpt-4o": "gpt-4o",
-                    "gpt-4o-mini": "gpt-4o-mini",
-                    "claude-sonnet-4-5": "claude-sonnet-4-5-20250929",
-                    "claude-haiku-3-5": "claude-haiku-3-5-20251001",
-                    "gemini-2.5-flash": "gemini-2.5-flash",
-                    "gemini-2.5-pro": "gemini-2.5-pro",
-                    "claude-sonnet-economy": "claude-haiku-3-5-20251001",
-                    "claude-sonnet-stable": "claude-sonnet-4-5-20250929",
-                    "gpt-economy": "gpt-4o-mini",
-                    "gpt-stable": "gpt-4o",
-                    "gemini-flash": "gemini-2.5-flash",
-                    "deepseek-chat": "deepseek-chat",
-                    "deepseek-reasoner": "deepseek-reasoner",
-                    "yu-code-auto": "claude-sonnet-4-5-20250929",
-                    "yu-chat-auto": "gpt-4o-mini",
-                    "yu-json": "gpt-4o-mini",
-                },
-                "poloapi": {
-                    # 御三家标准名
-                    "gpt-4o": "gpt-4o",
-                    "gpt-4o-mini": "gpt-4o-mini",
-                    "claude-sonnet-4-5": "claude-sonnet-4-5-20250929",
-                    "claude-haiku-3-5": "claude-haiku-3-5",
-                    "gemini-2.5-flash": "gemini-2.5-flash",
-                    "gemini-2.5-pro": "gemini-2.5-pro",
-                    # 旧别名
-                    "claude-sonnet-economy": "claude-sonnet-4-5-20250929",
-                    "claude-sonnet-stable": "claude-sonnet-4-5-20250929",
-                    "gpt-economy": "gpt-4o-mini",
-                    "gpt-stable": "gpt-4o",
-                    "gemini-flash": "gemini-2.5-flash",
-                    "deepseek-chat": "deepseek-chat",
-                    "deepseek-reasoner": "deepseek-reasoner",
-                    "qwen-plus": "qwen-plus",
-                    "qwen-coder": "qwen-coder-plus",
-                    "yu-code-auto": "claude-sonnet-4-5-20250929",
-                    "yu-chat-auto": "gpt-4o-mini",
-                    "yu-json": "gpt-4o-mini",
-                },
-                "weelinking": {
-                    # 御三家标准名
-                    "gpt-4o": "gpt-4o",
-                    "gpt-4o-mini": "gpt-4o-mini",
-                    "claude-sonnet-4-5": "claude-sonnet-4",
-                    "claude-haiku-3-5": "claude-haiku-3-5",
-                    "gemini-2.5-flash": "gemini-2.5-flash",
-                    # 旧别名
-                    "claude-sonnet-economy": "claude-sonnet-4",
-                    "claude-sonnet-stable": "claude-sonnet-4",
-                    "gpt-economy": "gpt-4o-mini",
-                    "gpt-stable": "gpt-4o",
-                    "gemini-flash": "gemini-2.5-flash",
-                    "yu-code-auto": "claude-sonnet-4",
-                    "yu-chat-auto": "gpt-4o-mini",
-                    "yu-json": "gpt-4o-mini",
-                },
-                "siliconflow": {
-                    "deepseek-chat": "deepseek-ai/DeepSeek-V3",
-                    "deepseek-reasoner": "deepseek-ai/DeepSeek-R1",
-                    "qwen-plus": "Qwen/Qwen3-235B-A22B-Instruct-2507",
-                    "qwen-coder": "Qwen/Qwen3-Coder-480B-A35B-Instruct",
-                    "doubao-fast": "Pro/doubao-seed-1-6-flash",
-                    "yu-chat-auto": "deepseek-ai/DeepSeek-V3",
-                    "yu-code-auto": "Qwen/Qwen3-Coder-480B-A35B-Instruct",
-                    "yu-json": "Qwen/Qwen3-235B-A22B-Instruct-2507",
-                },
+                "chhai": all_launch_models,
+                "ismaque": all_launch_models,
+                "poloapi": all_launch_models,
+                "weelinking": all_launch_models,
+                "rightcode-codex": all_launch_models,
+                "jiekou": {**claude_models, **gpt_models},
+                "apimart": all_launch_models,
+                "openai-direct": gpt_models,
+                "anthropic-direct": claude_models,
+                "google-ai": gemini_models,
             }
             for slug, mappings in real_provider_mappings.items():
                 row = conn.execute("SELECT id FROM providers WHERE slug = ?", (slug,)).fetchone()

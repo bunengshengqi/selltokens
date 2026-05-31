@@ -118,7 +118,7 @@ def _openai_to_anthropic_payload(payload: dict[str, Any]) -> dict[str, Any]:
             filtered.append({"role": role, "content": msg.get("content", "")})
 
     anthropic_payload: dict[str, Any] = {
-        "model": payload.get("model", "claude-sonnet-4-5-20250929"),
+        "model": payload.get("model", "claude-sonnet-4-6"),
         "max_tokens": payload.get("max_tokens") or 8192,
         "messages": filtered,
     }

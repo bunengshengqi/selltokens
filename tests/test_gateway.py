@@ -45,12 +45,12 @@ class GatewayRouterTest(unittest.TestCase):
         result = self.router.route_chat_completion(
             f"Bearer {self.demo_key}",
             {
-                "model": "yu-chat-auto",
+                "model": "claude-haiku-4-5",
                 "messages": [{"role": "user", "content": "hello"}],
             },
         )
 
-        self.assertEqual(result.response["model"], "yu-chat-auto")
+        self.assertEqual(result.response["model"], "claude-haiku-4-5")
         self.assertIn("choices", result.response)
         self.assertTrue(result.headers["X-Gateway-Provider"].startswith("mock-"))
 
@@ -73,7 +73,7 @@ class GatewayRouterTest(unittest.TestCase):
         result = self.router.stream_chat_completion(
             f"Bearer {self.demo_key}",
             {
-                "model": "yu-chat-auto",
+                "model": "claude-haiku-4-5",
                 "messages": [{"role": "user", "content": "hello"}],
                 "stream": True,
             },
@@ -99,7 +99,7 @@ class GatewayRouterTest(unittest.TestCase):
             result = self.router.stream_chat_completion(
                 f"Bearer {self.demo_key}",
                 {
-                    "model": "yu-chat-auto",
+                    "model": "claude-haiku-4-5",
                     "messages": [{"role": "user", "content": "hello"}],
                     "stream": True,
                 },
@@ -119,7 +119,7 @@ class GatewayRouterTest(unittest.TestCase):
         user_id = self.db.demo_user()["id"]
         with self.db.connect() as conn:
             conn.execute("UPDATE api_keys SET rpm_limit = 2 WHERE user_id = ?", (user_id,))
-        payload = {"model": "yu-chat-auto", "messages": [{"role": "user", "content": "hi"}]}
+        payload = {"model": "claude-haiku-4-5", "messages": [{"role": "user", "content": "hi"}]}
         self.router.route_chat_completion(f"Bearer {self.demo_key}", dict(payload))
         self.router.route_chat_completion(f"Bearer {self.demo_key}", dict(payload))
         with self.assertRaises(AppError) as ctx:

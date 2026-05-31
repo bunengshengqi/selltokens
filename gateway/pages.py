@@ -4,6 +4,7 @@ from html import escape
 from typing import Any, Iterable
 
 from .config import Settings, settings as default_settings
+from .policy import FIRST_WAVE_MODEL_SPECS, recharge_bonus_amount
 
 
 def home_page(settings: Settings, models: Iterable[dict[str, Any]]) -> str:
@@ -19,8 +20,8 @@ def home_page(settings: Settings, models: Iterable[dict[str, Any]]) -> str:
         <section class="landing-hero">
           <div>
             <p class="eyebrow">AI Coding / RPA / Agent API Gateway</p>
-            <h1>一个 API Key，统一调用 Claude、GPT、Gemini、DeepSeek、Qwen、豆包。</h1>
-            <p>按生产方案接 NewAPI + 混合上游：RightCode 做低价补充，PoloAPI / weelinking 做稳定线，SiliconFlow 做国产主力，jiekou.ai 和 APIMart 做模型补货。</p>
+            <h1>一个 API Key，先开放 Claude、GPT、Gemini 七个核心模型。</h1>
+            <p>第一版只接最容易转化的国外主力模型：Claude Opus / Sonnet / Haiku、GPT 5.5 / 5.4 / Mini、Gemini Flash。先把质量、充值和风控跑稳，再逐步扩展国产和多模态。</p>
             <div class="hero-actions">
               <a class="button primary" href="{escape(settings.register_url)}">立即注册</a>
               <a class="button" href="{escape(settings.login_url)}">登录控制台</a>
@@ -34,28 +35,28 @@ def home_page(settings: Settings, models: Iterable[dict[str, Any]]) -> str:
             </div>
             <div class="panel-row">
               <span>推荐模型</span>
-              <strong>yu-code-auto</strong>
+              <strong>claude-sonnet-4-6</strong>
             </div>
             <div class="route-stack">
-              <b>低价</b><b>稳定</b><b>国产</b>
+              <b>Claude</b><b>GPT</b><b>Gemini</b>
             </div>
             <pre>curl {escape(settings.public_api_base)}/v1/chat/completions \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
-  -d '{{"model":"yu-chat-auto","messages":[{{"role":"user","content":"你好"}}]}}'</pre>
+  -d '{{"model":"claude-haiku-4-5","messages":[{{"role":"user","content":"你好"}}]}}'</pre>
           </div>
         </section>
         <section class="conversion-strip">
           <div>
             <p class="eyebrow">Growth Funnel</p>
-            <h1>先试用，再充值，再邀请</h1>
-            <p>新用户注册即送体验额度，优先体验 DeepSeek、Qwen、豆包等低成本模型；充值保持微信支付不变，套餐和邀请奖励负责提升转化和复购。</p>
+            <h1>先充值，再加赠，再邀请</h1>
+            <p>注册不再直接送额度，避免批量注册薅羊毛。新用户完成充值或购买月卡后自动加赠：100 元以下送 5 元，100 元及以上送 10 元。</p>
           </div>
           <div class="conversion-grid">{funnel_cards}</div>
         </section>
         <section class="center-head compact">
           <p class="eyebrow">Models</p>
           <h1>支持的模型</h1>
-          <p>首页保留 token.chhai 的价格直出，加入 APIMart 的模型市场分类，再强化 jiekou.ai 式 Claude Code / Cursor 接入路径。</p>
+          <p>第一版只展示 7 个首发模型，避免模型市场太杂导致小白不知道选哪个，也方便你先控成本和控质量。</p>
           <a class="text-link" href="/pricing">查看全部 {len(model_list)} 个模型详情与定价 →</a>
         </section>
         <section class="model-grid">{cards}</section>
@@ -79,7 +80,7 @@ def home_page(settings: Settings, models: Iterable[dict[str, Any]]) -> str:
           <div><h2>自动路由</h2><p>根据价格、成功率、延迟和余额选择上游，失败时自动重试。</p></div>
           <div><h2>利润保护</h2><p>模型售价、上游成本和最低毛利分开管理，避免越用越亏。</p></div>
           <div><h2>New API 底座</h2><p>上线版建议用 New API 接管登录、充值、Token、渠道、日志和模型管理。</p></div>
-          <div><h2>小白友好</h2><p>免费试用、小额套餐、微信客服、Cherry Studio / Claude Code 教程一起做转化。</p></div>
+          <div><h2>小白友好</h2><p>低门槛充值、支付后加赠、微信客服、Cherry Studio / Claude Code 教程一起做转化。</p></div>
         </section>
         """,
         settings=settings,
@@ -112,7 +113,7 @@ def pricing_page(models: Iterable[dict[str, Any]], settings: Settings) -> str:
           <div class="pricing-hero">
             <p class="eyebrow">Claude Code API Pricing</p>
             <h1>为高强度 AI 编程准备的模型额度方案</h1>
-            <p>统一接入 Claude、Codex/GPT、Gemini 和国产模型。人民币余额计费，套餐决定通道优先级、服务支持和模型倍率，适合个人开发者、工作室和自动化 Agent 团队。</p>
+            <p>第一版聚焦 Claude、GPT、Gemini 七个核心模型。人民币余额计费，充值和月卡支付成功后再加赠，适合个人开发者、工作室和自动化 Agent 团队。</p>
             <div class="billing-toggle" aria-label="计费周期">
               <span class="active">按月付</span>
               <span>按年付 <b>省 2 个月</b></span>
@@ -142,7 +143,7 @@ def pricing_page(models: Iterable[dict[str, Any]], settings: Settings) -> str:
           <div>
             <p class="eyebrow">Recharge Ladder</p>
             <h2>阶梯收费标准</h2>
-            <p>按量充值用于小额尝试和日常补余额；月卡用于锁定复购。Claude / GPT / Gemini 最新模型走通用余额，低成本模型包只开放 DeepSeek、Qwen、豆包等低风险线路。</p>
+            <p>按量充值用于小额尝试和日常补余额；月卡用于锁定复购。所有加赠都绑定真实支付订单，注册本身不再发放免费额度。</p>
           </div>
           <div class="ladder-table">{ladder_rows}</div>
         </section>
@@ -158,7 +159,7 @@ def pricing_page(models: Iterable[dict[str, Any]], settings: Settings) -> str:
           <div>
             <p class="eyebrow">Model Multipliers</p>
             <h2>模型倍率</h2>
-            <p>国外最新大模型更贵，国产模型成本低、利润空间更大。这里给用户看的是清晰可理解的档位，实际倍率在 NewAPI 分组里配置。</p>
+            <p>首发模型按上游成本加价出售，Claude / GPT / Gemini 每个模型倍率不同。这里展示的是对外经营倍率，生产环境会同步写入 NewAPI 分组配置。</p>
           </div>
           <div class="rate-table">{rate_rows}</div>
         </section>
@@ -225,9 +226,9 @@ def recharge_page(
 ) -> str:
     amounts = [10, 50, 100, 500]
     plans = [
-        ("Pro", 39, "每天 4-5 小时中度使用，适合个人开发者"),
-        ("Max", 99, "每天 8 小时高强度使用，适合 Claude Code 主力用户"),
-        ("Ultra", 299, "工作室和团队使用，独享高速通道和人工支持"),
+        ("Starter", 29, "支付后加赠 ¥5，适合轻度 Cursor 用户"),
+        ("Builder", 69, "支付后加赠 ¥5，适合 Claude Code 主力用户"),
+        ("Team", 199, "支付后加赠 ¥10，适合工作室和团队使用"),
     ]
     min_amount = float(settings.min_recharge_amount)
     currency = escape(settings.billing_currency)
@@ -236,7 +237,7 @@ def recharge_page(
         <form class="pay-card" method="post" action="/recharge">
           <input type="hidden" name="amount" value="{amount}">
           <strong>{_money(amount, settings, decimals=0)}</strong>
-          <span>到账余额 {_money(amount, settings, decimals=2)}</span>
+          <span>支付后加赠 {_money(recharge_bonus_amount(amount), settings, decimals=0)}，合计 {_money(amount + recharge_bonus_amount(amount), settings, decimals=2)}</span>
           <button type="submit">演示充值</button>
         </form>
         """
@@ -245,7 +246,7 @@ def recharge_page(
     custom_card = f"""
         <form class="pay-card custom-pay" method="post" action="/recharge">
           <strong>自定义金额</strong>
-          <span>账户币种：{currency}，最低 {_money(min_amount, settings, decimals=2)}</span>
+          <span>账户币种：{currency}，最低 {_money(min_amount, settings, decimals=2)}；100 以下送 5，100 以上送 10</span>
           <input
             name="amount"
             type="number"
@@ -264,7 +265,7 @@ def recharge_page(
           <input type="hidden" name="amount" value="{amount}">
           <strong>{escape(name)}</strong>
           <span>{escape(desc)}</span>
-          <b>{_money(amount, settings, decimals=2)}</b>
+          <b>{_money(amount + recharge_bonus_amount(amount), settings, decimals=2)} 等值额度</b>
           <button type="submit">演示购买</button>
         </form>
         """
@@ -289,7 +290,7 @@ def recharge_page(
           <div>
             <p class="eyebrow">Billing</p>
             <h1>账户充值</h1>
-            <p>第一版账户按 {currency} 计费，最低 {_money(min_amount, settings, decimals=2)}；本地页面只做演示，上线后由 NewAPI 支付系统处理微信支付、兑换码和人工充值。</p>
+            <p>第一版账户按 {currency} 计费，最低 {_money(min_amount, settings, decimals=2)}；注册不送额度，充值或月卡支付成功后再加赠：100 元以下送 5 元，100 元及以上送 10 元。</p>
           </div>
           <div class="balance-pill">余额 {_money(user['balance'], settings, decimals=4)}</div>
         </section>
@@ -406,9 +407,9 @@ def docs_page(settings: Settings, *, portal: bool = False) -> str:
     cta_secondary_text = "返回控制台"
     if not portal:
         cta_title = "准备好了吗？"
-        cta_desc = "注册即送 ¥5 体验额度，无需绑卡，即刻接入。"
+        cta_desc = "注册后先充值再获得加赠额度，100 元以下送 5 元，100 元及以上送 10 元。"
         cta_primary_href = register
-        cta_primary_text = "免费注册"
+        cta_primary_text = "注册并充值"
         cta_secondary_href = app
         cta_secondary_text = "进控制台"
     tools = [
@@ -437,7 +438,7 @@ def docs_page(settings: Settings, *, portal: bool = False) -> str:
           <div class="ddh-bg"></div>
           <div class="ddh-content">
             <p class="ddh-eyebrow">接入文档</p>
-            <h1>一个 API Key，接入所有主流模型</h1>
+            <h1>一个 API Key，接入首发七个核心模型</h1>
             <p class="ddh-sub">100% 兼容 OpenAI Chat Completions — Cursor、Cline、Claude Code、任意 SDK 不需要修改现有代码。</p>
             <div class="ddh-endpoint">
               <span class="ddh-label">Base URL</span>
@@ -475,7 +476,7 @@ client = OpenAI(
 )
 
 resp = client.chat.completions.create(
-    model="yu-chat-auto",
+    model="claude-haiku-4-5",
     messages=[{{"role": "user", "content": "你好"}}]
 )
 print(resp.choices[0].message.content)</pre>
@@ -487,7 +488,7 @@ print(resp.choices[0].message.content)</pre>
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{{
-    "model": "yu-code-auto",
+    "model": "claude-sonnet-4-6",
     "messages": [
       {{"role": "user", "content": "写一个 Python 爬虫"}}
     ]
@@ -499,14 +500,14 @@ print(resp.choices[0].message.content)</pre>
               <pre>API Provider: OpenAI Compatible
 Base URL: {base}/v1
 API Key:   YOUR_API_KEY
-Model:     yu-code-auto</pre>
+Model:     claude-sonnet-4-6</pre>
             </article>
             <article>
               <div class="article-tag">Claude Code CLI · 环境变量</div>
               <h2>Claude Code</h2>
               <pre>export ANTHROPIC_BASE_URL={base}
 export ANTHROPIC_AUTH_TOKEN=YOUR_API_KEY
-export ANTHROPIC_MODEL=claude-sonnet-4-5
+export ANTHROPIC_MODEL=claude-sonnet-4-6
 
 claude  # 直接启动</pre>
             </article>
@@ -551,23 +552,23 @@ def claude_code_page(settings: Settings) -> str:
             <pre>API Provider: OpenAI Compatible
 Base URL: {base}/v1
 API Key: YOUR_API_KEY
-Model: yu-code-auto</pre>
+Model: claude-sonnet-4-6</pre>
           </article>
           <article>
             <h2>Claude Code</h2>
             <pre>export ANTHROPIC_BASE_URL={base}
 export ANTHROPIC_AUTH_TOKEN=YOUR_API_KEY
-export ANTHROPIC_MODEL=claude-sonnet-economy</pre>
+export ANTHROPIC_MODEL=claude-sonnet-4-6</pre>
           </article>
           <article>
-            <h2>经济线</h2>
+            <h2>轻量线</h2>
             <p>适合个人开发者、低频调用、代码解释、脚本生成。</p>
-            <code>claude-sonnet-economy</code>
+            <code>claude-haiku-4-5</code>
           </article>
           <article>
-            <h2>自动线</h2>
-            <p>平台自动选择 Claude / GPT / Qwen / DeepSeek，同步考虑价格和稳定性。</p>
-            <code>yu-code-auto</code>
+            <h2>主力线</h2>
+            <p>Claude Code / Cursor 默认先用 Sonnet，重任务再切 Opus。</p>
+            <code>claude-sonnet-4-6</code>
           </article>
         </section>
         """,
@@ -586,17 +587,17 @@ def cursor_guide_page(settings: Settings, *, portal: bool = False) -> str:
         ("1", "注册并获取 API Key", "注册账户后进入控制台 → API Keys，创建一个 Key（只在创建时显示一次，请妥善保存）。"),
         ("2", "打开 Cursor 模型设置", "Cursor → Settings → Cursor Settings → Models，找到 “OpenAI API Key” 区域。"),
         ("3", "填入 Key 并覆盖 Base URL", "勾选 OpenAI API Key 填入你的 Key，展开 “Override OpenAI Base URL”，填入下方平台地址。"),
-        ("4", "添加平台模型名", "在模型列表点 “Add model”，添加 yu-code-auto、claude-sonnet-4-5 等平台模型名，再点 Verify 验证。"),
+        ("4", "添加平台模型名", "在模型列表点 “Add model”，添加 claude-sonnet-4-6、claude-haiku-4-5 等平台模型名，再点 Verify 验证。"),
     ]
     step_html = "".join(
         f"<div><strong>{escape(num)}</strong><h2>{escape(title)}</h2><p>{escape(desc)}</p></div>"
         for num, title, desc in steps
     )
     models = [
-        ("yu-code-auto", "AI 编程自动路由，按价格/稳定性自动选 Claude/GPT/Qwen/DeepSeek"),
-        ("claude-sonnet-4-5", "Claude Sonnet 4.5，复杂重构、长上下文主力"),
-        ("gpt-4o", "OpenAI GPT-4o，通用对话与代码"),
-        ("deepseek-chat", "DeepSeek，低成本日常问答与脚本"),
+        ("claude-sonnet-4-6", "Claude Sonnet 4.6，复杂重构、长上下文主力"),
+        ("claude-haiku-4-5", "Claude Haiku 4.5，轻量快速调用"),
+        ("gpt-5.4", "GPT 5.4，通用对话与代码"),
+        ("gemini-3.5-flash", "Gemini 3.5 Flash，低延迟轻量任务"),
     ]
     model_rows = "".join(
         f"<tr><td><code>{escape(name)}</code></td><td>{escape(desc)}</td></tr>"
@@ -604,9 +605,9 @@ def cursor_guide_page(settings: Settings, *, portal: bool = False) -> str:
     )
     faqs = [
         ("Tab 补全 / Agent 还能用吗？", "覆盖 Base URL 后，自定义模型主要作用于 Chat。Cursor 的 Tab 补全和部分 Composer 能力仍走 Cursor 官方，不受影响。"),
-        ("提示 model not found？", "确认在模型列表里添加的名字是平台支持的模型名（如 yu-code-auto），不要填 Cursor 默认的 claude-3.5-sonnet 之类。"),
+        ("提示 model not found？", "确认在模型列表里添加的名字是平台支持的模型名（如 claude-sonnet-4-6），不要填 Cursor 默认的 claude-3.5-sonnet 之类。"),
         ("Verify 失败？", "检查 Base URL 是否以 /v1 结尾、Key 是否有效且账户有余额，必要时在控制台用量记录查看错误原因。"),
-        ("如何控制成本？", "默认用 yu-code-auto 让平台自动选低成本上游；重活再切 claude-sonnet-4-5。"),
+        ("如何控制成本？", "轻任务用 claude-haiku-4-5 或 gemini-3.5-flash；重活再切 claude-sonnet-4-6 / claude-opus-4-7。"),
     ]
     faq_html = "".join(
         f"<div><h2>{escape(q)}</h2><p>{escape(a)}</p></div>" for q, a in faqs
@@ -619,7 +620,7 @@ def cursor_guide_page(settings: Settings, *, portal: bool = False) -> str:
           <div>
             <p class="eyebrow">Guide · Cursor</p>
             <h1>在 Cursor 接入 996 Tokens API</h1>
-            <p>用 OpenAI 兼容方式把 Cursor 的对话模型切到本平台，一个 Key 调用 Claude / GPT / Gemini / 国产模型。</p>
+            <p>用 OpenAI 兼容方式把 Cursor 的对话模型切到本平台，一个 Key 调用 Claude / GPT / Gemini 首发模型。</p>
           </div>
           <a class="button primary" href="{primary_href}">{escape(primary_text)}</a>
         </section>
@@ -630,14 +631,14 @@ def cursor_guide_page(settings: Settings, *, portal: bool = False) -> str:
             <pre>API Provider: OpenAI Compatible
 Override Base URL: {base}/v1
 API Key: YOUR_API_KEY
-Model: yu-code-auto</pre>
+Model: claude-sonnet-4-6</pre>
           </article>
           <article>
             <h2>验证调用</h2>
             <pre>curl {base}/v1/chat/completions \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
-  -d '{{"model":"yu-code-auto","messages":[{{"role":"user","content":"你好"}}]}}'</pre>
+  -d '{{"model":"claude-sonnet-4-6","messages":[{{"role":"user","content":"你好"}}]}}'</pre>
           </article>
         </section>
         <section class="table-wrap">
@@ -677,8 +678,8 @@ def claude_code_cli_page(settings: Settings, *, portal: bool = False) -> str:
   "env": {
     "ANTHROPIC_BASE_URL": "%s",
     "ANTHROPIC_AUTH_TOKEN": "YOUR_API_KEY",
-    "ANTHROPIC_MODEL": "claude-sonnet-4-5",
-    "ANTHROPIC_SMALL_FAST_MODEL": "claude-haiku-3-5"
+    "ANTHROPIC_MODEL": "claude-sonnet-4-6",
+    "ANTHROPIC_SMALL_FAST_MODEL": "claude-haiku-4-5"
   }
 }""" % settings.public_api_base
     settings_json = escape(settings_json)
@@ -689,9 +690,9 @@ def claude_code_cli_page(settings: Settings, *, portal: bool = False) -> str:
         ("4", "启动并验证", "cd 进项目目录，运行 claude，用 /status 确认接入成功。", "claude"),
     ]
     models = [
-        ("claude-sonnet-4-5", "ANTHROPIC_MODEL", "主力模型，复杂任务与长上下文", "stable"),
-        ("claude-haiku-3-5", "ANTHROPIC_SMALL_FAST_MODEL", "轻量快速模型，用于标题/补全等低频调用", "economy"),
-        ("yu-code-auto", "任意变量", "平台自动路由，按成本与稳定性自动选上游", "auto"),
+        ("claude-sonnet-4-6", "ANTHROPIC_MODEL", "主力模型，复杂任务与长上下文", "stable"),
+        ("claude-haiku-4-5", "ANTHROPIC_SMALL_FAST_MODEL", "轻量快速模型，用于标题/补全等低频调用", "economy"),
+        ("claude-opus-4-7", "手动切换", "高价值重任务、架构分析和复杂 Agent", "premium"),
     ]
     model_rows = "".join(
         f"<tr><td><code>{escape(name)}</code></td><td><span class='line-badge {badge}'>{escape(env)}</span></td><td>{escape(desc)}</td></tr>"
@@ -701,7 +702,7 @@ def claude_code_cli_page(settings: Settings, *, portal: bool = False) -> str:
         ("❓", "ANTHROPIC_BASE_URL 要不要带 /v1？", "不要。Claude Code 走 Anthropic 原生协议，Base URL 只填根域名，平台自动适配 /v1/messages 转发。"),
         ("🔑", "AUTH_TOKEN 和 API_KEY 有什么区别？", "用 ANTHROPIC_AUTH_TOKEN 填平台 Key 即可。若客户端只识别 ANTHROPIC_API_KEY，填同一个 Key 也能用。"),
         ("💳", "提示余额不足 / 402 错误？", "前往控制台充值，账户余额为 0 时网关直接拒绝请求并返回 402。"),
-        ("💰", "如何降低使用成本？", "把 ANTHROPIC_SMALL_FAST_MODEL 设为 claude-haiku-3-5，大量轻量调用走便宜模型，重任务才触发 Sonnet。"),
+        ("💰", "如何降低使用成本？", "把 ANTHROPIC_SMALL_FAST_MODEL 设为 claude-haiku-4-5，大量轻量调用走便宜模型，重任务才触发 Sonnet。"),
     ]
     faq_html = "".join(
         f"""<div class="cli-faq-card">
@@ -740,8 +741,8 @@ def claude_code_cli_page(settings: Settings, *, portal: bool = False) -> str:
             <div class="chb-inner">
               <div class="chb-row"><span>Base URL</span><code>{base}</code></div>
               <div class="chb-row"><span>协议</span><code>Anthropic native</code></div>
-              <div class="chb-row"><span>主力模型</span><code>claude-sonnet-4-5</code></div>
-              <div class="chb-row"><span>轻量模型</span><code>claude-haiku-3-5</code></div>
+              <div class="chb-row"><span>主力模型</span><code>claude-sonnet-4-6</code></div>
+              <div class="chb-row"><span>轻量模型</span><code>claude-haiku-4-5</code></div>
             </div>
           </div>
         </section>
@@ -765,8 +766,8 @@ def claude_code_cli_page(settings: Settings, *, portal: bool = False) -> str:
               <h2>export 命令</h2>
               <pre>export ANTHROPIC_BASE_URL={base}
 export ANTHROPIC_AUTH_TOKEN=YOUR_API_KEY
-export ANTHROPIC_MODEL=claude-sonnet-4-5
-export ANTHROPIC_SMALL_FAST_MODEL=claude-haiku-3-5
+export ANTHROPIC_MODEL=claude-sonnet-4-6
+export ANTHROPIC_SMALL_FAST_MODEL=claude-haiku-4-5
 
 claude</pre>
             </article>
@@ -775,7 +776,7 @@ claude</pre>
               <h2>写入 ~/.zshrc / ~/.bashrc</h2>
               <pre>echo 'export ANTHROPIC_BASE_URL={base}' >> ~/.zshrc
 echo 'export ANTHROPIC_AUTH_TOKEN=YOUR_API_KEY' >> ~/.zshrc
-echo 'export ANTHROPIC_MODEL=claude-sonnet-4-5' >> ~/.zshrc
+echo 'export ANTHROPIC_MODEL=claude-sonnet-4-6' >> ~/.zshrc
 source ~/.zshrc
 
 claude</pre>
@@ -797,7 +798,7 @@ curl {base}/v1/messages \\
   -H "x-api-key: YOUR_API_KEY" \\
   -H "anthropic-version: 2023-06-01" \\
   -H "Content-Type: application/json" \\
-  -d '{{"model":"claude-sonnet-4-5","max_tokens":64,"messages":[{{"role":"user","content":"hi"}}]}}'</pre>
+  -d '{{"model":"claude-sonnet-4-6","max_tokens":64,"messages":[{{"role":"user","content":"hi"}}]}}'</pre>
             </article>
           </div>
         </section>
@@ -846,7 +847,7 @@ def about_page(settings: Settings, *, portal: bool = False) -> str:
     console = escape(settings.app_base_url.rstrip("/") + "/console")
     topup = escape(settings.app_base_url.rstrip("/") + "/console/topup")
     primary_href = console if portal else escape(settings.register_url)
-    primary_text = "返回控制台 →" if portal else "免费注册体验 →"
+    primary_text = "返回控制台 →" if portal else "注册并充值 →"
     secondary_href = topup if portal else "/docs"
     secondary_text = "账户充值" if portal else "查看接入文档"
     features = [
@@ -858,12 +859,12 @@ def about_page(settings: Settings, *, portal: bool = False) -> str:
         ("🛡️", "熔断 & 冷却", "上游连续出错后自动进入冷却，恢复后再放流量，保护用户体验和平台口碑。"),
     ]
     upstreams = [
-        ("🌐", "御三家直连 / 聚合商", "claude", "Claude、GPT-4o、Gemini — 稳定渠道高权重，低价渠道做补充和利润优化。"),
-        ("🚀", "SiliconFlow 国产主力", "siliconflow", "DeepSeek、Qwen、豆包、GLM、Embedding — 低成本、高速度、利润核心。"),
-        ("🔧", "全能补充渠道", "extra", "图像、视频、备用模型 — APIMart / jiekou.ai / token.chhai 等做模型丰富度。"),
+        ("🌐", "Claude 主力", "claude", "Opus / Sonnet / Haiku 三档模型，覆盖高质量、稳定开发和轻量调用。"),
+        ("⚙️", "GPT 主力", "gpt", "GPT-5.5 / GPT-5.4 / GPT-5.4 Mini 三档模型，兼顾复杂任务和低成本请求。"),
+        ("🔧", "Gemini 补充", "extra", "Gemini 3.5 Flash 承接低延迟和轻量任务，后续再扩展更多模型。"),
     ]
     stats = [
-        ("30+", "精选模型线路"),
+        ("7", "首发核心模型"),
         ("CNY", "人民币结算"),
         ("¥10", "最低充值"),
         ("海外", "只向海外用户开放"),
@@ -901,7 +902,7 @@ def about_page(settings: Settings, *, portal: bool = False) -> str:
             <p class="adh-eyebrow">About 996 Tokens</p>
             <h1>面向 AI 编程的<br>多模型 API 网关</h1>
             <p class="adh-sub">996 Tokens 是为 Claude Code、Cursor、Cline 和 AI Agent 开发者设计的 API 分发平台。<br>
-            一个 API Key，统一接入 Claude、GPT、Gemini、DeepSeek、Qwen、豆包；账户以人民币余额展示，本服务只向海外用户开放。</p>
+            一个 API Key，第一版统一接入 Claude、GPT、Gemini 七个核心模型；账户以人民币余额展示，本服务只向海外用户开放。</p>
             <div class="adh-actions">
               <a class="button primary adh-btn-primary" href="{primary_href}">{escape(primary_text)}</a>
               <a class="button adh-btn-ghost" href="{secondary_href}">{escape(secondary_text)}</a>
@@ -944,13 +945,13 @@ def about_page(settings: Settings, *, portal: bool = False) -> str:
                 <div class="arch-arrow">↓</div>
                 <div class="arch-node arch-pool">多上游候选池<small>评分路由 + 熔断 + 冷却</small></div>
                 <div class="arch-arrow">↓</div>
-                <div class="arch-node arch-models">Claude · GPT · Gemini · 国产模型</div>
+                <div class="arch-node arch-models">Claude · GPT · Gemini</div>
               </div>
             </div>
             <div class="aas-right">
               <p class="eyebrow">Upstreams</p>
               <h2>上游策略</h2>
-              <p>三条线并行，覆盖高稳定、低成本、多模态场景。</p>
+              <p>第一版只保留 Claude、GPT、Gemini 三条线，先把充值转化、稳定性和风控跑稳。</p>
               <div class="up-grid">{upstream_html}</div>
             </div>
           </div>
@@ -1103,15 +1104,15 @@ def newapi_plan_page(settings: Settings) -> str:
           <div>
             <p class="eyebrow">Launch Plan</p>
             <h1>NewAPI 混合上游上线方案</h1>
-            <p>生产版用 NewAPI 承接用户、充值、Token、渠道、模型、倍率和日志；本站负责官网、价格、Claude Code 教程和获客。核心策略是低价、稳定、国产三条线同时存在。</p>
+            <p>生产版用 NewAPI 承接用户、充值、Token、渠道、模型、倍率和日志；本站负责官网、价格、Claude Code 教程和获客。第一版先只开放 7 个 Claude / GPT / Gemini 模型。</p>
           </div>
           <a class="button primary" href="{newapi}">打开 New API</a>
         </section>
         <section class="feature-grid">
-          <div><h2>低价主力</h2><p>RightCode 负责 Claude / GPT / Gemini 的利润空间，但低权重运行，必须配合稳定线兜底。</p></div>
-          <div><h2>稳定主力</h2><p>PoloAPI 或 weelinking 权重更高，优先保障成功率、延迟和企业口碑。</p></div>
-          <div><h2>国产主力</h2><p>SiliconFlow 承接 DeepSeek、Qwen、豆包、GLM、Embedding，是默认利润和规模化调用核心。</p></div>
-          <div><h2>全能补充</h2><p>jiekou.ai、APIMart、token.chhai.cn 用作模型补货、图像视频、Claude Code 备用。</p></div>
+          <div><h2>稳定主力</h2><p>PoloAPI 或 weelinking 权重更高，优先保障 Claude / GPT / Gemini 成功率、延迟和企业口碑。</p></div>
+          <div><h2>低价补充</h2><p>RightCode 负责利润空间，但低权重运行，必须配合稳定线兜底。</p></div>
+          <div><h2>全能补充</h2><p>jiekou.ai、APIMart、token.chhai.cn 用作模型补货和 Claude Code 备用。</p></div>
+          <div><h2>国产后置</h2><p>SiliconFlow 等国产模型第二阶段开放，先不放入首发池，降低运营复杂度。</p></div>
         </section>
         <section class="table-wrap">
           <h2>上游优先级</h2>
@@ -1130,11 +1131,11 @@ def newapi_plan_page(settings: Settings) -> str:
         <section class="quickstart">
           <div>
             <h2>NewAPI 配置顺序</h2>
-            <p>先接渠道，再精简模型，再设置分组倍率和 failover。每家先充 100-300 元，只开放通过长上下文、工具调用、Claude Code / Cursor 测试的模型。</p>
+            <p>先接渠道，再精简模型，再设置分组倍率和 failover。每家先充 100-300 元，只开放这 7 个通过长上下文、工具调用、Claude Code / Cursor 测试的模型。</p>
           </div>
           <pre>1. 部署 NewAPI
-2. 添加 SiliconFlow / RightCode / PoloAPI 或 weelinking / jiekou.ai
-3. 每个热门模型保留 2-3 个渠道
+2. 添加 RightCode / PoloAPI 或 weelinking / jiekou.ai
+3. 只开放 7 个首发模型，每个模型保留 2-3 个渠道
 4. 稳定渠道权重高，低价渠道权重低
 5. 开启失败自动切换和重试
 6. 配置支付宝/微信/兑换码/人工充值
@@ -1149,7 +1150,7 @@ def newapi_plan_page(settings: Settings) -> str:
         </section>
         <section class="risk-note">
           <strong>风险提醒</strong>
-          <p>RightCode 这类极低价渠道只能做补充和利润优化，不能单独承载生产主链路。上线默认策略应是稳定渠道优先，低价渠道参与 failover 或低成本线路，国产模型承担高频和利润主力。</p>
+          <p>RightCode 这类极低价渠道只能做补充和利润优化，不能单独承载生产主链路。上线默认策略应是稳定渠道优先，低价渠道参与 failover 或低成本线路，首发模型先控制在 7 个以内。</p>
         </section>
         """,
         settings=settings,
@@ -1240,51 +1241,51 @@ def admin_page(
 def _pricing_plan_cards(settings: Settings) -> str:
     plans = [
         {
-            "name": "Free",
-            "price": 0,
-            "yearly": "注册即送 ¥5 体验额度",
+            "name": "Pay Go",
+            "price": 10,
+            "yearly": "充值 <¥100 加赠 ¥5",
             "badge": "",
             "class": "",
-            "tagline": "先让用户跑通工具，降低注册后流失。",
-            "rights": ["¥5 等值体验额度", "优先体验低成本模型", "高峰期不承诺优先级"],
-            "support": ["全天可用", "社区支持", "公开文档和示例"],
-            "rates": [("Claude", "按量"), ("Codex", "按量"), ("国产模型", "试用优先")],
-            "cta": "免费体验",
+            "tagline": "最低 ¥10 充值，先跑通 API Key、Cursor 和 Claude Code。",
+            "rights": ["注册不送额度", "支付后加赠 ¥5", "适合首单验证"],
+            "support": ["全天可用", "公开文档和示例", "异常订单人工补单"],
+            "rates": [("Claude", "按量"), ("GPT", "按量"), ("Gemini", "按量")],
+            "cta": "立即充值",
         },
         {
             "name": "Starter",
             "price": 29,
-            "yearly": "月含 ¥35 等值额度",
+            "yearly": "月卡支付后加赠 ¥5",
             "badge": "",
             "class": "",
             "tagline": "给小白和轻度 Cursor 用户一个低门槛月卡。",
-            "rights": ["低成本模型优先", "适合日常问答和轻量代码", "微信支付即可开通"],
+            "rights": ["到账 ¥34 等值额度", "适合日常问答和轻量代码", "微信支付即可开通"],
             "support": ["全天可用", "工单处理", "异常订单人工补单"],
-            "rates": [("Claude", "按量"), ("Codex", "按量"), ("国产模型", "低价包")],
+            "rates": [("Claude", "标准"), ("GPT", "标准"), ("Gemini", "标准")],
             "cta": "立即购买",
         },
         {
             "name": "Builder",
             "price": 69,
-            "yearly": "月含 ¥90 等值额度",
+            "yearly": "月卡支付后加赠 ¥5",
             "badge": "推荐",
             "class": "featured",
             "tagline": "主推套餐，覆盖大多数 AI 编程和 Agent 测试。",
-            "rights": ["更高通用额度", "适合 Claude Code / Cursor 日常开发", "热门模型自动路由"],
+            "rights": ["到账 ¥74 等值额度", "适合 Claude Code / Cursor 日常开发", "热门模型优先支持"],
             "support": ["全天可用", "优先排障", "协助配置 Claude Code / Cursor"],
-            "rates": [("Claude", "标准按量"), ("Codex", "标准按量"), ("国产模型", "折扣优先")],
+            "rates": [("Claude", "标准"), ("GPT", "标准"), ("Gemini", "标准")],
             "cta": "立即购买",
         },
         {
             "name": "Team",
             "price": 199,
-            "yearly": "月含 ¥280 等值额度",
+            "yearly": "月卡支付后加赠 ¥10",
             "badge": "顶级",
             "class": "top-tier",
             "tagline": "工作室、RPA、Agent 批量调用和小团队共享。",
-            "rights": ["团队额度池", "更高 RPM / TPM", "支持专属模型白名单"],
+            "rights": ["到账 ¥209 等值额度", "更高 RPM / TPM", "支持专属模型白名单"],
             "support": ["专属人工支持", "上线接入协助", "异常调用优先处理"],
-            "rates": [("Claude", "优先通道"), ("Codex", "优先通道"), ("国产模型", "最低档")],
+            "rates": [("Claude", "优先"), ("GPT", "优先"), ("Gemini", "优先")],
             "cta": "联系开通",
         },
     ]
@@ -1334,19 +1335,19 @@ def _pricing_plan_cards(settings: Settings) -> str:
 def _growth_funnel_cards(settings: Settings) -> str:
     items = [
         (
-            "免费试用",
-            "注册即送 ¥5",
-            "只推荐 DeepSeek、Qwen、豆包等低成本模型，先让用户跑通 yu-code-auto / Cursor / Claude Code 接入。",
+            "注册风控",
+            "注册 ¥0",
+            "新用户注册不再直接送额度，批量注册账号无法白嫖额度，先把爬虫成本抬起来。",
         ),
         (
             "充值转化",
-            "¥10 起充，主推 ¥29 月卡",
-            "支付方式保持微信支付；按量充值做兜底，月卡负责复购和稳定现金流。",
+            "<¥100 送 ¥5",
+            "按量充值和月卡都按真实支付金额加赠，支付方式保持微信支付不变。",
         ),
         (
-            "邀请裂变",
-            "被邀额外 ¥3，邀请人 ¥5",
-            "第一版用额度奖励快速上线；订单稳定后再做首充 15% 返佣。",
+            "复购激励",
+            "≥¥100 送 ¥10",
+            "大额充值和团队月卡只做固定加赠，避免早期折扣过深导致毛利失控。",
         ),
     ]
     return "".join(
@@ -1363,13 +1364,13 @@ def _growth_funnel_cards(settings: Settings) -> str:
 
 def _pricing_ladder_table(settings: Settings) -> str:
     rows = [
-        ("免费体验", "¥0", "¥5 体验额度", "注册即送；限低成本模型优先体验"),
-        ("小额充值", "¥10", "¥10 到账", "验证支付和 API Key，适合首单"),
-        ("入门月卡", "¥29/月", "¥35 等值额度", "主推小白转化，适合轻度 Cursor 使用"),
-        ("开发者月卡", "¥69/月", "¥90 等值额度", "主推套餐，适合日常 Claude Code / Agent 测试"),
-        ("专业月卡", "¥129/月", "¥180 等值额度", "适合高频调用和长上下文调试"),
-        ("团队月卡", "¥299/月", "¥450 等值额度", "适合工作室共享额度池和优先支持"),
-        ("大额充值", "¥500", "¥625 等值额度", "仅建议熟客/团队使用，人工风控"),
+        ("注册账户", "¥0", "¥0", "注册不送额度，防批量爬虫注册"),
+        ("小额充值", "¥10", "¥15 等值额度", "验证支付和 API Key，适合首单"),
+        ("入门月卡", "¥29/月", "¥34 等值额度", "主推小白转化，适合轻度 Cursor 使用"),
+        ("开发者月卡", "¥69/月", "¥74 等值额度", "主推套餐，适合日常 Claude Code / Agent 测试"),
+        ("专业月卡", "¥129/月", "¥139 等值额度", "适合高频调用和长上下文调试"),
+        ("团队月卡", "¥299/月", "¥309 等值额度", "适合工作室共享额度池和优先支持"),
+        ("大额充值", "¥500", "¥510 等值额度", "仅建议熟客/团队使用，人工风控"),
     ]
     rendered = [
         "<div class='ladder-row head'><span>档位</span><span>用户支付</span><span>到账/权益</span><span>定位</span></div>"
@@ -1384,18 +1385,18 @@ def _pricing_ladder_table(settings: Settings) -> str:
         for name, price, value, note in rows
     )
     rendered.append(
-        f"<div class='rate-foot'>按量充值最低 {_money(settings.min_recharge_amount, settings, decimals=2)}；月卡额度不建议覆盖 Claude / GPT / Gemini 最新模型的亏本调用。</div>"
+        f"<div class='rate-foot'>按量充值最低 {_money(settings.min_recharge_amount, settings, decimals=2)}；支付金额大于 0 且小于 ¥100 加赠 ¥5，达到 ¥100 加赠 ¥10。</div>"
     )
     return "".join(rendered)
 
 
 def _referral_rules(settings: Settings) -> str:
     rows = [
-        ("新用户", "注册即送 ¥5", "无需支付，降低试用门槛。"),
-        ("被邀请人", "额外 +¥3", "使用邀请链接注册后叠加，总体验额度 ¥8。"),
-        ("邀请人", "成功邀请 +¥5", "第一版固定额度，避免首期开发复杂度过高。"),
-        ("首充返佣", "建议 15%", "第二阶段接订单回调；首充返佣上限 ¥50/人，防刷。"),
-        ("风控", "同设备/同 IP 限制", "异常注册不发放奖励，可转人工审核。"),
+        ("新用户", "注册 ¥0", "必须完成真实支付订单后才发加赠。"),
+        ("充值 <¥100", "+¥5", "按量充值和月卡都适用。"),
+        ("充值 ≥¥100", "+¥10", "固定加赠，不做高比例折扣。"),
+        ("邀请奖励", "绑定首充", "第二阶段接首充返佣，未首充不发放邀请奖励。"),
+        ("风控", "订单驱动", "异常注册不发放奖励，可转人工审核。"),
     ]
     return "".join(
         f"""
@@ -1411,13 +1412,11 @@ def _referral_rules(settings: Settings) -> str:
 
 def _pricing_rate_rows(settings: Settings) -> str:
     rows = [
-        ("Anthropic Claude", "1.15x - 1.60x", "国外最新模型，稳定渠道更贵，低价渠道做补充。"),
-        ("OpenAI Codex / GPT", "1.15x - 1.50x", "代码、Agent、工具调用重点测试 failover。"),
-        ("Google Gemini", "1.20x - 1.45x", "大上下文和多模态补充，按实测模型名开放。"),
-        ("DeepSeek / Qwen / 豆包", "0.80x - 1.00x", "国产模型成本低，适合做默认推荐和利润主力。"),
+        (spec.model, f"{spec.multiplier:.2f}x", f"{spec.display_name}，上游成本 × {spec.multiplier:g}。")
+        for spec in FIRST_WAVE_MODEL_SPECS
     ]
     rendered = [
-        "<div class='rate-row head'><span>模型</span><span>套餐倍率</span><span>说明</span></div>"
+        "<div class='rate-row head'><span>模型</span><span>成本倍率</span><span>说明</span></div>"
     ]
     rendered.extend(
         "<div class='rate-row'>"
@@ -1436,8 +1435,8 @@ def _pricing_rate_rows(settings: Settings) -> str:
 def _capacity_cards() -> str:
     items = [
         ("NewAPI 底座", "用户、Token、充值、日志和模型倍率交给 NewAPI，官网只负责获客和转化。"),
-        ("多上游冗余", "Claude / GPT / Gemini 至少 2-3 个渠道，SiliconFlow 承接国产高频调用。"),
-        ("限流与分组", "Free / Pro / Max / Ultra 分组设置 RPM、TPM、倍率和高峰期优先级。"),
+        ("多上游冗余", "Claude / GPT / Gemini 首发模型至少保留 2 个渠道，低价线补充，稳定线兜底。"),
+        ("限流与分组", "Pay Go / Starter / Builder / Team 分组设置 RPM、TPM、倍率和高峰期优先级。"),
         ("监控与补单", "支付回调、余额异常、上游失败和毛利波动都需要后台可见并能人工处理。"),
     ]
     return "".join(
@@ -1478,41 +1477,35 @@ def _provider_hint(model_name: str) -> str:
         return "RightCode / PoloAPI / weelinking"
     if "gemini" in model_name:
         return "Gemini via Stable Mix"
-    if "deepseek" in model_name:
-        return "SiliconFlow / DeepSeek"
-    if "qwen" in model_name:
-        return "SiliconFlow / Qwen"
-    if "doubao" in model_name:
-        return "SiliconFlow / Doubao"
     return "Auto Route"
 
 
 def _provider_mix_cards() -> str:
     items = [
-        ("RightCode", "极致低价", "Claude / Codex / Gemini 低价补充，适合省成本和赚差价，但必须低权重。"),
+        ("RightCode", "极致低价", "Claude / GPT / Gemini 低价补充，适合省成本和赚差价，但必须低权重。"),
         ("PoloAPI / weelinking", "稳定中价", "稳定渠道权重更高，承接 Claude、GPT、Gemini 主力请求和企业用户。"),
-        ("SiliconFlow", "国产主力", "DeepSeek、Qwen、豆包、GLM、Embedding 优先接这里，成本低、速度快。"),
-        ("jiekou.ai / APIMart", "全能补充", "模型补货、图像视频、Claude Code 备用，适合做覆盖面和应急切换。"),
+        ("jiekou.ai / APIMart", "全能补充", "模型补货、备用模型、Claude Code 兼容性测试，适合做覆盖面和应急切换。"),
+        ("SiliconFlow", "后续国产", "DeepSeek、Qwen、豆包等国产线路第二阶段再开放，先不放进首发模型池。"),
     ]
     return "".join(f"<div><h2>{escape(name)}</h2><strong>{escape(tag)}</strong><p>{escape(desc)}</p></div>" for name, tag, desc in items)
 
 
 def _model_category_cards() -> str:
     items = [
-        ("文本", "Claude、GPT、Gemini、DeepSeek、Qwen、豆包、Kimi、GLM。"),
-        ("代码", "Claude Sonnet、GPT Codex、Qwen Coder、DeepSeek Coder，重点服务 Claude Code / Cursor。"),
-        ("图像", "Flux、GPT Image、通义万相、豆包图像，生产版放到 NewAPI 渠道里开放。"),
-        ("视频 / Embedding", "Kling / 可灵后续扩展；Embedding 用 Qwen、BGE 等国产低成本线路。"),
+        ("Claude", "claude-opus-4-7、claude-sonnet-4-6、claude-haiku-4-5。"),
+        ("GPT", "gpt-5.5、gpt-5.4、gpt-5.4-mini。"),
+        ("Gemini", "gemini-3.5-flash，负责低延迟轻量请求。"),
+        ("后续扩展", "国产模型、图像、视频和 Embedding 第二阶段逐步开放。"),
     ]
     return "".join(f"<div><h2>{escape(name)}</h2><p>{escape(desc)}</p></div>" for name, desc in items)
 
 
 def _upstream_strategy_rows() -> str:
     rows = [
-        ("1", "RightCode", "极致低价", "Claude Opus / Sonnet、GPT Codex、Gemini", "低价补充、利润优化、Claude Code 专线测试"),
-        ("2", "PoloAPI / weelinking", "稳定中价", "Claude、GPT、Gemini、DeepSeek、Qwen", "稳定主力、高权重、企业用户优先"),
-        ("3", "SiliconFlow", "国产最优", "DeepSeek、Qwen、豆包、GLM、Embedding", "国产默认主力、高频调用、利润核心"),
-        ("4", "jiekou.ai / APIMart / token.chhai.cn", "全能补充", "御三家、图像、视频、备用模型", "补货、备用、模型丰富度"),
+        ("1", "PoloAPI / weelinking", "稳定中价", "Claude、GPT、Gemini", "稳定主力、高权重、企业用户优先"),
+        ("2", "RightCode", "极致低价", "Claude Opus / Sonnet、GPT、Gemini", "低价补充、利润优化、Claude Code 专线测试"),
+        ("3", "jiekou.ai / APIMart / token.chhai.cn", "全能补充", "御三家、备用模型", "补货、备用、模型丰富度"),
+        ("4", "SiliconFlow", "后续国产", "DeepSeek、Qwen、豆包、GLM、Embedding", "第二阶段开放，不进首发模型池"),
     ]
     return "".join(
         "<tr>"
@@ -1528,11 +1521,11 @@ def _upstream_strategy_rows() -> str:
 
 def _newapi_route_rows() -> str:
     rows = [
-        ("Claude Sonnet 最新", "PoloAPI / weelinking", "RightCode", "jiekou.ai", "代码和 Agent 用户主力，必须测工具调用和长上下文。"),
-        ("GPT-5.x / Codex", "PoloAPI / weelinking", "RightCode Codex", "APIMart", "对外可分低价线和稳定线，避免低价渠道全量承载。"),
-        ("Gemini Pro / Flash", "PoloAPI / weelinking", "RightCode Gemini", "APIMart", "适合多模态和低价大上下文，实测模型名后开放。"),
-        ("DeepSeek / Qwen / 豆包", "SiliconFlow", "官方直连", "PoloAPI", "国产模型做默认推荐和利润主力。"),
-        ("图像 / 视频", "APIMart / SiliconFlow", "jiekou.ai", "token.chhai.cn", "第二阶段逐步开放，先不要影响文本 API 稳定。"),
+        ("claude-opus-4-7", "PoloAPI / weelinking", "RightCode", "jiekou.ai", "上游成本 × 1.6，重任务和高价值用户。"),
+        ("claude-sonnet-4-6", "PoloAPI / weelinking", "RightCode", "jiekou.ai", "上游成本 × 1.35，Claude Code / Cursor 主力。"),
+        ("claude-haiku-4-5", "PoloAPI / weelinking", "RightCode", "jiekou.ai", "上游成本 × 1.3，轻量快速调用。"),
+        ("gpt-5.5 / gpt-5.4 / mini", "PoloAPI / weelinking", "RightCode", "APIMart", "分别按 1.5 / 1.35 / 1.3 加价。"),
+        ("gemini-3.5-flash", "PoloAPI / weelinking", "RightCode Gemini", "APIMart", "上游成本 × 1.3，低延迟轻量任务。"),
     ]
     return "".join(
         "<tr>"
@@ -1775,6 +1768,7 @@ def layout(
     .line-badge.auto {{ background: #e0f2fe; color: #0369a1; }}
     .line-badge.economy {{ background: #dcfce7; color: #15803d; }}
     .line-badge.stable {{ background: #fef3c7; color: #92400e; }}
+    .line-badge.premium {{ background: #f3e8ff; color: #7e22ce; }}
     .provider {{ margin: 6px 0 18px; color: var(--muted); }}
     .desc {{ color: #334155; line-height: 1.55; margin: 0 0 18px; flex: 1; }}
     .price-lines {{ border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 7px; color: var(--muted); font-size: 13px; }}

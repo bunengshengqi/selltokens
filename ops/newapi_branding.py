@@ -445,7 +445,7 @@ ABOUT_HTML = r"""
       <div>
         <div class="nt-kicker">ABOUT 996 TOKENS</div>
         <h1>为 AI 编程和 Agent 调用而设计的多模型 API 平台</h1>
-        <p>996 Tokens 把 Claude、GPT、Gemini、DeepSeek、Qwen、豆包等模型统一到一个 OpenAI 兼容入口。用户只需要一个 API Key，就能在 Cursor、Claude Code、Cline、脚本和业务系统里切换模型。</p>
+        <p>996 Tokens 第一版只开放 Claude、GPT、Gemini 七个核心模型。用户只需要一个 API Key，就能在 Cursor、Claude Code、Cline、脚本和业务系统里切换模型。</p>
         <div class="nt-actions">
           <a class="nt-btn primary" href="/console">返回控制台</a>
           <a class="nt-btn" href="/console/topup">账户充值</a>
@@ -474,7 +474,7 @@ ABOUT_HTML = r"""
   </section>
 
   <div class="nt-metrics">
-    <div class="nt-metric"><strong>30+</strong><span>精选模型线路</span></div>
+    <div class="nt-metric"><strong>7</strong><span>首发核心模型</span></div>
     <div class="nt-metric"><strong>CNY</strong><span>人民币余额展示</span></div>
     <div class="nt-metric"><strong>¥10</strong><span>最低充值门槛</span></div>
     <div class="nt-metric"><strong>100</strong><span>第一版并发目标</span></div>
@@ -489,12 +489,12 @@ ABOUT_HTML = r"""
       </div>
     </div>
     <div class="nt-card-grid">
-      <div class="nt-card"><div class="nt-card-mark">A</div><h3>统一接入</h3><p>一个 API Key 调用主流国外模型和国产模型，兼容 OpenAI Chat Completions。</p></div>
-      <div class="nt-card"><div class="nt-card-mark">B</div><h3>成本控制</h3><p>按模型和渠道设置倍率，国产模型承接高频场景，国外模型保证体验和利润。</p></div>
+      <div class="nt-card"><div class="nt-card-mark">A</div><h3>统一接入</h3><p>一个 API Key 调用 Claude、GPT、Gemini 首发模型，兼容 OpenAI Chat Completions。</p></div>
+      <div class="nt-card"><div class="nt-card-mark">B</div><h3>成本控制</h3><p>按模型和渠道设置倍率，首发模型按上游成本加价，先保证体验和利润。</p></div>
       <div class="nt-card"><div class="nt-card-mark">C</div><h3>稳定优先</h3><p>每个热门模型配置多条上游线路，失败自动切换，降低单渠道波动风险。</p></div>
       <div class="nt-card"><div class="nt-card-mark">D</div><h3>人民币余额</h3><p>账户以人民币展示，保留微信支付、兑换码、人工补单，降低第一版充值摩擦。</p></div>
       <div class="nt-card"><div class="nt-card-mark">E</div><h3>开发者友好</h3><p>重点适配 Cursor、Claude Code、Cline、Cherry Studio 和常见 SDK。</p></div>
-      <div class="nt-card"><div class="nt-card-mark">F</div><h3>运营留存</h3><p>免费额度、阶梯套餐、邀请奖励和用量统计，帮助用户注册后尽快完成首充。</p></div>
+      <div class="nt-card"><div class="nt-card-mark">F</div><h3>运营留存</h3><p>注册不送额度，充值和月卡支付成功后加赠，帮助减少批量注册薅羊毛。</p></div>
     </div>
   </section>
 

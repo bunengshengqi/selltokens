@@ -1,7 +1,7 @@
 # 996 Tokens — 多模型 API 分发平台
 
 > 面向 AI 编程（Claude Code / Cursor）、RPA、Agent 开发者的多模型 API 网关。
-> 一个 Key 统一接入 GPT / Claude / Gemini / DeepSeek / Qwen，人民币余额按量计费，当前只向海外用户开放。
+> 一个 Key 首发接入 Claude / GPT / Gemini 七个核心模型，人民币余额按量计费，当前只向海外用户开放。
 
 **生产地址：**
 
@@ -41,18 +41,19 @@
 
 ---
 
-## 支持模型（御三家）
+## 首发模型
 
-| 模型 | 类型 | 收费（输入/输出，¥/M tokens） |
-|------|------|-------------------------------|
-| `gpt-4o` | stable | 22 / 88 |
-| `gpt-4o-mini` | economy | 1.4 / 5.6 |
-| `claude-sonnet-4-5` | stable | 28 / 140 |
-| `claude-haiku-3-5` | economy | 3 / 15 |
-| `gemini-2.5-pro` | stable | 18 / 72 |
-| `gemini-2.5-flash` | economy | 1.4 / 5.6 |
+| 模型 | 加价策略 | 收费（输入/输出，¥/M tokens） |
+|------|----------|-------------------------------|
+| `claude-opus-4-7` | 上游成本 × 1.6 | 8 / 40 |
+| `claude-sonnet-4-6` | 上游成本 × 1.35 | 4.05 / 20.25 |
+| `claude-haiku-4-5` | 上游成本 × 1.3 | 1.3 / 6.5 |
+| `gpt-5.5` | 上游成本 × 1.5 | 7.5 / 45 |
+| `gpt-5.4` | 上游成本 × 1.35 | 3.375 / 20.25 |
+| `gpt-5.4-mini` | 上游成本 × 1.3 | 0.975 / 5.85 |
+| `gemini-3.5-flash` | 上游成本 × 1.3 | 0.65 / 3.9 |
 
-另有 DeepSeek / Qwen / 豆包 / 自动路由线路（`yu-code-auto`、`yu-chat-auto`）。
+第一版只开放以上 7 个模型，国产模型、图像、视频和 Embedding 后续逐步接入。
 
 ---
 
@@ -62,11 +63,11 @@
 |--------|------|------|---------|------|
 | 1（主力） | `chhai` | token.chhai.cn | 御三家全线 | 默认启用 |
 | 2 | `ismaque` | ismaque.org | 御三家全线 | 备用 |
-| 3 | `poloapi` | poloai.top | 御三家 + DeepSeek | 备用 |
+| 3 | `poloapi` | poloai.top | Claude / GPT / Gemini | 备用 |
 | 4 | `jiekou` | jiekou.ai | Claude / GPT | 备用 |
 | 5 | `weelinking` | weelinking.com | 御三家 | 备用 |
 | 直连 | `openai-direct` / `anthropic-direct` / `google-ai` | 官方 | 各自模型 | 按需启用 |
-| 国产 | `siliconflow` / `deepseek` / `qwen` / `doubao` | 各官方 | 国产模型 | 按需启用 |
+| 国产 | `siliconflow` / `deepseek` / `qwen` / `doubao` | 各官方 | 国产模型 | 第二阶段启用 |
 
 ---
 
@@ -108,7 +109,7 @@ curl http://127.0.0.1:8001/v1/chat/completions \
   -H "Authorization: Bearer sk-yu-demo-local" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "gpt-4o-mini",
+    "model": "claude-haiku-4-5",
     "messages": [{"role": "user", "content": "你好"}]
   }'
 ```
@@ -194,21 +195,21 @@ docker compose -f ops/docker-compose.prod.yml up -d
 
 | 环节 | 标准 | 目的 |
 |------|------|------|
-| 免费试用 | 新用户注册即送 ¥5 等值额度 | 让用户先跑通 API Key、Cursor、Claude Code |
-| 充值转化 | ¥10 起充，主推 ¥29 / ¥69 / ¥129 月卡 | 用低门槛套餐提高首充和复购 |
-| 邀请裂变 | 被邀请人额外 ¥3，邀请人得 ¥5 | 用额度奖励做低成本获客 |
+| 注册风控 | 新用户注册 ¥0，必须充值后才送 | 杜绝批量注册直接拿额度 |
+| 充值转化 | 100 以下送 ¥5，100 以上送 ¥10 | 用真实支付触发加赠 |
+| 邀请裂变 | 邀请奖励绑定首充 | 未首充不发放奖励，降低薅羊毛 |
 
 充值阶梯建议：
 
 | 档位 | 用户支付 | 到账/权益 |
 |------|------:|------:|
-| 免费体验 | ¥0 | ¥5 体验额度 |
-| 小额充值 | ¥10 | ¥10 到账 |
-| 入门月卡 | ¥29/月 | ¥35 等值额度 |
-| 开发者月卡 | ¥69/月 | ¥90 等值额度 |
-| 专业月卡 | ¥129/月 | ¥180 等值额度 |
-| 团队月卡 | ¥299/月 | ¥450 等值额度 |
-| 大额充值 | ¥500 | ¥625 等值额度 |
+| 注册账户 | ¥0 | ¥0 |
+| 小额充值 | ¥10 | ¥15 等值额度 |
+| 入门月卡 | ¥29/月 | ¥34 等值额度 |
+| 开发者月卡 | ¥69/月 | ¥74 等值额度 |
+| 专业月卡 | ¥129/月 | ¥139 等值额度 |
+| 团队月卡 | ¥299/月 | ¥309 等值额度 |
+| 大额充值 | ¥500 | ¥510 等值额度 |
 
 更完整的运营规则见 `docs/growth-funnel.md`。
 

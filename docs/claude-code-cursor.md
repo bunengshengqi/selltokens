@@ -6,16 +6,16 @@
 API Provider: OpenAI Compatible
 Base URL: https://api.yourdomain.com/v1
 API Key: YOUR_API_KEY
-Model: yu-code-auto
+Model: claude-sonnet-4-6
 ```
 
 也可以直接指定：
 
 ```text
-claude-sonnet-economy
-claude-sonnet-stable
-qwen-coder
-deepseek-chat
+claude-opus-4-7
+claude-sonnet-4-6
+claude-haiku-4-5
+gemini-3.5-flash
 ```
 
 ## Claude Code
@@ -25,7 +25,7 @@ deepseek-chat
 ```bash
 export ANTHROPIC_BASE_URL=https://api.yourdomain.com
 export ANTHROPIC_AUTH_TOKEN=YOUR_API_KEY
-export ANTHROPIC_MODEL=claude-sonnet-economy
+export ANTHROPIC_MODEL=claude-sonnet-4-6
 ```
 
 如果客户端支持 OpenAI-compatible，则使用：
@@ -33,7 +33,7 @@ export ANTHROPIC_MODEL=claude-sonnet-economy
 ```text
 Base URL: https://api.yourdomain.com/v1
 API Key: YOUR_API_KEY
-Model: yu-code-auto
+Model: claude-sonnet-4-6
 ```
 
-注意：Claude Code 是工具名，不是模型名。平台侧模型名应该明确写成 `claude-sonnet-economy`、`claude-sonnet-stable` 或 `yu-code-auto`。
+注意：Claude Code 是工具名，不是模型名。平台侧模型名应该明确写成 `claude-sonnet-4-6`、`claude-haiku-4-5` 或 `claude-opus-4-7`。

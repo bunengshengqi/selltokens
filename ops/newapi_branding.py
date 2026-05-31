@@ -1,0 +1,480 @@
+#!/usr/bin/env python3
+"""Apply 996 Tokens branding options to the NewAPI SQLite database."""
+
+from __future__ import annotations
+
+import os
+import sqlite3
+
+
+DB_PATH = os.environ.get("NEWAPI_DB", "/opt/selltokens/data/new-api/one-api.db")
+DOCS_LINK = "https://app.996tokens.com/docs"
+
+ABOUT_HTML = r"""
+<style>
+  .nt-about {
+    --nt-ink: #0f172a;
+    --nt-muted: #64748b;
+    --nt-line: #e2e8f0;
+    --nt-blue: #2563eb;
+    --nt-cyan: #06b6d4;
+    --nt-green: #16a34a;
+    --nt-violet: #7c3aed;
+    --nt-amber: #d97706;
+    font-size: 16px;
+    color: var(--nt-ink);
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 6px 18px 56px;
+  }
+  .nt-about * { box-sizing: border-box; }
+  .nt-about a { text-decoration: none; }
+  .nt-hero {
+    position: relative;
+    overflow: hidden;
+    min-height: 420px;
+    border: 1px solid rgba(148, 163, 184, .28);
+    border-radius: 26px;
+    background:
+      radial-gradient(circle at 12% 18%, rgba(37, 99, 235, .45), transparent 32%),
+      radial-gradient(circle at 78% 18%, rgba(6, 182, 212, .30), transparent 30%),
+      linear-gradient(135deg, #07111f 0%, #0f1d35 48%, #111827 100%);
+    color: white;
+    box-shadow: 0 28px 80px rgba(15, 23, 42, .18);
+  }
+  .nt-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.065) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.065) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,.9), transparent 86%);
+  }
+  .nt-hero-inner {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) 390px;
+    gap: 42px;
+    align-items: center;
+    min-height: 420px;
+    padding: 52px;
+  }
+  .nt-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+    margin: 0 0 18px;
+    padding: 7px 12px;
+    border: 1px solid rgba(147, 197, 253, .35);
+    border-radius: 999px;
+    background: rgba(37, 99, 235, .16);
+    color: #bfdbfe;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .08em;
+  }
+  .nt-hero h1 {
+    max-width: 760px;
+    margin: 0;
+    color: #fff;
+    font-size: 52px;
+    line-height: 1.08;
+    font-weight: 900;
+    letter-spacing: 0;
+  }
+  .nt-hero p {
+    max-width: 720px;
+    margin: 20px 0 0;
+    color: #cbd5e1;
+    font-size: 17px;
+    line-height: 1.85;
+  }
+  .nt-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 28px;
+  }
+  .nt-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 18px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,.18);
+    font-weight: 800;
+    color: #e2e8f0;
+    background: rgba(255,255,255,.08);
+  }
+  .nt-btn.primary {
+    border-color: #3b82f6;
+    background: #2563eb;
+    color: #fff;
+    box-shadow: 0 18px 42px rgba(37, 99, 235, .34);
+  }
+  .nt-panel {
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 22px;
+    padding: 18px;
+    background: rgba(255,255,255,.08);
+    backdrop-filter: blur(14px);
+  }
+  .nt-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .nt-panel-head strong { font-size: 16px; color: #fff; }
+  .nt-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #bbf7d0;
+    font-size: 12px;
+    font-weight: 800;
+  }
+  .nt-live::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, .15);
+  }
+  .nt-route {
+    display: grid;
+    grid-template-columns: 34px 1fr;
+    gap: 12px;
+    align-items: center;
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(15, 23, 42, .42);
+    border: 1px solid rgba(255,255,255,.1);
+  }
+  .nt-route + .nt-route { margin-top: 10px; }
+  .nt-dot {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 11px;
+    background: rgba(59, 130, 246, .18);
+    color: #93c5fd;
+    font-weight: 900;
+  }
+  .nt-route strong { display: block; color: #fff; font-size: 14px; }
+  .nt-route span { display: block; margin-top: 3px; color: #94a3b8; font-size: 12px; line-height: 1.5; }
+  .nt-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin: 18px 0 0;
+  }
+  .nt-metric {
+    border: 1px solid var(--nt-line);
+    border-radius: 18px;
+    background: #fff;
+    padding: 22px;
+    box-shadow: 0 16px 44px rgba(15, 23, 42, .07);
+  }
+  .nt-metric strong { display: block; font-size: 30px; line-height: 1; color: var(--nt-ink); }
+  .nt-metric span { display: block; margin-top: 8px; color: var(--nt-muted); font-weight: 700; }
+  .nt-section { margin-top: 28px; }
+  .nt-section-head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 16px;
+  }
+  .nt-section-head h2 {
+    margin: 0;
+    color: var(--nt-ink);
+    font-size: 28px;
+    line-height: 1.2;
+    font-weight: 900;
+  }
+  .nt-section-head p {
+    max-width: 560px;
+    margin: 8px 0 0;
+    color: var(--nt-muted);
+    line-height: 1.7;
+  }
+  .nt-chip {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    min-height: 30px;
+    padding: 0 11px;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 12px;
+    font-weight: 900;
+  }
+  .nt-card-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .nt-card {
+    min-height: 210px;
+    border: 1px solid var(--nt-line);
+    border-radius: 20px;
+    background: #fff;
+    padding: 24px;
+    box-shadow: 0 14px 40px rgba(15, 23, 42, .06);
+  }
+  .nt-card-mark {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 13px;
+    margin-bottom: 18px;
+    color: #fff;
+    font-weight: 900;
+  }
+  .nt-card:nth-child(1) .nt-card-mark { background: var(--nt-blue); }
+  .nt-card:nth-child(2) .nt-card-mark { background: var(--nt-green); }
+  .nt-card:nth-child(3) .nt-card-mark { background: var(--nt-violet); }
+  .nt-card:nth-child(4) .nt-card-mark { background: var(--nt-cyan); }
+  .nt-card:nth-child(5) .nt-card-mark { background: var(--nt-amber); }
+  .nt-card:nth-child(6) .nt-card-mark { background: #475569; }
+  .nt-card h3 { margin: 0 0 10px; color: var(--nt-ink); font-size: 18px; font-weight: 900; }
+  .nt-card p { margin: 0; color: var(--nt-muted); line-height: 1.7; }
+  .nt-flow {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    border: 1px solid var(--nt-line);
+    border-radius: 22px;
+    background: linear-gradient(180deg, #ffffff, #f8fafc);
+    padding: 16px;
+    box-shadow: 0 16px 42px rgba(15, 23, 42, .06);
+  }
+  .nt-flow-step {
+    position: relative;
+    min-height: 148px;
+    border-radius: 16px;
+    padding: 18px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+  }
+  .nt-flow-step:not(:last-child)::after {
+    content: "→";
+    position: absolute;
+    right: -15px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #eff6ff;
+    color: var(--nt-blue);
+    font-weight: 900;
+    border: 1px solid #bfdbfe;
+  }
+  .nt-flow-step b {
+    display: inline-flex;
+    width: 28px;
+    height: 28px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #0f172a;
+    color: #fff;
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+  .nt-flow-step strong { display: block; font-size: 16px; margin-bottom: 8px; }
+  .nt-flow-step span { color: var(--nt-muted); line-height: 1.65; font-size: 14px; }
+  .nt-band {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 20px;
+    align-items: center;
+    border-radius: 22px;
+    padding: 26px;
+    background: #0f172a;
+    color: #fff;
+    box-shadow: 0 22px 60px rgba(15, 23, 42, .14);
+  }
+  .nt-band h2 { margin: 0 0 10px; color: #fff; font-size: 26px; }
+  .nt-band p { margin: 0; color: #cbd5e1; line-height: 1.75; }
+  .nt-band-list {
+    display: grid;
+    gap: 10px;
+  }
+  .nt-band-list span {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 12px;
+    background: rgba(255,255,255,.06);
+    color: #e2e8f0;
+    font-weight: 800;
+  }
+  @media (max-width: 960px) {
+    .nt-hero-inner, .nt-band { grid-template-columns: 1fr; padding: 32px; }
+    .nt-hero h1 { font-size: 40px; }
+    .nt-metrics, .nt-card-grid, .nt-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .nt-flow-step:not(:last-child)::after { display: none; }
+  }
+  @media (max-width: 620px) {
+    .nt-about { padding: 0 10px 42px; }
+    .nt-hero-inner { padding: 24px; }
+    .nt-hero h1 { font-size: 32px; }
+    .nt-metrics, .nt-card-grid, .nt-flow { grid-template-columns: 1fr; }
+    .nt-section-head { align-items: flex-start; flex-direction: column; }
+  }
+</style>
+
+<div class="nt-about">
+  <section class="nt-hero">
+    <div class="nt-hero-inner">
+      <div>
+        <div class="nt-kicker">ABOUT 996 TOKENS</div>
+        <h1>为 AI 编程和 Agent 调用而设计的多模型 API 平台</h1>
+        <p>996 Tokens 把 Claude、GPT、Gemini、DeepSeek、Qwen、豆包等模型统一到一个 OpenAI 兼容入口。用户只需要一个 API Key，就能在 Cursor、Claude Code、Cline、脚本和业务系统里切换模型。</p>
+        <div class="nt-actions">
+          <a class="nt-btn primary" href="/console">返回控制台</a>
+          <a class="nt-btn" href="/console/topup">账户充值</a>
+          <a class="nt-btn" href="/docs">查看文档</a>
+        </div>
+      </div>
+      <div class="nt-panel">
+        <div class="nt-panel-head">
+          <strong>生产路由视图</strong>
+          <span class="nt-live">ONLINE</span>
+        </div>
+        <div class="nt-route">
+          <div class="nt-dot">1</div>
+          <div><strong>用户请求</strong><span>Cursor / Claude Code / OpenAI SDK 统一接入</span></div>
+        </div>
+        <div class="nt-route">
+          <div class="nt-dot">2</div>
+          <div><strong>NewAPI 控制台</strong><span>余额、Token、用量、充值、模型权限集中管理</span></div>
+        </div>
+        <div class="nt-route">
+          <div class="nt-dot">3</div>
+          <div><strong>多上游模型池</strong><span>稳定线路优先，低价线路补充，失败自动切换</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="nt-metrics">
+    <div class="nt-metric"><strong>30+</strong><span>精选模型线路</span></div>
+    <div class="nt-metric"><strong>CNY</strong><span>人民币余额展示</span></div>
+    <div class="nt-metric"><strong>¥10</strong><span>最低充值门槛</span></div>
+    <div class="nt-metric"><strong>100</strong><span>第一版并发目标</span></div>
+  </div>
+
+  <section class="nt-section">
+    <div class="nt-section-head">
+      <div>
+        <span class="nt-chip">核心能力</span>
+        <h2>不是简单转发，而是可运营的 API 生意底座</h2>
+        <p>页面、计费、路由、上游、充值和客服都围绕“可稳定交付、可持续盈利”来设计。</p>
+      </div>
+    </div>
+    <div class="nt-card-grid">
+      <div class="nt-card"><div class="nt-card-mark">A</div><h3>统一接入</h3><p>一个 API Key 调用主流国外模型和国产模型，兼容 OpenAI Chat Completions。</p></div>
+      <div class="nt-card"><div class="nt-card-mark">B</div><h3>成本控制</h3><p>按模型和渠道设置倍率，国产模型承接高频场景，国外模型保证体验和利润。</p></div>
+      <div class="nt-card"><div class="nt-card-mark">C</div><h3>稳定优先</h3><p>每个热门模型配置多条上游线路，失败自动切换，降低单渠道波动风险。</p></div>
+      <div class="nt-card"><div class="nt-card-mark">D</div><h3>人民币余额</h3><p>账户以人民币展示，保留微信支付、兑换码、人工补单，降低第一版充值摩擦。</p></div>
+      <div class="nt-card"><div class="nt-card-mark">E</div><h3>开发者友好</h3><p>重点适配 Cursor、Claude Code、Cline、Cherry Studio 和常见 SDK。</p></div>
+      <div class="nt-card"><div class="nt-card-mark">F</div><h3>运营留存</h3><p>免费额度、阶梯套餐、邀请奖励和用量统计，帮助用户注册后尽快完成首充。</p></div>
+    </div>
+  </section>
+
+  <section class="nt-section">
+    <div class="nt-section-head">
+      <div>
+        <span class="nt-chip">系统分工</span>
+        <h2>三套视角，各司其职</h2>
+      </div>
+    </div>
+    <div class="nt-flow">
+      <div class="nt-flow-step"><b>01</b><strong>公开官网</strong><span>展示品牌、价格、模型、Claude Code 教程和注册入口。</span></div>
+      <div class="nt-flow-step"><b>02</b><strong>用户后台</strong><span>管理余额、充值、API Key、调用日志、用量统计和模型权限。</span></div>
+      <div class="nt-flow-step"><b>03</b><strong>管理后台</strong><span>配置用户、订单、渠道、倍率、模型路由、日志和风控。</span></div>
+      <div class="nt-flow-step"><b>04</b><strong>API 网关</strong><span>通过 api.996tokens.com 对外提供 OpenAI 兼容调用入口。</span></div>
+    </div>
+  </section>
+
+  <section class="nt-section">
+    <div class="nt-band">
+      <div>
+        <h2>服务声明</h2>
+        <p>996 Tokens 当前只向海外用户开放。平台不参与上游资金清算，仅提供 API 分发、用量统计、账户充值和技术接入服务；企业合作、兑换码或异常订单请联系管理员确认。</p>
+      </div>
+      <div class="nt-band-list">
+        <span>官网 <b>996tokens.com</b></span>
+        <span>控制台 <b>app.996tokens.com</b></span>
+        <span>API <b>api.996tokens.com</b></span>
+      </div>
+    </div>
+  </section>
+</div>
+"""
+
+FOOTER_HTML = r"""
+<style>
+footer .text-sm.flex-shrink-0 { display: none !important; }
+footer > div { justify-content: center !important; }
+.custom-footer { width: 100%; text-align: center; }
+.custom-footer .footer-note {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  line-height: 1.7;
+}
+.custom-footer .footer-copy { color: var(--semi-color-text-1); }
+.custom-footer .footer-disclaimer { color: var(--semi-color-text-2); font-size: 13px; }
+a[href*="newapi.pro"], a[href*="github.com/QuantumNous"] { display: none !important; }
+</style>
+<div class="custom-footer">
+  <div class="footer-note">
+    <div class="footer-copy">© 2026 996 Tokens. 版权所有</div>
+    <div class="footer-disclaimer">只向海外用户开放</div>
+  </div>
+</div>
+"""
+
+
+def upsert_option(conn: sqlite3.Connection, key: str, value: str) -> None:
+    conn.execute(
+        "insert or replace into options (`key`, value) values (?, ?)",
+        (key, value),
+    )
+
+
+def main() -> None:
+    with sqlite3.connect(DB_PATH) as conn:
+        upsert_option(conn, "About", ABOUT_HTML.strip())
+        upsert_option(conn, "Footer", FOOTER_HTML.strip())
+        upsert_option(conn, "DocsLink", DOCS_LINK)
+        upsert_option(conn, "general_setting.docs_link", DOCS_LINK)
+        conn.commit()
+    print(f"Updated NewAPI branding options in {DB_PATH}")
+
+
+if __name__ == "__main__":
+    main()

@@ -389,23 +389,65 @@ def usage_page(logs: Iterable[dict[str, Any]], settings: Settings) -> str:
 
 def docs_page(settings: Settings) -> str:
     base = escape(settings.public_api_base)
+    register = escape(settings.register_url)
+    app = escape(settings.app_base_url)
+    tools = [
+        ("/docs/cursor", "🖱️", "Cursor / Cline", "图形界面接入", "覆盖 Base URL 即可调用所有平台模型，3 步完成。"),
+        ("/docs/claude-code-cli", "⌨️", "Claude Code CLI", "命令行 Agent 接入", "设置环境变量后直接 claude 启动，支持完整 Agent 编码。"),
+        ("#sdk", "🐍", "OpenAI SDK", "Python / Node.js", "换一行 base_url，其他代码零改动。"),
+        ("#curl", "🔧", "curl / HTTP", "任意语言直调", "标准 Bearer Token 鉴权，与 OpenAI API 格式完全一致。"),
+    ]
+    tool_html = "".join(
+        f"""<a class="doc-tool-card" href="{href}" id="{href.lstrip('/').replace('/', '-').lstrip('#')}">
+          <div class="dtc-icon">{icon}</div>
+          <div class="dtc-body">
+            <strong>{escape(name)}</strong>
+            <span class="dtc-tag">{escape(tag)}</span>
+            <p>{escape(desc)}</p>
+          </div>
+          <div class="dtc-arrow">→</div>
+        </a>"""
+        for href, icon, name, tag, desc in tools
+    )
     return layout(
         "Docs",
         "docs",
         f"""
-        <section class="center-head compact">
-          <p class="eyebrow">Docs</p>
-          <h1>接入文档</h1>
-          <p>兼容 OpenAI Chat Completions。Cursor、Cline、Claude Code 可以直接走 OpenAI-compatible 配置。</p>
+        <section class="docs-dark-hero">
+          <div class="ddh-bg"></div>
+          <div class="ddh-content">
+            <p class="ddh-eyebrow">接入文档</p>
+            <h1>一个 API Key，接入所有主流模型</h1>
+            <p class="ddh-sub">100% 兼容 OpenAI Chat Completions — Cursor、Cline、Claude Code、任意 SDK 不需要修改现有代码。</p>
+            <div class="ddh-endpoint">
+              <span class="ddh-label">Base URL</span>
+              <code class="ddh-url">{base}/v1</code>
+            </div>
+            <div class="ddh-actions">
+              <a class="button ddh-btn-primary" href="{register}">注册并获取 API Key →</a>
+              <a class="button ddh-btn-ghost" href="{app}">已登录？进控制台</a>
+            </div>
+          </div>
         </section>
-        <section class="action-grid">
-          <a class="action-card" href="/docs/cursor"><strong>Cursor 接入教程 →</strong><span>图形界面，覆盖 Base URL 即可调用平台模型。</span></a>
-          <a class="action-card" href="/docs/claude-code-cli"><strong>Claude Code CLI 接入教程 →</strong><span>命令行 Agent 编码，环境变量一键接入。</span></a>
+
+        <section class="docs-tools-section">
+          <div class="dts-head">
+            <p class="eyebrow">Quick Start</p>
+            <h2>选择你的接入方式</h2>
+          </div>
+          <div class="doc-tools-grid">{tool_html}</div>
         </section>
-        <section class="docs-grid">
-          <article>
-            <h2>OpenAI SDK</h2>
-            <pre>from openai import OpenAI
+
+        <section class="docs-code-section">
+          <div class="dcs-head">
+            <p class="eyebrow">Code Examples</p>
+            <h2>示例代码</h2>
+          </div>
+          <div class="docs-grid">
+            <article id="sdk">
+              <div class="article-tag">Python · OpenAI SDK</div>
+              <h2>OpenAI SDK</h2>
+              <pre>from openai import OpenAI
 
 client = OpenAI(
     api_key="YOUR_API_KEY",
@@ -417,10 +459,11 @@ resp = client.chat.completions.create(
     messages=[{{"role": "user", "content": "你好"}}]
 )
 print(resp.choices[0].message.content)</pre>
-          </article>
-          <article>
-            <h2>curl</h2>
-            <pre>curl {base}/v1/chat/completions \\
+            </article>
+            <article id="curl">
+              <div class="article-tag">Shell · curl</div>
+              <h2>curl</h2>
+              <pre>curl {base}/v1/chat/completions \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{{
@@ -429,20 +472,38 @@ print(resp.choices[0].message.content)</pre>
       {{"role": "user", "content": "写一个 Python 爬虫"}}
     ]
   }}'</pre>
-          </article>
-          <article>
-            <h2>Cursor / Cline</h2>
-            <pre>API Provider: OpenAI Compatible
+            </article>
+            <article>
+              <div class="article-tag">Cursor · Cline · OpenAI Compatible</div>
+              <h2>Cursor / Cline</h2>
+              <pre>API Provider: OpenAI Compatible
 Base URL: {base}/v1
-API Key: YOUR_API_KEY
-Model: yu-code-auto</pre>
-          </article>
-          <article>
-            <h2>Claude Code</h2>
-            <pre>export ANTHROPIC_BASE_URL={base}
+API Key:   YOUR_API_KEY
+Model:     yu-code-auto</pre>
+            </article>
+            <article>
+              <div class="article-tag">Claude Code CLI · 环境变量</div>
+              <h2>Claude Code</h2>
+              <pre>export ANTHROPIC_BASE_URL={base}
 export ANTHROPIC_AUTH_TOKEN=YOUR_API_KEY
-export ANTHROPIC_MODEL=claude-sonnet-economy</pre>
-          </article>
+export ANTHROPIC_MODEL=claude-sonnet-4-5
+
+claude  # 直接启动</pre>
+            </article>
+          </div>
+        </section>
+
+        <section class="docs-cta-strip">
+          <div class="docs-cta-inner">
+            <div>
+              <strong>准备好了吗？</strong>
+              <p>注册即送 ¥5 体验额度，无需绑卡，即刻接入。</p>
+            </div>
+            <div class="docs-cta-btns">
+              <a class="button primary" href="{register}">免费注册</a>
+              <a class="button" href="{app}">进控制台</a>
+            </div>
+          </div>
         </section>
         """,
         settings=settings,
@@ -582,6 +643,7 @@ Model: yu-code-auto</pre>
 def claude_code_cli_page(settings: Settings) -> str:
     base = escape(settings.public_api_base)
     register = escape(settings.register_url)
+    app = escape(settings.app_base_url)
     settings_json = """{
   "env": {
     "ANTHROPIC_BASE_URL": "%s",
@@ -592,90 +654,157 @@ def claude_code_cli_page(settings: Settings) -> str:
 }""" % settings.public_api_base
     settings_json = escape(settings_json)
     steps = [
-        ("1", "安装 Claude Code CLI", "需要 Node.js 18+，全局安装官方 CLI。"),
-        ("2", "获取 API Key", "在控制台 → API Keys 创建 Key，并确保账户有余额。"),
-        ("3", "配置环境变量", "把平台地址、Key 和模型名写入环境变量（或写进 ~/.claude/settings.json 持久化）。"),
-        ("4", "启动并验证", "在项目目录运行 claude，用 /status 或 /model 确认接入成功。"),
+        ("1", "安装 Claude Code CLI", "需要 Node.js 18+，终端运行安装命令。", "npm install -g @anthropic-ai/claude-code"),
+        ("2", "获取 API Key", "注册后进入控制台 → API Keys，点击新建 Key（只显示一次，请保存好）。", ""),
+        ("3", "配置环境变量", "将平台地址和 Key 写入环境变量，或直接持久化到 shell 配置文件。", ""),
+        ("4", "启动并验证", "cd 进项目目录，运行 claude，用 /status 确认接入成功。", "claude"),
     ]
-    step_html = "".join(
-        f"<div><strong>{escape(num)}</strong><h2>{escape(title)}</h2><p>{escape(desc)}</p></div>"
-        for num, title, desc in steps
-    )
     models = [
-        ("claude-sonnet-4-5", "主力模型（ANTHROPIC_MODEL），复杂任务与长上下文"),
-        ("claude-haiku-3-5", "快速小模型（ANTHROPIC_SMALL_FAST_MODEL），用于标题/补全等轻量调用"),
-        ("yu-code-auto", "平台自动路由，按成本与稳定性自动选上游"),
+        ("claude-sonnet-4-5", "ANTHROPIC_MODEL", "主力模型，复杂任务与长上下文", "stable"),
+        ("claude-haiku-3-5", "ANTHROPIC_SMALL_FAST_MODEL", "轻量快速模型，用于标题/补全等低频调用", "economy"),
+        ("yu-code-auto", "任意变量", "平台自动路由，按成本与稳定性自动选上游", "auto"),
     ]
     model_rows = "".join(
-        f"<tr><td><code>{escape(name)}</code></td><td>{escape(desc)}</td></tr>"
-        for name, desc in models
+        f"<tr><td><code>{escape(name)}</code></td><td><span class='line-badge {badge}'>{escape(env)}</span></td><td>{escape(desc)}</td></tr>"
+        for name, env, desc, badge in models
     )
     faqs = [
-        ("ANTHROPIC_BASE_URL 要不要带 /v1？", "不要。Claude Code 走 Anthropic 协议，Base URL 填到域名根（不带 /v1），平台会自动转发 /v1/messages。"),
-        ("AUTH_TOKEN 和 API_KEY 区别？", "用 ANTHROPIC_AUTH_TOKEN 填平台的 Key 即可；若客户端只认 ANTHROPIC_API_KEY，填同一个 Key 也可以。"),
-        ("提示余额不足 / 402？", "去控制台充值；账户余额为 0 时网关会直接拒绝请求。"),
-        ("如何省钱？", "把 ANTHROPIC_SMALL_FAST_MODEL 设为 claude-haiku-3-5，大量轻量调用走便宜模型。"),
+        ("❓", "ANTHROPIC_BASE_URL 要不要带 /v1？", "不要。Claude Code 走 Anthropic 原生协议，Base URL 只填根域名，平台自动适配 /v1/messages 转发。"),
+        ("🔑", "AUTH_TOKEN 和 API_KEY 有什么区别？", "用 ANTHROPIC_AUTH_TOKEN 填平台 Key 即可。若客户端只识别 ANTHROPIC_API_KEY，填同一个 Key 也能用。"),
+        ("💳", "提示余额不足 / 402 错误？", "前往控制台充值，账户余额为 0 时网关直接拒绝请求并返回 402。"),
+        ("💰", "如何降低使用成本？", "把 ANTHROPIC_SMALL_FAST_MODEL 设为 claude-haiku-3-5，大量轻量调用走便宜模型，重任务才触发 Sonnet。"),
     ]
     faq_html = "".join(
-        f"<div><h2>{escape(q)}</h2><p>{escape(a)}</p></div>" for q, a in faqs
+        f"""<div class="cli-faq-card">
+          <div class="faq-emoji">{escape(emoji)}</div>
+          <strong>{escape(q)}</strong>
+          <p>{escape(a)}</p>
+        </div>"""
+        for emoji, q, a in faqs
+    )
+    step_html = "".join(
+        f"""<div class="cli-step">
+          <div class="cli-step-num">{escape(num)}</div>
+          <div class="cli-step-body">
+            <strong>{escape(title)}</strong>
+            <p>{escape(desc)}</p>
+            {f'<pre class="cli-step-code">{escape(code)}</pre>' if code else ''}
+          </div>
+        </div>"""
+        for num, title, desc, code in steps
     )
     return layout(
         "Claude Code CLI 接入",
         "docs",
         f"""
-        <section class="page-title">
-          <div>
+        <section class="cli-hero">
+          <div class="cli-hero-text">
             <p class="eyebrow">Guide · Claude Code CLI</p>
-            <h1>在 Claude Code 命令行接入 996 Tokens API</h1>
-            <p>通过环境变量把官方 Claude Code CLI 指向本平台，人民币计费、多上游冗余，享受完整 Agent 编码体验。</p>
+            <h1>在 Claude Code 接入 996 Tokens</h1>
+            <p>通过环境变量把官方 Claude Code CLI 指向本平台，人民币计费、多上游冗余，4 步完成完整 Agent 编码接入。</p>
+            <div class="cli-hero-actions">
+              <a class="button primary" href="{register}">注册获取 API Key →</a>
+              <a class="button" href="{app}">已有 Key？进控制台</a>
+            </div>
           </div>
-          <a class="button primary" href="{register}">获取 API Key</a>
+          <div class="cli-hero-badge">
+            <div class="chb-inner">
+              <div class="chb-row"><span>Base URL</span><code>{base}</code></div>
+              <div class="chb-row"><span>协议</span><code>Anthropic native</code></div>
+              <div class="chb-row"><span>主力模型</span><code>claude-sonnet-4-5</code></div>
+              <div class="chb-row"><span>轻量模型</span><code>claude-haiku-3-5</code></div>
+            </div>
+          </div>
         </section>
-        <section class="steps">{step_html}</section>
-        <section class="docs-grid">
-          <article>
-            <h2>安装 CLI</h2>
-            <pre>npm install -g @anthropic-ai/claude-code
 
-claude --version</pre>
-          </article>
-          <article>
-            <h2>临时环境变量</h2>
-            <pre>export ANTHROPIC_BASE_URL={base}
+        <section class="cli-steps-section">
+          <div class="css-head">
+            <p class="eyebrow">Steps</p>
+            <h2>四步接入</h2>
+          </div>
+          <div class="cli-steps-grid">{step_html}</div>
+        </section>
+
+        <section class="docs-code-section">
+          <div class="dcs-head">
+            <p class="eyebrow">Configuration</p>
+            <h2>三种配置方式</h2>
+          </div>
+          <div class="docs-grid">
+            <article>
+              <div class="article-tag">方式一 · 临时环境变量（测试用）</div>
+              <h2>export 命令</h2>
+              <pre>export ANTHROPIC_BASE_URL={base}
 export ANTHROPIC_AUTH_TOKEN=YOUR_API_KEY
 export ANTHROPIC_MODEL=claude-sonnet-4-5
 export ANTHROPIC_SMALL_FAST_MODEL=claude-haiku-3-5
 
 claude</pre>
-          </article>
-          <article>
-            <h2>持久化（写入 shell 配置）</h2>
-            <pre>echo 'export ANTHROPIC_BASE_URL={base}' >> ~/.zshrc
+            </article>
+            <article>
+              <div class="article-tag">方式二 · 持久化到 Shell 配置</div>
+              <h2>写入 ~/.zshrc / ~/.bashrc</h2>
+              <pre>echo 'export ANTHROPIC_BASE_URL={base}' >> ~/.zshrc
 echo 'export ANTHROPIC_AUTH_TOKEN=YOUR_API_KEY' >> ~/.zshrc
 echo 'export ANTHROPIC_MODEL=claude-sonnet-4-5' >> ~/.zshrc
-source ~/.zshrc</pre>
-          </article>
-          <article>
-            <h2>或写入 ~/.claude/settings.json</h2>
-            <pre>{settings_json}</pre>
-          </article>
+source ~/.zshrc
+
+claude</pre>
+            </article>
+            <article>
+              <div class="article-tag">方式三 · settings.json（推荐）</div>
+              <h2>~/.claude/settings.json</h2>
+              <pre>{settings_json}</pre>
+            </article>
+            <article>
+              <div class="article-tag">验证接入</div>
+              <h2>确认配置正确</h2>
+              <pre># 启动后在 Claude Code 内执行
+/status    # 查看当前模型和连接状态
+/model     # 确认模型名
+
+# 或用 curl 快速测试
+curl {base}/v1/messages \\
+  -H "x-api-key: YOUR_API_KEY" \\
+  -H "anthropic-version: 2023-06-01" \\
+  -H "Content-Type: application/json" \\
+  -d '{{"model":"claude-sonnet-4-5","max_tokens":64,"messages":[{{"role":"user","content":"hi"}}]}}'</pre>
+            </article>
+          </div>
         </section>
-        <section class="table-wrap">
-          <h2>推荐模型</h2>
-          <table>
-            <thead><tr><th>模型名</th><th>用途</th></tr></thead>
-            <tbody>{model_rows}</tbody>
-          </table>
+
+        <section class="cli-models-section">
+          <div class="dcs-head">
+            <p class="eyebrow">Models</p>
+            <h2>推荐模型组合</h2>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>模型名</th><th>环境变量</th><th>用途说明</th></tr></thead>
+              <tbody>{model_rows}</tbody>
+            </table>
+          </div>
         </section>
-        <section class="center-head compact">
-          <p class="eyebrow">FAQ</p>
-          <h1>常见问题</h1>
+
+        <section class="cli-faq-section">
+          <div class="dcs-head">
+            <p class="eyebrow">FAQ</p>
+            <h2>常见问题</h2>
+          </div>
+          <div class="cli-faq-grid">{faq_html}</div>
         </section>
-        <section class="feature-grid">{faq_html}</section>
-        <section class="pricing-note">
-          <strong>下一步</strong>
-          <p>更喜欢图形界面？看看在 Cursor 里接入的教程。</p>
-          <a class="text-link" href="/docs/cursor">Cursor 接入教程 →</a>
+
+        <section class="docs-cta-strip">
+          <div class="docs-cta-inner">
+            <div>
+              <strong>更喜欢图形界面？</strong>
+              <p>查看 Cursor / Cline 接入教程，3 步完成配置。</p>
+            </div>
+            <div class="docs-cta-btns">
+              <a class="button primary" href="/docs/cursor">Cursor 接入教程 →</a>
+              <a class="button" href="{app}">进控制台</a>
+            </div>
+          </div>
         </section>
         """,
         settings=settings,
@@ -688,72 +817,139 @@ def about_page(settings: Settings) -> str:
     features = [
         ("🔀", "多上游自动路由", "同一模型保留 2–3 个渠道，按价格、延迟、成功率评分后自动选路，单点挂掉自动切换。"),
         ("💰", "毛利保护", "每次请求都会验证售价 vs 成本是否满足最低毛利率，避免高频调用亏本。"),
-        ("🇨🇳", "人民币计费", "账户余额以 CNY 计算，微信支付充值，按量扣费，告别汇率换算。"),
+        ("💳", "人民币计费", "账户余额以 CNY 展示，当前保留微信支付、兑换码和人工补单，方便第一版快速上线。"),
         ("⚡", "流式输出", "完整支持 SSE streaming，Claude Code / Cursor 打字机效果无卡顿。"),
         ("🔌", "OpenAI 兼容", "接口格式 100% OpenAI Chat Completions，不需要修改现有代码，换一行 Base URL 即可。"),
         ("🛡️", "熔断 & 冷却", "上游连续出错后自动进入冷却，恢复后再放流量，保护用户体验和平台口碑。"),
     ]
     upstreams = [
-        ("御三家直连 / 聚合商", "Claude、GPT-4o、Gemini — 稳定渠道高权重，低价渠道做补充和利润优化。"),
-        ("SiliconFlow 国产主力", "DeepSeek、Qwen、豆包、GLM、Embedding — 低成本、高速度、利润核心。"),
-        ("全能补充渠道", "图像、视频、备用模型 — APIMart / jiekou.ai / token.chhai 等做模型丰富度。"),
+        ("🌐", "御三家直连 / 聚合商", "claude", "Claude、GPT-4o、Gemini — 稳定渠道高权重，低价渠道做补充和利润优化。"),
+        ("🚀", "SiliconFlow 国产主力", "siliconflow", "DeepSeek、Qwen、豆包、GLM、Embedding — 低成本、高速度、利润核心。"),
+        ("🔧", "全能补充渠道", "extra", "图像、视频、备用模型 — APIMart / jiekou.ai / token.chhai 等做模型丰富度。"),
+    ]
+    stats = [
+        ("30+", "精选模型线路"),
+        ("CNY", "人民币结算"),
+        ("¥10", "最低充值"),
+        ("海外", "只向海外用户开放"),
     ]
     feature_html = "".join(
-        f"<div><h2>{escape(icon)} {escape(title)}</h2><p>{escape(desc)}</p></div>"
+        f"""<div class="af-card">
+          <div class="af-icon">{escape(icon)}</div>
+          <h3>{escape(title)}</h3>
+          <p>{escape(desc)}</p>
+        </div>"""
         for icon, title, desc in features
     )
     upstream_html = "".join(
-        f"<div><h2>{escape(name)}</h2><p>{escape(desc)}</p></div>"
-        for name, desc in upstreams
+        f"""<div class="up-card up-{slug}">
+          <div class="up-icon">{escape(icon)}</div>
+          <strong>{escape(name)}</strong>
+          <p>{escape(desc)}</p>
+        </div>"""
+        for icon, name, slug, desc in upstreams
+    )
+    stats_html = "".join(
+        f"""<div class="about-stat">
+          <strong>{escape(val)}</strong>
+          <span>{escape(label)}</span>
+        </div>"""
+        for val, label in stats
     )
     return layout(
         "About",
         "about",
         f"""
-        <section class="about-hero">
-          <p class="eyebrow">About 996 Tokens</p>
-          <h1>面向 AI 编程的多模型 API 网关</h1>
-          <p>996 Tokens 是为 Claude Code、Cursor、Cline 和 AI Agent 开发者设计的 API 分发平台。<br>
-          一个 API Key，统一接入 Claude、GPT、Gemini、DeepSeek、Qwen、豆包，人民币计费，无需备案。</p>
-          <div class="hero-actions">
-            <a class="button primary" href="{escape(settings.register_url)}">免费注册体验</a>
-            <a class="button" href="/docs">查看接入文档</a>
+        <section class="about-dark-hero">
+          <div class="adh-bg"></div>
+          <div class="adh-content">
+            <p class="adh-eyebrow">About 996 Tokens</p>
+            <h1>面向 AI 编程的<br>多模型 API 网关</h1>
+            <p class="adh-sub">996 Tokens 是为 Claude Code、Cursor、Cline 和 AI Agent 开发者设计的 API 分发平台。<br>
+            一个 API Key，统一接入 Claude、GPT、Gemini、DeepSeek、Qwen、豆包；账户以人民币余额展示，本服务只向海外用户开放。</p>
+            <div class="adh-actions">
+              <a class="button primary adh-btn-primary" href="{escape(settings.register_url)}">免费注册体验 →</a>
+              <a class="button adh-btn-ghost" href="/docs">查看接入文档</a>
+            </div>
+            <div class="about-stats-row">{stats_html}</div>
           </div>
         </section>
-        <section class="center-head compact">
-          <p class="eyebrow">Features</p>
-          <h1>核心能力</h1>
-        </section>
-        <section class="feature-grid about-features">{feature_html}</section>
-        <section class="about-stack">
-          <div>
-            <p class="eyebrow">Architecture</p>
-            <h2>技术架构</h2>
-            <p>官网（Yu Gateway）负责获客、文档和 API 路由；New API 后台负责用户管理、充值、Key 和渠道；Nginx 做 HTTPS 反代和域名分流。</p>
-            <pre>用户请求
-  → Nginx HTTPS 反代
-    ├─ www.996tokens.com  → Yu Gateway（官网 + 路由层）
-    ├─ api.996tokens.com  → New API（用户 / 充值 / Key）
-    └─ app.996tokens.com  → New API（控制台）
-         ↓
-    多上游候选池（评分路由 + 熔断）
-         ↓
-    Claude / GPT / Gemini / 国产模型上游</pre>
+
+        <section class="about-section">
+          <div class="about-section-head">
+            <p class="eyebrow">Features</p>
+            <h2>六大核心能力</h2>
+            <p>每一项能力都是为了让 AI 编程工具更快、更稳、更省。</p>
           </div>
-          <div class="upstream-stack">
-            <p class="eyebrow">Upstreams</p>
-            <h2>上游策略</h2>
-            {upstream_html}
+          <div class="af-grid">{feature_html}</div>
+        </section>
+
+        <section class="about-arch-section">
+          <div class="aas-inner">
+            <div class="aas-left">
+              <p class="eyebrow">Architecture</p>
+              <h2>技术架构</h2>
+              <p>官网负责品牌、价格和接入文档；New API 负责用户登录、充值、API Key、渠道、倍率和用量日志；Nginx 做 HTTPS 反代和域名分流。</p>
+              <div class="arch-diagram">
+                <div class="arch-node arch-user">用户请求</div>
+                <div class="arch-arrow">↓</div>
+                <div class="arch-node arch-nginx">Nginx HTTPS 反代</div>
+                <div class="arch-arrow">↓</div>
+                <div class="arch-branches">
+                  <div class="arch-branch">
+                    <div class="arch-node arch-www">www.996tokens.com<small>官网 / 价格 / 文档</small></div>
+                  </div>
+                  <div class="arch-branch">
+                    <div class="arch-node arch-api">api.996tokens.com<small>API 调用入口</small></div>
+                  </div>
+                  <div class="arch-branch">
+                    <div class="arch-node arch-app">app.996tokens.com<small>用户后台 / 管理后台</small></div>
+                  </div>
+                </div>
+                <div class="arch-arrow">↓</div>
+                <div class="arch-node arch-pool">多上游候选池<small>评分路由 + 熔断 + 冷却</small></div>
+                <div class="arch-arrow">↓</div>
+                <div class="arch-node arch-models">Claude · GPT · Gemini · 国产模型</div>
+              </div>
+            </div>
+            <div class="aas-right">
+              <p class="eyebrow">Upstreams</p>
+              <h2>上游策略</h2>
+              <p>三条线并行，覆盖高稳定、低成本、多模态场景。</p>
+              <div class="up-grid">{upstream_html}</div>
+            </div>
           </div>
         </section>
-        <section class="about-contact">
-          <p class="eyebrow">Contact</p>
-          <h2>联系我们</h2>
-          <p>有问题或想合作，欢迎通过以下方式联系：</p>
-          <div class="contact-grid">
-            <div><strong>微信客服</strong><p>扫码添加，或在控制台提交工单。</p></div>
-            <div><strong>接入文档</strong><p><a class="text-link" href="/docs" style="margin-top:0">www.996tokens.com/docs →</a></p></div>
-            <div><strong>API Base URL</strong><p><code>{base}/v1</code></p></div>
+
+        <section class="about-contact-section">
+          <div class="acs-head">
+            <p class="eyebrow">Contact</p>
+            <h2>联系我们</h2>
+            <p>有问题或想合作，欢迎通过以下方式联系：</p>
+          </div>
+          <div class="acs-grid">
+            <div class="acs-card">
+              <div class="acs-icon">💬</div>
+              <strong>微信客服</strong>
+              <p>扫码添加微信，或在控制台提交工单，工作时间内快速响应。</p>
+            </div>
+            <div class="acs-card">
+              <div class="acs-icon">📚</div>
+              <strong>接入文档</strong>
+              <p><a class="acs-link" href="/docs">www.996tokens.com/docs →</a></p>
+              <p style="margin-top:6px;color:var(--muted);font-size:13px;">Cursor、Claude Code、OpenAI SDK 接入教程。</p>
+            </div>
+            <div class="acs-card">
+              <div class="acs-icon">🔗</div>
+              <strong>API Base URL</strong>
+              <p><code class="acs-code">{base}/v1</code></p>
+              <p style="margin-top:6px;color:var(--muted);font-size:13px;">兼容 OpenAI Chat Completions，换一行即接入。</p>
+            </div>
+            <div class="acs-card">
+              <div class="acs-icon">🌍</div>
+              <strong>服务声明</strong>
+              <p>996 Tokens 当前只向海外用户开放；如需企业合作、兑换码或异常订单处理，请先联系管理员确认。</p>
+            </div>
           </div>
         </section>
         """,
@@ -1406,7 +1602,7 @@ def layout(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{escape(title)} · Yu Gateway</title>
+  <title>{escape(title)} · {escape(cfg.site_name)}</title>
   <style>
     :root {{
       color-scheme: light;
@@ -1598,22 +1794,87 @@ def layout(
     .two {{ display: grid; grid-template-columns: .8fr 1.2fr; gap: 16px; align-items: start; }}
     .risk-note {{ margin-top: 24px; border: 1px solid #fed7aa; background: #fff7ed; color: #7c2d12; border-radius: 12px; padding: 18px 20px; }}
     .risk-note p {{ margin: 8px 0 0; line-height: 1.6; }}
-    .about-hero {{ text-align: center; padding: 54px 0 48px; max-width: 820px; margin: 0 auto; }}
-    .about-hero h1 {{ font-size: 40px; margin-bottom: 18px; }}
-    .about-hero p {{ color: var(--muted); font-size: 17px; line-height: 1.75; margin: 0 auto 24px; }}
-    .about-features {{ grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 0; }}
-    .about-stack {{ display: grid; grid-template-columns: 1.1fr .9fr; gap: 28px; margin: 34px 0; border: 1px solid var(--line); border-radius: 16px; padding: 28px; background: #fff; box-shadow: var(--shadow); }}
-    .about-stack p {{ color: var(--muted); line-height: 1.7; }}
-    .upstream-stack {{ display: grid; gap: 14px; align-content: start; }}
-    .upstream-stack div {{ border: 1px solid var(--line); border-radius: 12px; padding: 16px; background: var(--wash); }}
-    .upstream-stack h2 {{ font-size: 17px; margin-bottom: 6px; }}
-    .upstream-stack p {{ margin: 0; font-size: 14px; }}
-    .about-contact {{ margin: 28px 0; border: 1px solid var(--line); border-radius: 16px; padding: 28px; background: var(--wash); }}
-    .about-contact p {{ color: var(--muted); line-height: 1.65; }}
-    .contact-grid {{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }}
-    .contact-grid div {{ border: 1px solid var(--line); border-radius: 12px; padding: 18px; background: #fff; }}
-    .contact-grid strong {{ display: block; margin-bottom: 8px; }}
-    .contact-grid p {{ margin: 0; font-size: 14px; }}
+    /* ── About page redesign ── */
+    .about-dark-hero {{ position: relative; margin: -26px -18px 0; overflow: hidden; background: #07101f; color: #f0f6ff; padding: 80px 18px 64px; }}
+    .adh-bg {{ position: absolute; inset: 0; background: radial-gradient(ellipse 70% 60% at 20% 30%, rgba(37,99,235,.28) 0%, transparent 60%), radial-gradient(ellipse 50% 50% at 80% 70%, rgba(16,163,74,.16) 0%, transparent 55%); pointer-events: none; }}
+    .adh-bg::after {{ content: ''; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px); background-size: 44px 44px; }}
+    .adh-content {{ position: relative; z-index: 1; max-width: 900px; margin: 0 auto; text-align: center; }}
+    .adh-eyebrow {{ display: inline-block; margin: 0 0 16px; padding: 4px 14px; border: 1px solid rgba(147,197,253,.4); border-radius: 999px; background: rgba(37,99,235,.18); color: #93c5fd; font-size: 12px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }}
+    .about-dark-hero h1 {{ font-size: 54px; line-height: 1.12; font-weight: 900; color: #fff; margin: 0 0 22px; }}
+    .adh-sub {{ color: #94a3b8; font-size: 17px; line-height: 1.8; margin: 0 auto 32px; max-width: 780px; }}
+    .adh-actions {{ display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }}
+    .adh-btn-primary {{ background: linear-gradient(135deg, #2563eb, #1d4ed8); border: none; color: #fff; padding: 12px 26px; border-radius: 10px; font-size: 15px; box-shadow: 0 8px 24px rgba(37,99,235,.4); transition: transform .15s, box-shadow .15s; }}
+    .adh-btn-primary:hover {{ transform: translateY(-2px); box-shadow: 0 12px 32px rgba(37,99,235,.5); }}
+    .adh-btn-ghost {{ background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.2); color: #e2e8f0; padding: 12px 26px; border-radius: 10px; font-size: 15px; transition: background .15s; }}
+    .adh-btn-ghost:hover {{ background: rgba(255,255,255,.14); }}
+    .about-stats-row {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 52px; max-width: 760px; margin-left: auto; margin-right: auto; }}
+    .about-stat {{ border: 1px solid rgba(255,255,255,.1); border-radius: 14px; background: rgba(255,255,255,.06); backdrop-filter: blur(10px); padding: 18px 12px; }}
+    .about-stat strong {{ display: block; font-size: 28px; font-weight: 900; color: #fff; line-height: 1.1; }}
+    .about-stat span {{ display: block; margin-top: 4px; color: #94a3b8; font-size: 13px; }}
+    /* Features section */
+    .about-section {{ max-width: 1240px; margin: 0 auto; padding: 64px 18px 32px; }}
+    .about-section-head {{ text-align: center; margin-bottom: 40px; }}
+    .about-section-head h2 {{ font-size: 32px; margin-bottom: 10px; }}
+    .about-section-head p {{ color: var(--muted); font-size: 16px; max-width: 560px; margin: 0 auto; }}
+    .af-grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }}
+    .af-card {{ border: 1px solid var(--line); border-radius: 16px; background: #fff; padding: 28px; box-shadow: 0 4px 20px rgba(15,23,42,.06); transition: transform .2s, box-shadow .2s; }}
+    .af-card:hover {{ transform: translateY(-4px); box-shadow: 0 12px 40px rgba(15,23,42,.12); }}
+    .af-icon {{ font-size: 32px; margin-bottom: 16px; }}
+    .af-card h3 {{ font-size: 17px; font-weight: 800; margin: 0 0 10px; color: var(--ink); }}
+    .af-card p {{ color: var(--muted); line-height: 1.65; margin: 0; font-size: 14px; }}
+    /* Architecture section */
+    .about-arch-section {{ background: var(--wash); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 64px 18px; }}
+    .aas-inner {{ max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: 1.1fr .9fr; gap: 48px; align-items: start; }}
+    .aas-left h2, .aas-right h2 {{ font-size: 26px; margin: 6px 0 12px; }}
+    .aas-left > p, .aas-right > p {{ color: var(--muted); line-height: 1.7; margin-bottom: 24px; }}
+    .arch-diagram {{ display: flex; flex-direction: column; align-items: center; gap: 4px; }}
+    .arch-node {{ width: 100%; text-align: center; padding: 12px 16px; border-radius: 10px; font-weight: 700; font-size: 14px; border: 1px solid var(--line); background: #fff; box-shadow: 0 2px 8px rgba(15,23,42,.06); }}
+    .arch-node small {{ display: block; font-weight: 400; font-size: 12px; color: var(--muted); margin-top: 3px; }}
+    .arch-user {{ background: #1e3a5f; color: #fff; border-color: #1e3a5f; }}
+    .arch-nginx {{ background: #0f4c35; color: #fff; border-color: #0f4c35; }}
+    .arch-pool {{ background: linear-gradient(135deg, #1e293b, #0f172a); color: #e2e8f0; border-color: #334155; }}
+    .arch-pool small {{ color: #94a3b8; }}
+    .arch-models {{ background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; border-color: #2563eb; font-size: 13px; }}
+    .arch-branches {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; }}
+    .arch-branch {{ display: flex; }}
+    .arch-www {{ background: #edf2ff; color: #1d4ed8; border-color: #bfdbfe; }}
+    .arch-api {{ background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }}
+    .arch-app {{ background: #fefce8; color: #854d0e; border-color: #fde68a; }}
+    .arch-arrow {{ font-size: 18px; color: var(--muted); line-height: 1; }}
+    .up-grid {{ display: grid; gap: 14px; }}
+    .up-card {{ border: 1px solid var(--line); border-radius: 14px; padding: 20px; background: #fff; box-shadow: 0 2px 10px rgba(15,23,42,.05); display: flex; flex-direction: column; gap: 8px; }}
+    .up-icon {{ font-size: 24px; }}
+    .up-card strong {{ font-size: 15px; font-weight: 800; color: var(--ink); }}
+    .up-card p {{ margin: 0; color: var(--muted); font-size: 13px; line-height: 1.6; }}
+    .up-claude {{ border-left: 3px solid #2563eb; }}
+    .up-siliconflow {{ border-left: 3px solid #16a34a; }}
+    .up-extra {{ border-left: 3px solid #d97706; }}
+    /* Contact section */
+    .about-contact-section {{ max-width: 1240px; margin: 0 auto; padding: 64px 18px 80px; }}
+    .acs-head {{ text-align: center; margin-bottom: 36px; }}
+    .acs-head h2 {{ font-size: 30px; margin-bottom: 10px; }}
+    .acs-head p {{ color: var(--muted); font-size: 16px; }}
+    .acs-grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }}
+    .acs-card {{ border: 1px solid var(--line); border-radius: 16px; padding: 28px; background: #fff; box-shadow: var(--shadow); transition: transform .2s, box-shadow .2s; }}
+    .acs-card:hover {{ transform: translateY(-3px); box-shadow: 0 12px 36px rgba(15,23,42,.1); }}
+    .acs-icon {{ font-size: 30px; margin-bottom: 14px; }}
+    .acs-card strong {{ display: block; font-size: 16px; font-weight: 800; margin-bottom: 10px; color: var(--ink); }}
+    .acs-card p {{ color: var(--muted); font-size: 14px; line-height: 1.65; margin: 0; }}
+    .acs-link {{ color: var(--blue); font-weight: 700; text-decoration: none; }}
+    .acs-link:hover {{ text-decoration: underline; }}
+    .acs-code {{ background: #eef2ff; color: var(--blue-dark); padding: 6px 10px; border-radius: 6px; font-size: 13px; display: inline-block; word-break: break-all; }}
+    @media (max-width: 980px) {{
+      .about-dark-hero {{ padding: 60px 18px 48px; }}
+      .about-dark-hero h1 {{ font-size: 38px; }}
+      .about-stats-row {{ grid-template-columns: repeat(2, 1fr); }}
+      .af-grid, .aas-inner, .acs-grid {{ grid-template-columns: 1fr; }}
+      .arch-branches {{ grid-template-columns: 1fr; }}
+    }}
+    @media (max-width: 560px) {{
+      .about-dark-hero h1 {{ font-size: 28px; }}
+      .about-stats-row {{ grid-template-columns: repeat(2, 1fr); gap: 10px; }}
+      .about-section, .about-arch-section, .about-contact-section {{ padding-top: 40px; padding-bottom: 32px; }}
+    }}
     @media (max-width: 980px) {{
       header {{ align-items: flex-start; flex-direction: column; }}
       nav {{ justify-content: flex-start; }}

@@ -44,7 +44,7 @@ class Settings:
             database_path=database_path,
             admin_token=os.getenv("ADMIN_TOKEN", "change-me-admin-token"),
             public_api_base=os.getenv("PUBLIC_API_BASE", "http://127.0.0.1:8001"),
-            site_name=os.getenv("SITE_NAME", "Yu Gateway"),
+            site_name=os.getenv("SITE_NAME", "996 Tokens"),
             app_base_url=os.getenv("APP_BASE_URL", "/dashboard"),
             login_url=os.getenv("LOGIN_URL", "/login"),
             register_url=os.getenv("REGISTER_URL", "/register"),

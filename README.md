@@ -1,7 +1,7 @@
 # 996 Tokens — 多模型 API 分发平台
 
 > 面向 AI 编程（Claude Code / Cursor）、RPA、Agent 开发者的多模型 API 网关。
-> 一个 Key 统一接入 GPT-4o / Claude / Gemini，按量计费，香港节点，无需备案。
+> 一个 Key 统一接入 GPT / Claude / Gemini / DeepSeek / Qwen，人民币余额按量计费，当前只向海外用户开放。
 
 **生产地址：**
 

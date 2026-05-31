@@ -35,8 +35,10 @@ services:
       ERROR_LOG_ENABLED: "true"
       # 生产上线后建议迁移到 MySQL（并发更好）：
       # SQL_DSN: root:password@tcp(mysql:3306)/newapi
-      # ── 品牌定制：覆盖 New API 默认的 docs.newapi.pro 链接 ──
-      # 将「帮助文档」链接指向自己的文档页
+      # ── 品牌定制 ──
+      # 注意：New API v1.0 rc.8 的「文档」导航实际读取数据库 options.general_setting.docs_link。
+      # 首次部署后请在后台系统设置里改为 https://www.996tokens.com/docs，
+      # 或手动写入 options 表；下面变量只保留给兼容未来镜像。
       DOCUMENTATION_LINK: "https://www.996tokens.com/docs"
       # 将 About / 关于页面重定向到主站 about 页
       ABOUT_LINK: "https://www.996tokens.com/about"

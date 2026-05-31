@@ -37,9 +37,9 @@ services:
       # SQL_DSN: root:password@tcp(mysql:3306)/newapi
       # ── 品牌定制 ──
       # 注意：New API v1.0 rc.8 的「文档」导航实际读取数据库 options.general_setting.docs_link。
-      # 首次部署后请在后台系统设置里改为 https://app.996tokens.com/docs，
+      # 首次部署后请在后台系统设置里改为 https://app.996tokens.com/about#docs，
       # 或手动写入 options 表；下面变量只保留给兼容未来镜像。
-      DOCUMENTATION_LINK: "https://app.996tokens.com/docs"
+      DOCUMENTATION_LINK: "https://app.996tokens.com/about#docs"
       # NewAPI 的 About / Footer 内容由 ops/newapi_branding.py 写入 options 表。
       ABOUT_LINK: "https://www.996tokens.com/about"
       # 页脚 HTML：隐藏 New API 品牌，改为 996 Tokens 版权与开放范围声明

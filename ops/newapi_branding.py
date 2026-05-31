@@ -8,7 +8,7 @@ import sqlite3
 
 
 DB_PATH = os.environ.get("NEWAPI_DB", "/opt/selltokens/data/new-api/one-api.db")
-DOCS_LINK = "https://app.996tokens.com/docs"
+DOCS_LINK = "https://app.996tokens.com/about#docs"
 
 ABOUT_HTML = r"""
 <style>
@@ -250,6 +250,102 @@ ABOUT_HTML = r"""
   .nt-card:nth-child(6) .nt-card-mark { background: #475569; }
   .nt-card h3 { margin: 0 0 10px; color: var(--nt-ink); font-size: 18px; font-weight: 900; }
   .nt-card p { margin: 0; color: var(--nt-muted); line-height: 1.7; }
+  .nt-docs {
+    display: grid;
+    grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr);
+    gap: 18px;
+    align-items: stretch;
+  }
+  .nt-doc-main,
+  .nt-doc-card {
+    border: 1px solid var(--nt-line);
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 14px 40px rgba(15, 23, 42, .06);
+  }
+  .nt-doc-main {
+    min-height: 320px;
+    padding: 26px;
+    background:
+      radial-gradient(circle at 16% 10%, rgba(37, 99, 235, .12), transparent 34%),
+      linear-gradient(180deg, #ffffff, #f8fafc);
+  }
+  .nt-doc-main h3 {
+    margin: 0 0 12px;
+    font-size: 24px;
+    color: var(--nt-ink);
+    font-weight: 900;
+  }
+  .nt-doc-main p { margin: 0; color: var(--nt-muted); line-height: 1.75; }
+  .nt-endpoint {
+    display: grid;
+    gap: 8px;
+    margin: 22px 0;
+    padding: 16px;
+    border-radius: 16px;
+    border: 1px solid #dbeafe;
+    background: #eff6ff;
+  }
+  .nt-endpoint span {
+    color: #1d4ed8;
+    font-size: 12px;
+    font-weight: 900;
+  }
+  .nt-endpoint code {
+    display: block;
+    width: 100%;
+    padding: 12px 13px;
+    border-radius: 12px;
+    background: #0f172a;
+    color: #dbeafe;
+    overflow-wrap: anywhere;
+  }
+  .nt-mini-steps {
+    display: grid;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .nt-mini-steps div {
+    display: grid;
+    grid-template-columns: 30px 1fr;
+    gap: 10px;
+    align-items: start;
+    color: var(--nt-muted);
+    line-height: 1.6;
+  }
+  .nt-mini-steps b {
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: #0f172a;
+    color: #fff;
+    font-size: 12px;
+  }
+  .nt-doc-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .nt-doc-card {
+    min-height: 150px;
+    padding: 20px;
+    color: var(--nt-ink);
+  }
+  .nt-doc-icon {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    margin-bottom: 14px;
+    background: #eef2ff;
+    color: var(--nt-blue);
+    font-weight: 900;
+  }
+  .nt-doc-card strong { display: block; margin-bottom: 8px; font-size: 16px; }
+  .nt-doc-card span { color: var(--nt-muted); line-height: 1.6; font-size: 14px; }
   .nt-flow {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -331,14 +427,14 @@ ABOUT_HTML = r"""
   @media (max-width: 960px) {
     .nt-hero-inner, .nt-band { grid-template-columns: 1fr; padding: 32px; }
     .nt-hero h1 { font-size: 40px; }
-    .nt-metrics, .nt-card-grid, .nt-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .nt-metrics, .nt-card-grid, .nt-flow, .nt-docs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .nt-flow-step:not(:last-child)::after { display: none; }
   }
   @media (max-width: 620px) {
     .nt-about { padding: 0 10px 42px; }
     .nt-hero-inner { padding: 24px; }
     .nt-hero h1 { font-size: 32px; }
-    .nt-metrics, .nt-card-grid, .nt-flow { grid-template-columns: 1fr; }
+    .nt-metrics, .nt-card-grid, .nt-flow, .nt-docs, .nt-doc-grid { grid-template-columns: 1fr; }
     .nt-section-head { align-items: flex-start; flex-direction: column; }
   }
 </style>
@@ -353,7 +449,7 @@ ABOUT_HTML = r"""
         <div class="nt-actions">
           <a class="nt-btn primary" href="/console">返回控制台</a>
           <a class="nt-btn" href="/console/topup">账户充值</a>
-          <a class="nt-btn" href="/docs">查看文档</a>
+          <a class="nt-btn" href="#docs">查看文档</a>
         </div>
       </div>
       <div class="nt-panel">
@@ -399,6 +495,46 @@ ABOUT_HTML = r"""
       <div class="nt-card"><div class="nt-card-mark">D</div><h3>人民币余额</h3><p>账户以人民币展示，保留微信支付、兑换码、人工补单，降低第一版充值摩擦。</p></div>
       <div class="nt-card"><div class="nt-card-mark">E</div><h3>开发者友好</h3><p>重点适配 Cursor、Claude Code、Cline、Cherry Studio 和常见 SDK。</p></div>
       <div class="nt-card"><div class="nt-card-mark">F</div><h3>运营留存</h3><p>免费额度、阶梯套餐、邀请奖励和用量统计，帮助用户注册后尽快完成首充。</p></div>
+    </div>
+  </section>
+
+  <section class="nt-section" id="docs">
+    <div class="nt-section-head">
+      <div>
+        <span class="nt-chip">接入文档</span>
+        <h2>在后台里完成第一步，不用跳出控制台</h2>
+        <p>这里保留最常用的接入信息。完整公开文档仍在官网，适合发给用户或写教程。</p>
+      </div>
+      <a class="nt-btn primary" href="https://www.996tokens.com/docs" target="_blank" rel="noopener noreferrer">公开文档 ↗</a>
+    </div>
+    <div class="nt-docs">
+      <div class="nt-doc-main">
+        <h3>OpenAI 兼容入口</h3>
+        <p>绝大多数客户端只需要替换 Base URL，然后填入后台创建的 API Key。</p>
+        <div class="nt-endpoint">
+          <span>BASE URL</span>
+          <code>https://api.996tokens.com/v1</code>
+        </div>
+        <div class="nt-mini-steps">
+          <div><b>1</b><span>进入控制台，创建或复制你的 API Key。</span></div>
+          <div><b>2</b><span>在 Cursor、Cline、Cherry Studio 或 SDK 中填写 Base URL。</span></div>
+          <div><b>3</b><span>选择模型后发起测试请求，后台可查看日志和扣费。</span></div>
+        </div>
+      </div>
+      <div class="nt-doc-grid">
+        <a class="nt-doc-card" href="https://www.996tokens.com/docs/cursor" target="_blank" rel="noopener noreferrer">
+          <div class="nt-doc-icon">C</div><strong>Cursor / Cline</strong><span>图形界面接入，适合 AI 编程日常使用。</span>
+        </a>
+        <a class="nt-doc-card" href="https://www.996tokens.com/docs/claude-code-cli" target="_blank" rel="noopener noreferrer">
+          <div class="nt-doc-icon">CC</div><strong>Claude Code CLI</strong><span>命令行 Agent 编码，配置环境变量后启动。</span>
+        </a>
+        <a class="nt-doc-card" href="https://www.996tokens.com/docs#sdk" target="_blank" rel="noopener noreferrer">
+          <div class="nt-doc-icon">SDK</div><strong>OpenAI SDK</strong><span>Python / Node.js 只改 base_url，其余代码基本不变。</span>
+        </a>
+        <a class="nt-doc-card" href="/pricing">
+          <div class="nt-doc-icon">¥</div><strong>模型价格</strong><span>在模型广场查看可用模型、倍率和人民币计价。</span>
+        </a>
+      </div>
     </div>
   </section>
 

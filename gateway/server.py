@@ -73,13 +73,13 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 models = [dict(row) for row in self.database.list_models()]
                 self._send_html(pricing_page(models, self.app_settings))
             elif path == "/about":
-                self._send_html(about_page(self.app_settings))
+                self._send_html(about_page(self.app_settings, portal=self._is_app_host()))
             elif path == "/docs":
-                self._send_html(docs_page(self.app_settings))
+                self._send_html(docs_page(self.app_settings, portal=self._is_app_host()))
             elif path == "/docs/cursor":
-                self._send_html(cursor_guide_page(self.app_settings))
+                self._send_html(cursor_guide_page(self.app_settings, portal=self._is_app_host()))
             elif path == "/docs/claude-code-cli":
-                self._send_html(claude_code_cli_page(self.app_settings))
+                self._send_html(claude_code_cli_page(self.app_settings, portal=self._is_app_host()))
             elif path == "/claude-code":
                 self._send_html(claude_code_page(self.app_settings))
             elif path == "/status":
@@ -306,6 +306,11 @@ class GatewayHandler(BaseHTTPRequestHandler):
     def _is_local_request(self) -> bool:
         host = (self.headers.get("Host") or "").split(":", 1)[0].strip("[]").lower()
         return host in {"localhost", "127.0.0.1", "::1"}
+
+    def _is_app_host(self) -> bool:
+        host = (self.headers.get("Host") or "").split(":", 1)[0].strip("[]").lower()
+        app_host = urlparse(self.app_settings.app_base_url).netloc.split(":", 1)[0].lower()
+        return (bool(app_host) and host == app_host) or host.startswith("app.")
 
     def _send_json(self, payload: dict[str, Any], status: int = 200, headers: dict[str, str] | None = None) -> None:
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")

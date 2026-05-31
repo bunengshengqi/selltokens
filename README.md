@@ -229,7 +229,7 @@ docker compose -f ops/docker-compose.prod.yml up -d
 - [ ] 申请 SSL 证书覆盖全部子域名
 - [ ] 至少充值一个上游账号（建议 chhai 或 PoloAPI，各 ¥100 起测）
 - [ ] New API 后台创建管理员账号，配置模型倍率
-- [ ] New API → 系统设置 → 通用设置：把文档链接改为 `https://www.996tokens.com/docs`
+- [ ] New API → 系统设置 → 通用设置：把文档链接改为 `https://app.996tokens.com/docs`
 - [ ] 配置微信支付（快小铺）并测试充值流程
 - [ ] 关闭 `DEMO_PORTAL_ENABLED=false`
 - [ ] 设置强随机 `ADMIN_TOKEN`

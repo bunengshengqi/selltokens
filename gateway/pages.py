@@ -387,10 +387,30 @@ def usage_page(logs: Iterable[dict[str, Any]], settings: Settings) -> str:
     )
 
 
-def docs_page(settings: Settings) -> str:
+def docs_page(settings: Settings, *, portal: bool = False) -> str:
     base = escape(settings.public_api_base)
     register = escape(settings.register_url)
     app = escape(settings.app_base_url)
+    console = escape(settings.app_base_url.rstrip("/") + "/console")
+    topup = escape(settings.app_base_url.rstrip("/") + "/console/topup")
+    models = escape(settings.app_base_url.rstrip("/") + "/pricing")
+    primary_href = console if portal else register
+    primary_text = "返回控制台 →" if portal else "注册并获取 API Key →"
+    secondary_href = topup if portal else app
+    secondary_text = "账户充值" if portal else "已登录？进控制台"
+    cta_title = "继续使用后台"
+    cta_desc = "你已经在用户后台，可以一边看文档一边回到控制台创建 Key、充值或查看用量。"
+    cta_primary_href = models
+    cta_primary_text = "打开模型广场"
+    cta_secondary_href = console
+    cta_secondary_text = "返回控制台"
+    if not portal:
+        cta_title = "准备好了吗？"
+        cta_desc = "注册即送 ¥5 体验额度，无需绑卡，即刻接入。"
+        cta_primary_href = register
+        cta_primary_text = "免费注册"
+        cta_secondary_href = app
+        cta_secondary_text = "进控制台"
     tools = [
         ("/docs/cursor", "🖱️", "Cursor / Cline", "图形界面接入", "覆盖 Base URL 即可调用所有平台模型，3 步完成。"),
         ("/docs/claude-code-cli", "⌨️", "Claude Code CLI", "命令行 Agent 接入", "设置环境变量后直接 claude 启动，支持完整 Agent 编码。"),
@@ -424,8 +444,8 @@ def docs_page(settings: Settings) -> str:
               <code class="ddh-url">{base}/v1</code>
             </div>
             <div class="ddh-actions">
-              <a class="button ddh-btn-primary" href="{register}">注册并获取 API Key →</a>
-              <a class="button ddh-btn-ghost" href="{app}">已登录？进控制台</a>
+              <a class="button ddh-btn-primary" href="{primary_href}">{escape(primary_text)}</a>
+              <a class="button ddh-btn-ghost" href="{secondary_href}">{escape(secondary_text)}</a>
             </div>
           </div>
         </section>
@@ -496,18 +516,18 @@ claude  # 直接启动</pre>
         <section class="docs-cta-strip">
           <div class="docs-cta-inner">
             <div>
-              <strong>准备好了吗？</strong>
-              <p>注册即送 ¥5 体验额度，无需绑卡，即刻接入。</p>
+              <strong>{escape(cta_title)}</strong>
+              <p>{escape(cta_desc)}</p>
             </div>
             <div class="docs-cta-btns">
-              <a class="button primary" href="{register}">免费注册</a>
-              <a class="button" href="{app}">进控制台</a>
+              <a class="button primary" href="{cta_primary_href}">{escape(cta_primary_text)}</a>
+              <a class="button" href="{cta_secondary_href}">{escape(cta_secondary_text)}</a>
             </div>
           </div>
         </section>
         """,
         settings=settings,
-        variant="public",
+        variant="portal" if portal else "public",
     )
 
 
@@ -556,9 +576,12 @@ export ANTHROPIC_MODEL=claude-sonnet-economy</pre>
     )
 
 
-def cursor_guide_page(settings: Settings) -> str:
+def cursor_guide_page(settings: Settings, *, portal: bool = False) -> str:
     base = escape(settings.public_api_base)
     register = escape(settings.register_url)
+    console = escape(settings.app_base_url.rstrip("/") + "/console")
+    primary_href = console if portal else register
+    primary_text = "回控制台创建 Key" if portal else "获取 API Key"
     steps = [
         ("1", "注册并获取 API Key", "注册账户后进入控制台 → API Keys，创建一个 Key（只在创建时显示一次，请妥善保存）。"),
         ("2", "打开 Cursor 模型设置", "Cursor → Settings → Cursor Settings → Models，找到 “OpenAI API Key” 区域。"),
@@ -598,7 +621,7 @@ def cursor_guide_page(settings: Settings) -> str:
             <h1>在 Cursor 接入 996 Tokens API</h1>
             <p>用 OpenAI 兼容方式把 Cursor 的对话模型切到本平台，一个 Key 调用 Claude / GPT / Gemini / 国产模型。</p>
           </div>
-          <a class="button primary" href="{register}">获取 API Key</a>
+          <a class="button primary" href="{primary_href}">{escape(primary_text)}</a>
         </section>
         <section class="steps">{step_html}</section>
         <section class="docs-grid">
@@ -636,14 +659,20 @@ Model: yu-code-auto</pre>
         </section>
         """,
         settings=settings,
-        variant="public",
+        variant="portal" if portal else "public",
     )
 
 
-def claude_code_cli_page(settings: Settings) -> str:
+def claude_code_cli_page(settings: Settings, *, portal: bool = False) -> str:
     base = escape(settings.public_api_base)
     register = escape(settings.register_url)
     app = escape(settings.app_base_url)
+    console = escape(settings.app_base_url.rstrip("/") + "/console")
+    topup = escape(settings.app_base_url.rstrip("/") + "/console/topup")
+    primary_href = console if portal else register
+    primary_text = "回控制台创建 Key →" if portal else "注册获取 API Key →"
+    secondary_href = topup if portal else app
+    secondary_text = "账户充值" if portal else "已有 Key？进控制台"
     settings_json = """{
   "env": {
     "ANTHROPIC_BASE_URL": "%s",
@@ -703,8 +732,8 @@ def claude_code_cli_page(settings: Settings) -> str:
             <h1>在 Claude Code 接入 996 Tokens</h1>
             <p>通过环境变量把官方 Claude Code CLI 指向本平台，人民币计费、多上游冗余，4 步完成完整 Agent 编码接入。</p>
             <div class="cli-hero-actions">
-              <a class="button primary" href="{register}">注册获取 API Key →</a>
-              <a class="button" href="{app}">已有 Key？进控制台</a>
+              <a class="button primary" href="{primary_href}">{escape(primary_text)}</a>
+              <a class="button" href="{secondary_href}">{escape(secondary_text)}</a>
             </div>
           </div>
           <div class="cli-hero-badge">
@@ -808,12 +837,18 @@ curl {base}/v1/messages \\
         </section>
         """,
         settings=settings,
-        variant="public",
+        variant="portal" if portal else "public",
     )
 
 
-def about_page(settings: Settings) -> str:
+def about_page(settings: Settings, *, portal: bool = False) -> str:
     base = escape(settings.public_api_base)
+    console = escape(settings.app_base_url.rstrip("/") + "/console")
+    topup = escape(settings.app_base_url.rstrip("/") + "/console/topup")
+    primary_href = console if portal else escape(settings.register_url)
+    primary_text = "返回控制台 →" if portal else "免费注册体验 →"
+    secondary_href = topup if portal else "/docs"
+    secondary_text = "账户充值" if portal else "查看接入文档"
     features = [
         ("🔀", "多上游自动路由", "同一模型保留 2–3 个渠道，按价格、延迟、成功率评分后自动选路，单点挂掉自动切换。"),
         ("💰", "毛利保护", "每次请求都会验证售价 vs 成本是否满足最低毛利率，避免高频调用亏本。"),
@@ -868,8 +903,8 @@ def about_page(settings: Settings) -> str:
             <p class="adh-sub">996 Tokens 是为 Claude Code、Cursor、Cline 和 AI Agent 开发者设计的 API 分发平台。<br>
             一个 API Key，统一接入 Claude、GPT、Gemini、DeepSeek、Qwen、豆包；账户以人民币余额展示，本服务只向海外用户开放。</p>
             <div class="adh-actions">
-              <a class="button primary adh-btn-primary" href="{escape(settings.register_url)}">免费注册体验 →</a>
-              <a class="button adh-btn-ghost" href="/docs">查看接入文档</a>
+              <a class="button primary adh-btn-primary" href="{primary_href}">{escape(primary_text)}</a>
+              <a class="button adh-btn-ghost" href="{secondary_href}">{escape(secondary_text)}</a>
             </div>
             <div class="about-stats-row">{stats_html}</div>
           </div>
@@ -954,7 +989,7 @@ def about_page(settings: Settings) -> str:
         </section>
         """,
         settings=settings,
-        variant="public",
+        variant="portal" if portal else "public",
     )
 
 
@@ -1569,6 +1604,16 @@ def layout(
             ("docs", "/docs", "文档"),
         ]
         actions = f"<a class='button ghost' href='/'>返回官网</a>"
+    elif variant == "portal":
+        app_root = cfg.app_base_url.rstrip("/")
+        nav = [
+            ("console", f"{app_root}/console", "控制台"),
+            ("pricing", f"{app_root}/pricing", "模型广场"),
+            ("docs", "/docs", "文档"),
+            ("claude", "/docs/claude-code-cli", "Claude Code"),
+            ("about", "/about", "关于"),
+        ]
+        actions = f"<a class='button primary' href='{escape(app_root)}/console'>返回控制台</a>"
     elif variant == "admin":
         nav = [
             ("admin", "/admin", "运营面板"),
@@ -1794,6 +1839,54 @@ def layout(
     .two {{ display: grid; grid-template-columns: .8fr 1.2fr; gap: 16px; align-items: start; }}
     .risk-note {{ margin-top: 24px; border: 1px solid #fed7aa; background: #fff7ed; color: #7c2d12; border-radius: 12px; padding: 18px 20px; }}
     .risk-note p {{ margin: 8px 0 0; line-height: 1.6; }}
+    /* ── Docs page redesign ── */
+    .docs-dark-hero, .cli-hero {{ position: relative; margin: -26px -18px 0; overflow: hidden; border-radius: 0 0 24px 24px; background: #07101f; color: #f8fafc; padding: 76px 18px 62px; }}
+    .ddh-bg {{ position: absolute; inset: 0; background: radial-gradient(ellipse 72% 58% at 18% 28%, rgba(37,99,235,.32), transparent 62%), radial-gradient(ellipse 58% 50% at 84% 72%, rgba(20,184,166,.18), transparent 58%); pointer-events: none; }}
+    .ddh-bg::after, .cli-hero::after {{ content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px); background-size: 42px 42px; opacity: .72; pointer-events: none; }}
+    .ddh-content {{ position: relative; z-index: 1; max-width: 980px; margin: 0 auto; text-align: center; }}
+    .ddh-eyebrow, .article-tag {{ display: inline-flex; align-items: center; width: fit-content; min-height: 28px; border-radius: 999px; padding: 5px 11px; font-size: 12px; font-weight: 900; color: #93c5fd; background: rgba(37,99,235,.16); border: 1px solid rgba(147,197,253,.32); }}
+    .docs-dark-hero h1, .cli-hero h1 {{ margin: 0; color: #fff; font-size: 54px; line-height: 1.08; font-weight: 900; }}
+    .ddh-sub, .cli-hero p {{ max-width: 820px; margin: 18px auto 0; color: #b8c4d5; font-size: 17px; line-height: 1.75; }}
+    .ddh-endpoint {{ width: min(760px, 100%); margin: 26px auto 0; display: grid; grid-template-columns: 130px 1fr; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,.12); border-radius: 14px; padding: 10px; background: rgba(255,255,255,.08); box-shadow: 0 24px 70px rgba(0,0,0,.2); backdrop-filter: blur(12px); text-align: left; }}
+    .ddh-label {{ color: #cbd5e1; font-weight: 900; text-align: center; }}
+    .ddh-url {{ display: block; background: rgba(255,255,255,.12); color: #fff; padding: 12px 14px; border-radius: 10px; overflow-wrap: anywhere; }}
+    .ddh-actions, .cli-hero-actions, .docs-cta-btns {{ display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 24px; }}
+    .ddh-btn-primary {{ background: #2563eb; border-color: #2563eb; color: #fff; box-shadow: 0 14px 34px rgba(37,99,235,.36); }}
+    .ddh-btn-ghost {{ background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.18); color: #e2e8f0; }}
+    .docs-tools-section, .docs-code-section, .cli-steps-section, .cli-models-section, .cli-faq-section {{ max-width: 1180px; margin: 0 auto; padding: 54px 0 0; }}
+    .dts-head, .dcs-head, .css-head {{ margin-bottom: 20px; }}
+    .dts-head h2, .dcs-head h2, .css-head h2 {{ font-size: 30px; margin-bottom: 8px; }}
+    .doc-tools-grid {{ display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }}
+    .doc-tool-card {{ min-height: 210px; display: flex; flex-direction: column; gap: 14px; position: relative; border: 1px solid var(--line); border-radius: 16px; background: #fff; padding: 22px; color: var(--ink); text-decoration: none; box-shadow: var(--shadow); transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }}
+    .doc-tool-card:hover {{ transform: translateY(-4px); border-color: #bfdbfe; box-shadow: 0 18px 48px rgba(37,99,235,.14); }}
+    .dtc-icon {{ width: 46px; height: 46px; display: grid; place-items: center; border-radius: 12px; background: #edf2ff; font-size: 23px; }}
+    .dtc-body strong {{ display: block; font-size: 19px; margin-bottom: 8px; }}
+    .dtc-tag {{ display: inline-flex; width: fit-content; border-radius: 999px; background: #e0f2fe; color: #0369a1; padding: 4px 9px; font-size: 12px; font-weight: 900; }}
+    .dtc-body p {{ margin: 12px 0 0; color: var(--muted); line-height: 1.6; }}
+    .dtc-arrow {{ margin-top: auto; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; background: #f1f5f9; color: var(--blue); font-weight: 900; }}
+    .docs-code-section article {{ min-height: 340px; display: flex; flex-direction: column; gap: 14px; }}
+    .docs-code-section article pre {{ flex: 1; min-height: 230px; }}
+    .docs-cta-strip {{ max-width: 1180px; margin: 54px auto 0; border-radius: 18px; background: linear-gradient(135deg, #0f172a, #1e3a8a); color: #fff; padding: 26px; box-shadow: 0 28px 70px rgba(15,23,42,.18); }}
+    .docs-cta-inner {{ display: flex; align-items: center; justify-content: space-between; gap: 18px; }}
+    .docs-cta-inner strong {{ display: block; font-size: 22px; margin-bottom: 6px; }}
+    .docs-cta-inner p {{ margin: 0; color: #cbd5e1; }}
+    .docs-cta-inner .button:not(.primary) {{ background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.18); color: #fff; }}
+    .cli-hero {{ display: grid; grid-template-columns: minmax(0, .95fr) minmax(360px, .75fr); gap: 28px; align-items: center; }}
+    .cli-hero > * {{ position: relative; z-index: 1; }}
+    .cli-hero-text {{ max-width: 720px; margin-left: auto; }}
+    .cli-hero-badge {{ max-width: 520px; margin-right: auto; }}
+    .chb-inner {{ border: 1px solid rgba(255,255,255,.14); border-radius: 18px; background: rgba(255,255,255,.08); padding: 18px; box-shadow: 0 24px 70px rgba(0,0,0,.2); backdrop-filter: blur(12px); }}
+    .chb-row {{ display: grid; grid-template-columns: 120px 1fr; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,.12); }}
+    .chb-row:last-child {{ border-bottom: 0; }}
+    .chb-row span {{ color: #cbd5e1; font-weight: 800; }}
+    .chb-row code {{ background: rgba(255,255,255,.12); color: #fff; overflow-wrap: anywhere; }}
+    .cli-steps-grid, .cli-faq-grid {{ display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }}
+    .cli-step, .cli-faq-card {{ border: 1px solid var(--line); border-radius: 16px; padding: 20px; background: #fff; box-shadow: var(--shadow); }}
+    .cli-step-num {{ width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: var(--blue); color: #fff; font-weight: 900; margin-bottom: 14px; }}
+    .cli-step-body strong, .cli-faq-card strong {{ display: block; font-size: 17px; margin-bottom: 8px; }}
+    .cli-step-body p, .cli-faq-card p {{ color: var(--muted); line-height: 1.6; margin: 0; }}
+    .cli-step-code {{ margin-top: 14px; min-height: 0; padding: 12px; font-size: 12px; }}
+    .faq-emoji {{ font-size: 26px; margin-bottom: 12px; }}
     /* ── About page redesign ── */
     .about-dark-hero {{ position: relative; margin: -26px -18px 0; overflow: hidden; background: #07101f; color: #f0f6ff; padding: 80px 18px 64px; }}
     .adh-bg {{ position: absolute; inset: 0; background: radial-gradient(ellipse 70% 60% at 20% 30%, rgba(37,99,235,.28) 0%, transparent 60%), radial-gradient(ellipse 50% 50% at 80% 70%, rgba(16,163,74,.16) 0%, transparent 55%); pointer-events: none; }}
@@ -1869,11 +1962,18 @@ def layout(
       .about-stats-row {{ grid-template-columns: repeat(2, 1fr); }}
       .af-grid, .aas-inner, .acs-grid {{ grid-template-columns: 1fr; }}
       .arch-branches {{ grid-template-columns: 1fr; }}
+      .docs-dark-hero, .cli-hero {{ padding: 56px 18px 46px; }}
+      .docs-dark-hero h1, .cli-hero h1 {{ font-size: 38px; }}
+      .doc-tools-grid, .cli-hero, .cli-steps-grid, .cli-faq-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+      .docs-cta-inner {{ align-items: flex-start; flex-direction: column; }}
     }}
     @media (max-width: 560px) {{
       .about-dark-hero h1 {{ font-size: 28px; }}
       .about-stats-row {{ grid-template-columns: repeat(2, 1fr); gap: 10px; }}
       .about-section, .about-arch-section, .about-contact-section {{ padding-top: 40px; padding-bottom: 32px; }}
+      .docs-dark-hero h1, .cli-hero h1 {{ font-size: 30px; }}
+      .ddh-endpoint, .doc-tools-grid, .cli-hero, .cli-steps-grid, .cli-faq-grid {{ grid-template-columns: 1fr; }}
+      .ddh-label {{ text-align: left; padding-left: 4px; }}
     }}
     @media (max-width: 980px) {{
       header {{ align-items: flex-start; flex-direction: column; }}

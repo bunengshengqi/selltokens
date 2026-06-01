@@ -21,7 +21,7 @@ def home_page(settings: Settings, models: Iterable[dict[str, Any]]) -> str:
           <div>
             <p class="eyebrow">AI Coding / RPA / Agent API Gateway</p>
             <h1>一个 API Key，先开放 Claude、GPT、Gemini 七个核心模型。</h1>
-            <p>第一版只接最容易转化的国外主力模型：Claude Opus / Sonnet / Haiku、GPT 5.5 / 5.4 / Mini、Gemini Flash。先把质量、充值和风控跑稳，再逐步扩展国产和多模态。</p>
+          <p>面向 Claude Code、Cursor、Cline 和各类 Agent 工具，一个账户统一管理余额、API Key 和用量记录。</p>
             <div class="hero-actions">
               <a class="button primary" href="{escape(settings.register_url)}">立即注册</a>
               <a class="button" href="{escape(settings.login_url)}">登录控制台</a>
@@ -47,7 +47,7 @@ def home_page(settings: Settings, models: Iterable[dict[str, Any]]) -> str:
         </section>
         <section class="conversion-strip">
           <div>
-            <p class="eyebrow">Growth Funnel</p>
+            <p class="eyebrow">New User Bonus</p>
             <h1>先充值，再加赠，再邀请</h1>
             <p>注册不再直接送额度，避免批量注册薅羊毛。新用户完成充值或购买月卡后自动加赠：100 元以下送 5 元，100 元及以上送 10 元。</p>
           </div>
@@ -56,14 +56,14 @@ def home_page(settings: Settings, models: Iterable[dict[str, Any]]) -> str:
         <section class="center-head compact">
           <p class="eyebrow">Models</p>
           <h1>支持的模型</h1>
-          <p>第一版只展示 7 个首发模型，避免模型市场太杂导致小白不知道选哪个，也方便你先控成本和控质量。</p>
+          <p>精选 Claude、GPT、Gemini 系列模型，覆盖高质量推理、日常编程和轻量快速调用。</p>
           <a class="text-link" href="/pricing">查看全部 {len(model_list)} 个模型详情与定价 →</a>
         </section>
         <section class="model-grid">{cards}</section>
         <section class="center-head compact">
-          <p class="eyebrow">Upstream Mix</p>
-          <h1>2026 年 5 月上线组合</h1>
-          <p>不把命押在单一低价渠道上。每个热门模型至少 2-3 个上游，低价线负责利润空间，稳定线负责口碑，国产线负责规模化调用。</p>
+          <p class="eyebrow">Why 996 Tokens</p>
+          <h1>为开发者准备的 API 服务</h1>
+          <p>少折腾配置，多关注自己的项目。我们把模型、余额、文档和接入入口整理成一个清晰的使用体验。</p>
         </section>
         <section class="feature-grid">{mix_cards}</section>
         <section class="center-head compact">
@@ -73,14 +73,14 @@ def home_page(settings: Settings, models: Iterable[dict[str, Any]]) -> str:
         <section class="feature-grid">{category_cards}</section>
         <section class="steps">
           <div><strong>1</strong><h2>注册并充值</h2><p>用户注册后进入控制台，充值余额或兑换额度。</p></div>
-          <div><strong>2</strong><h2>创建 API Key</h2><p>在 New API 或本地控制台生成 Token，设置额度和模型权限。</p></div>
+          <div><strong>2</strong><h2>创建 API Key</h2><p>在控制台生成 Key，复制后保存到你的开发工具。</p></div>
           <div><strong>3</strong><h2>改一行 Base URL</h2><p>OpenAI SDK / Cursor / Cline 只需要换成平台地址。</p></div>
         </section>
         <section class="feature-grid">
-          <div><h2>自动路由</h2><p>根据价格、成功率、延迟和余额选择上游，失败时自动重试。</p></div>
-          <div><h2>利润保护</h2><p>模型售价、上游成本和最低毛利分开管理，避免越用越亏。</p></div>
-          <div><h2>New API 底座</h2><p>上线版建议用 New API 接管登录、充值、Token、渠道、日志和模型管理。</p></div>
-          <div><h2>小白友好</h2><p>低门槛充值、支付后加赠、微信客服、Cherry Studio / Claude Code 教程一起做转化。</p></div>
+          <div><h2>接入简单</h2><p>兼容 OpenAI 格式，常见 SDK 和工具只需要替换 Base URL。</p></div>
+          <div><h2>余额清晰</h2><p>人民币余额展示，充值、扣费和用量记录都能在控制台查看。</p></div>
+          <div><h2>模型精选</h2><p>默认只展示常用模型，减少选择困扰。</p></div>
+          <div><h2>新手友好</h2><p>提供文档、示例命令和常见工具配置教程。</p></div>
         </section>
         """,
         settings=settings,
@@ -90,7 +90,6 @@ def home_page(settings: Settings, models: Iterable[dict[str, Any]]) -> str:
 
 def pricing_page(models: Iterable[dict[str, Any]], settings: Settings) -> str:
     plan_cards = _pricing_plan_cards(settings)
-    rate_rows = _pricing_rate_rows(settings)
     capacity_cards = _capacity_cards()
     ladder_rows = _pricing_ladder_table(settings)
     referral_rules = _referral_rules(settings)
@@ -102,7 +101,6 @@ def pricing_page(models: Iterable[dict[str, Any]], settings: Settings) -> str:
             f"<td>{_line_badge(model['line_type'])}</td>"
             f"<td>{_money(model['input_price'], settings, decimals=4)} / M tokens</td>"
             f"<td>{_money(model['output_price'], settings, decimals=4)} / M tokens</td>"
-            f"<td>{float(model['min_margin']) * 100:.0f}%</td>"
             "</tr>"
         )
     return layout(
@@ -120,7 +118,7 @@ def pricing_page(models: Iterable[dict[str, Any]], settings: Settings) -> str:
             </div>
             <div class="hero-stats">
               <span><strong>100</strong> 人同时在线目标</span>
-              <span><strong>3+</strong> 热门模型冗余上游</span>
+              <span><strong>7</strong> 个首发模型</span>
               <span><strong>CNY</strong> 余额和支付</span>
             </div>
           </div>
@@ -128,15 +126,15 @@ def pricing_page(models: Iterable[dict[str, Any]], settings: Settings) -> str:
         </section>
         <section class="capacity-panel">
           <div>
-            <p class="eyebrow">Production Target</p>
-            <h2>第一版按 100 人同时在线设计</h2>
-            <p>页面展示的是套餐，真正承载在线用户的是 NewAPI、上游冗余、支付回调和监控。100 人同时在线不是靠单一上游硬扛，而是通过分组、限流、failover 和缓存把风险拆开。</p>
+            <p class="eyebrow">Service Target</p>
+            <h2>面向高频开发场景设计</h2>
+            <p>适合 Claude Code、Cursor、Cline、自动化脚本和 Agent 调用。你只需要管理余额和 API Key，剩下的连接体验由平台处理。</p>
           </div>
           <div class="capacity-grid">{capacity_cards}</div>
         </section>
         <section class="pricing-note">
           <strong>计费说明</strong>
-          <p>套餐负责额度、通道优先级和服务支持；模型实际扣费仍按 NewAPI 的模型倍率和分组价格计算。第一版支付方式保持微信支付，兑换码和人工补单作为兜底。</p>
+          <p>余额按人民币展示并按实际调用扣费。充值或购买月卡后会自动加赠额度，第一版支付方式保持微信支付。</p>
           <a class="text-link" href="{escape(settings.register_url)}">进入控制台购买套餐 →</a>
         </section>
         <section class="funnel-panel">
@@ -155,19 +153,11 @@ def pricing_page(models: Iterable[dict[str, Any]], settings: Settings) -> str:
           </div>
           <div class="referral-rules">{referral_rules}</div>
         </section>
-        <section class="rate-panel">
-          <div>
-            <p class="eyebrow">Model Multipliers</p>
-            <h2>模型倍率</h2>
-            <p>首发模型按上游成本加价出售，Claude / GPT / Gemini 每个模型倍率不同。这里展示的是对外经营倍率，生产环境会同步写入 NewAPI 分组配置。</p>
-          </div>
-          <div class="rate-table">{rate_rows}</div>
-        </section>
         <section class="feature-grid">{_model_category_cards()}</section>
         <section class="table-wrap">
           <h2>按量模型单价</h2>
           <table>
-            <thead><tr><th>模型</th><th>线路</th><th>输入价格</th><th>输出价格</th><th>最低毛利</th></tr></thead>
+            <thead><tr><th>模型</th><th>类型</th><th>输入价格</th><th>输出价格</th></tr></thead>
             <tbody>{''.join(rows)}</tbody>
           </table>
         </section>
@@ -207,9 +197,9 @@ def dashboard_page(
           <div><strong>{usage['total_requests']}</strong><span>累计请求</span></div>
         </section>
         <section class="action-grid">
-          <a class="action-card" href="/recharge"><strong>充值余额</strong><span>本地演示充值；上线后跳转 NewAPI 支付系统。</span></a>
+          <a class="action-card" href="/recharge"><strong>充值余额</strong><span>充值后即可使用模型调用额度。</span></a>
           <a class="action-card" href="/keys"><strong>API Keys</strong><span>创建和查看调用 Key。</span></a>
-          <a class="action-card" href="/usage"><strong>用量记录</strong><span>查看模型、上游、扣费和失败原因。</span></a>
+          <a class="action-card" href="/usage"><strong>用量记录</strong><span>查看模型、tokens、扣费和请求状态。</span></a>
           <a class="action-card" href="/docs"><strong>接入文档</strong><span>Cursor、Cline、Claude Code 和 SDK 示例。</span></a>
         </section>
         """,
@@ -303,7 +293,7 @@ def recharge_page(
         <section class="table-wrap">
           <h2>充值订单</h2>
           <table>
-            <thead><tr><th>订单号</th><th>金额</th><th>渠道</th><th>状态</th><th>创建时间</th></tr></thead>
+            <thead><tr><th>订单号</th><th>金额</th><th>支付方式</th><th>状态</th><th>创建时间</th></tr></thead>
             <tbody>{''.join(rows) if rows else _empty_row(5, '暂无充值订单')}</tbody>
           </table>
         </section>
@@ -374,12 +364,12 @@ def usage_page(logs: Iterable[dict[str, Any]], settings: Settings) -> str:
           <div>
             <p class="eyebrow">Usage</p>
             <h1>用量记录</h1>
-            <p>查看请求模型、实际上游、token 统计、扣费和失败原因。</p>
+            <p>查看请求模型、token 统计、扣费和请求状态。</p>
           </div>
         </section>
         <section class="table-wrap">
           <table>
-            <thead><tr><th>时间</th><th>模型</th><th>上游</th><th>输入/输出</th><th>扣费</th><th>状态</th><th>错误</th></tr></thead>
+            <thead><tr><th>时间</th><th>模型</th><th>服务</th><th>输入/输出</th><th>扣费</th><th>状态</th><th>错误</th></tr></thead>
             <tbody>{''.join(rows) if rows else _empty_row(7, '暂无调用记录')}</tbody>
           </table>
         </section>
@@ -607,7 +597,7 @@ def cursor_guide_page(settings: Settings, *, portal: bool = False) -> str:
         ("Tab 补全 / Agent 还能用吗？", "覆盖 Base URL 后，自定义模型主要作用于 Chat。Cursor 的 Tab 补全和部分 Composer 能力仍走 Cursor 官方，不受影响。"),
         ("提示 model not found？", "确认在模型列表里添加的名字是平台支持的模型名（如 claude-sonnet-4-6），不要填 Cursor 默认的 claude-3.5-sonnet 之类。"),
         ("Verify 失败？", "检查 Base URL 是否以 /v1 结尾、Key 是否有效且账户有余额，必要时在控制台用量记录查看错误原因。"),
-        ("如何控制成本？", "轻任务用 claude-haiku-4-5 或 gemini-3.5-flash；重活再切 claude-sonnet-4-6 / claude-opus-4-7。"),
+        ("如何控制预算？", "轻任务用 claude-haiku-4-5 或 gemini-3.5-flash；重任务再切 claude-sonnet-4-6 / claude-opus-4-7。"),
     ]
     faq_html = "".join(
         f"<div><h2>{escape(q)}</h2><p>{escape(a)}</p></div>" for q, a in faqs
@@ -702,7 +692,7 @@ def claude_code_cli_page(settings: Settings, *, portal: bool = False) -> str:
         ("❓", "ANTHROPIC_BASE_URL 要不要带 /v1？", "不要。Claude Code 走 Anthropic 原生协议，Base URL 只填根域名，平台自动适配 /v1/messages 转发。"),
         ("🔑", "AUTH_TOKEN 和 API_KEY 有什么区别？", "用 ANTHROPIC_AUTH_TOKEN 填平台 Key 即可。若客户端只识别 ANTHROPIC_API_KEY，填同一个 Key 也能用。"),
         ("💳", "提示余额不足 / 402 错误？", "前往控制台充值，账户余额为 0 时网关直接拒绝请求并返回 402。"),
-        ("💰", "如何降低使用成本？", "把 ANTHROPIC_SMALL_FAST_MODEL 设为 claude-haiku-4-5，大量轻量调用走便宜模型，重任务才触发 Sonnet。"),
+        ("💰", "如何控制预算？", "把 ANTHROPIC_SMALL_FAST_MODEL 设为 claude-haiku-4-5，大量轻量调用走快速模型，重任务再使用 Sonnet。"),
     ]
     faq_html = "".join(
         f"""<div class="cli-faq-card">
@@ -731,7 +721,7 @@ def claude_code_cli_page(settings: Settings, *, portal: bool = False) -> str:
           <div class="cli-hero-text">
             <p class="eyebrow">Guide · Claude Code CLI</p>
             <h1>在 Claude Code 接入 996 Tokens</h1>
-            <p>通过环境变量把官方 Claude Code CLI 指向本平台，人民币计费、多上游冗余，4 步完成完整 Agent 编码接入。</p>
+            <p>通过环境变量把官方 Claude Code CLI 指向本平台，人民币计费，4 步完成完整 Agent 编码接入。</p>
             <div class="cli-hero-actions">
               <a class="button primary" href="{primary_href}">{escape(primary_text)}</a>
               <a class="button" href="{secondary_href}">{escape(secondary_text)}</a>
@@ -851,17 +841,17 @@ def about_page(settings: Settings, *, portal: bool = False) -> str:
     secondary_href = topup if portal else "/docs"
     secondary_text = "账户充值" if portal else "查看接入文档"
     features = [
-        ("🔀", "多上游自动路由", "同一模型保留 2–3 个渠道，按价格、延迟、成功率评分后自动选路，单点挂掉自动切换。"),
-        ("💰", "毛利保护", "每次请求都会验证售价 vs 成本是否满足最低毛利率，避免高频调用亏本。"),
-        ("💳", "人民币计费", "账户余额以 CNY 展示，当前保留微信支付、兑换码和人工补单，方便第一版快速上线。"),
+        ("🔌", "统一接口", "兼容 OpenAI Chat Completions，常见 SDK 和开发工具都能快速接入。"),
+        ("🧠", "精选模型", "提供 Claude、GPT、Gemini 系列模型，覆盖编程、推理、写作和轻量任务。"),
+        ("💳", "人民币余额", "账户余额以 CNY 展示，充值、扣费和用量记录清晰可查。"),
         ("⚡", "流式输出", "完整支持 SSE streaming，Claude Code / Cursor 打字机效果无卡顿。"),
-        ("🔌", "OpenAI 兼容", "接口格式 100% OpenAI Chat Completions，不需要修改现有代码，换一行 Base URL 即可。"),
-        ("🛡️", "熔断 & 冷却", "上游连续出错后自动进入冷却，恢复后再放流量，保护用户体验和平台口碑。"),
+        ("🧰", "工具友好", "提供 Cursor、Claude Code、Cline、Cherry Studio 和常见 SDK 教程。"),
+        ("🌍", "海外开放", "当前服务只向海外用户开放，如需企业合作请先联系管理员确认。"),
     ]
-    upstreams = [
-        ("🌐", "Claude 主力", "claude", "Opus / Sonnet / Haiku 三档模型，覆盖高质量、稳定开发和轻量调用。"),
-        ("⚙️", "GPT 主力", "gpt", "GPT-5.5 / GPT-5.4 / GPT-5.4 Mini 三档模型，兼顾复杂任务和低成本请求。"),
-        ("🔧", "Gemini 补充", "extra", "Gemini 3.5 Flash 承接低延迟和轻量任务，后续再扩展更多模型。"),
+    model_groups = [
+        ("C", "Claude 系列", "claude", "Opus、Sonnet、Haiku，适合 AI 编程、复杂分析和长文本任务。"),
+        ("G", "GPT 系列", "gpt", "GPT-5.5、GPT-5.4、GPT-5.4 Mini，适合通用对话、代码和 Agent。"),
+        ("M", "Gemini 系列", "extra", "Gemini 3.5 Flash，适合快速响应和轻量任务。"),
     ]
     stats = [
         ("7", "首发核心模型"),
@@ -877,13 +867,13 @@ def about_page(settings: Settings, *, portal: bool = False) -> str:
         </div>"""
         for icon, title, desc in features
     )
-    upstream_html = "".join(
+    model_group_html = "".join(
         f"""<div class="up-card up-{slug}">
           <div class="up-icon">{escape(icon)}</div>
           <strong>{escape(name)}</strong>
           <p>{escape(desc)}</p>
         </div>"""
-        for icon, name, slug, desc in upstreams
+        for icon, name, slug, desc in model_groups
     )
     stats_html = "".join(
         f"""<div class="about-stat">
@@ -901,7 +891,7 @@ def about_page(settings: Settings, *, portal: bool = False) -> str:
           <div class="adh-content">
             <p class="adh-eyebrow">About 996 Tokens</p>
             <h1>面向 AI 编程的<br>多模型 API 网关</h1>
-            <p class="adh-sub">996 Tokens 是为 Claude Code、Cursor、Cline 和 AI Agent 开发者设计的 API 分发平台。<br>
+            <p class="adh-sub">996 Tokens 是为 Claude Code、Cursor、Cline 和 AI Agent 开发者设计的 API 服务。<br>
             一个 API Key，第一版统一接入 Claude、GPT、Gemini 七个核心模型；账户以人民币余额展示，本服务只向海外用户开放。</p>
             <div class="adh-actions">
               <a class="button primary adh-btn-primary" href="{primary_href}">{escape(primary_text)}</a>
@@ -915,7 +905,7 @@ def about_page(settings: Settings, *, portal: bool = False) -> str:
           <div class="about-section-head">
             <p class="eyebrow">Features</p>
             <h2>六大核心能力</h2>
-            <p>每一项能力都是为了让 AI 编程工具更快、更稳、更省。</p>
+            <p>每一项能力都围绕开发者实际接入和日常调用体验。</p>
           </div>
           <div class="af-grid">{feature_html}</div>
         </section>
@@ -923,36 +913,36 @@ def about_page(settings: Settings, *, portal: bool = False) -> str:
         <section class="about-arch-section">
           <div class="aas-inner">
             <div class="aas-left">
-              <p class="eyebrow">Architecture</p>
-              <h2>技术架构</h2>
-              <p>官网负责品牌、价格和接入文档；New API 负责用户登录、充值、API Key、渠道、倍率和用量日志；Nginx 做 HTTPS 反代和域名分流。</p>
+              <p class="eyebrow">How It Works</p>
+              <h2>使用流程</h2>
+              <p>注册账户、充值余额、创建 API Key，然后在你的开发工具里替换 Base URL 即可开始调用。</p>
               <div class="arch-diagram">
                 <div class="arch-node arch-user">用户请求</div>
                 <div class="arch-arrow">↓</div>
-                <div class="arch-node arch-nginx">Nginx HTTPS 反代</div>
+                <div class="arch-node arch-nginx">996 Tokens</div>
                 <div class="arch-arrow">↓</div>
                 <div class="arch-branches">
                   <div class="arch-branch">
-                    <div class="arch-node arch-www">www.996tokens.com<small>官网 / 价格 / 文档</small></div>
+                    <div class="arch-node arch-www">官网<small>价格 / 文档 / 教程</small></div>
                   </div>
                   <div class="arch-branch">
-                    <div class="arch-node arch-api">api.996tokens.com<small>API 调用入口</small></div>
+                    <div class="arch-node arch-api">API<small>OpenAI 兼容入口</small></div>
                   </div>
                   <div class="arch-branch">
-                    <div class="arch-node arch-app">app.996tokens.com<small>用户后台 / 管理后台</small></div>
+                    <div class="arch-node arch-app">控制台<small>充值 / Key / 用量</small></div>
                   </div>
                 </div>
                 <div class="arch-arrow">↓</div>
-                <div class="arch-node arch-pool">多上游候选池<small>评分路由 + 熔断 + 冷却</small></div>
+                <div class="arch-node arch-pool">模型服务<small>Claude / GPT / Gemini</small></div>
                 <div class="arch-arrow">↓</div>
                 <div class="arch-node arch-models">Claude · GPT · Gemini</div>
               </div>
             </div>
             <div class="aas-right">
-              <p class="eyebrow">Upstreams</p>
-              <h2>上游策略</h2>
-              <p>第一版只保留 Claude、GPT、Gemini 三条线，先把充值转化、稳定性和风控跑稳。</p>
-              <div class="up-grid">{upstream_html}</div>
+              <p class="eyebrow">Models</p>
+              <h2>支持模型</h2>
+              <p>第一版先提供最常用的 Claude、GPT、Gemini 模型，后续会逐步扩展更多类型。</p>
+              <div class="up-grid">{model_group_html}</div>
             </div>
           </div>
         </section>
@@ -995,31 +985,34 @@ def about_page(settings: Settings, *, portal: bool = False) -> str:
 
 
 def status_page(providers: Iterable[dict[str, Any]]) -> str:
-
-    rows = []
-    for provider in providers:
-        public_status = "online" if provider["status"] == "active" else "standby"
-        rows.append(
-            "<tr>"
-            f"<td><strong>{escape(provider['name'])}</strong><small>{escape(provider['slug'])}</small></td>"
-            f"<td><span class='status {escape(provider['status'])}'>{escape(public_status)}</span></td>"
-            f"<td>{escape(provider['type'])}</td>"
-            f"<td>{int(provider['avg_latency_ms'] or 0)} ms</td>"
-            "</tr>"
-        )
+    items = [
+        ("API 接口", "online", "可用", "OpenAI 兼容接口正常服务"),
+        ("用户控制台", "online", "可用", "登录、充值、Key 管理和用量查询正常"),
+        ("接入文档", "online", "可用", "Cursor、Claude Code、SDK 示例可访问"),
+        ("支付服务", "online", "可用", "微信支付和人工处理通道正常"),
+    ]
+    rows = [
+        "<tr>"
+        f"<td><strong>{escape(name)}</strong><small>{escape(desc)}</small></td>"
+        f"<td><span class='status active'>{escape(status)}</span></td>"
+        f"<td>{escape(note)}</td>"
+        "</tr>"
+        for name, _, status, desc in items
+        for note in ["正常运行"]
+    ]
     return layout(
         "Status",
         "status",
         f"""
         <section class="center-head compact">
           <p class="eyebrow">Status</p>
-          <h1>上游状态</h1>
-          <p>公开状态页只展示可用性，不暴露上游 Key、真实余额和内部成本。</p>
+          <h1>平台状态</h1>
+          <p>这里展示用户会直接使用到的服务状态。如遇到充值、Key 或调用异常，请联系管理员处理。</p>
         </section>
         <section class="table-wrap">
           <table>
-            <thead><tr><th>线路</th><th>状态</th><th>类型</th><th>平均延迟</th></tr></thead>
-            <tbody>{''.join(rows) if rows else _empty_row(4, '暂无上游')}</tbody>
+            <thead><tr><th>服务</th><th>状态</th><th>说明</th></tr></thead>
+            <tbody>{''.join(rows) if rows else _empty_row(3, '暂无状态')}</tbody>
           </table>
         </section>
         """,
@@ -1044,7 +1037,7 @@ def register_page(settings: Settings) -> str:
     return auth_page(
         settings,
         title="注册账户",
-        subtitle="上线后这里会连接 New API 的注册页，也可以接 OAuth / 邀请码 / 邮箱验证。",
+        subtitle="创建账户后进入控制台，充值余额、创建 API Key 并查看用量。",
         primary_text="创建账户",
         primary_href=settings.app_base_url,
         alternate_text="已有账户？去登录",
@@ -1083,7 +1076,7 @@ def auth_page(
             <input placeholder="至少 8 位" type="password">
             <a class="button primary full" href="{escape(primary_href)}">{escape(primary_text)}</a>
             <a class="text-link" href="{escape(alternate_href)}">{escape(alternate_text)}</a>
-            <small>生产环境建议直接接 New API 登录/注册，本站只保留品牌入口。</small>
+            <small>注册和登录将在控制台完成，本站保留品牌入口和接入说明。</small>
           </div>
         </section>
         """,
@@ -1097,49 +1090,48 @@ def newapi_plan_page(settings: Settings) -> str:
     upstream_rows = _upstream_strategy_rows()
     route_rows = _newapi_route_rows()
     return layout(
-        "New API Plan",
-        "newapi",
+        "部署方案",
+        "deploy",
         f"""
         <section class="page-title">
           <div>
             <p class="eyebrow">Launch Plan</p>
-            <h1>NewAPI 混合上游上线方案</h1>
-            <p>生产版用 NewAPI 承接用户、充值、Token、渠道、模型、倍率和日志；本站负责官网、价格、Claude Code 教程和获客。第一版先只开放 7 个 Claude / GPT / Gemini 模型。</p>
+            <h1>部署方案</h1>
+            <p>生产版分为官网、用户控制台和 API 调用入口。第一版面向开发者提供 7 个 Claude / GPT / Gemini 模型。</p>
           </div>
-          <a class="button primary" href="{newapi}">打开 New API</a>
+          <a class="button primary" href="{newapi}">打开控制台</a>
         </section>
         <section class="feature-grid">
-          <div><h2>稳定主力</h2><p>PoloAPI 或 weelinking 权重更高，优先保障 Claude / GPT / Gemini 成功率、延迟和企业口碑。</p></div>
-          <div><h2>低价补充</h2><p>RightCode 负责利润空间，但低权重运行，必须配合稳定线兜底。</p></div>
-          <div><h2>全能补充</h2><p>jiekou.ai、APIMart、token.chhai.cn 用作模型补货和 Claude Code 备用。</p></div>
-          <div><h2>国产后置</h2><p>SiliconFlow 等国产模型第二阶段开放，先不放入首发池，降低运营复杂度。</p></div>
+          <div><h2>官网入口</h2><p>展示首页、价格、文档、状态和关于页面。</p></div>
+          <div><h2>用户控制台</h2><p>承接登录、注册、充值、API Key、用量记录和模型列表。</p></div>
+          <div><h2>API 域名</h2><p>提供 OpenAI 兼容调用入口，方便 SDK 和开发工具接入。</p></div>
+          <div><h2>服务支持</h2><p>保留人工处理入口，用于充值异常和接入问题。</p></div>
         </section>
         <section class="table-wrap">
-          <h2>上游优先级</h2>
+          <h2>域名分工</h2>
           <table>
-            <thead><tr><th>优先级</th><th>平台</th><th>类型</th><th>主要覆盖</th><th>NewAPI 用途</th></tr></thead>
+            <thead><tr><th>域名</th><th>用途</th><th>用户看到什么</th><th>说明</th></tr></thead>
             <tbody>{upstream_rows}</tbody>
           </table>
         </section>
         <section class="table-wrap">
-          <h2>热门模型冗余</h2>
+          <h2>首发模型</h2>
           <table>
-            <thead><tr><th>模型线</th><th>主渠道</th><th>低价补充</th><th>备用</th><th>备注</th></tr></thead>
+            <thead><tr><th>系列</th><th>模型</th><th>适合场景</th><th>说明</th></tr></thead>
             <tbody>{route_rows}</tbody>
           </table>
         </section>
         <section class="quickstart">
           <div>
-            <h2>NewAPI 配置顺序</h2>
-            <p>先接渠道，再精简模型，再设置分组倍率和 failover。每家先充 100-300 元，只开放这 7 个通过长上下文、工具调用、Claude Code / Cursor 测试的模型。</p>
+            <h2>配置顺序</h2>
+            <p>先确认域名和证书，再完成用户控制台、支付、模型列表和文档入口配置。</p>
           </div>
-          <pre>1. 部署 NewAPI
-2. 添加 RightCode / PoloAPI 或 weelinking / jiekou.ai
-3. 只开放 7 个首发模型，每个模型保留 2-3 个渠道
-4. 稳定渠道权重高，低价渠道权重低
-5. 开启失败自动切换和重试
-6. 配置支付宝/微信/兑换码/人工充值
-7. 用 Cherry Studio、Claude Code、Cursor 做压力和兼容性测试</pre>
+          <pre>1. 部署用户控制台
+2. 配置 www / app / api 三个域名
+3. 开启 HTTPS
+4. 配置登录、注册、充值和 API Key
+5. 只展示 7 个首发模型
+6. 用 Cherry Studio、Claude Code、Cursor 做接入测试</pre>
         </section>
         <section class="quickstart">
           <div>
@@ -1149,8 +1141,8 @@ def newapi_plan_page(settings: Settings) -> str:
           <pre>docker compose -f ops/newapi-compose.yml up -d</pre>
         </section>
         <section class="risk-note">
-          <strong>风险提醒</strong>
-          <p>RightCode 这类极低价渠道只能做补充和利润优化，不能单独承载生产主链路。上线默认策略应是稳定渠道优先，低价渠道参与 failover 或低成本线路，首发模型先控制在 7 个以内。</p>
+          <strong>提醒</strong>
+          <p>公开页面只展示用户需要知道的信息：模型、价格、文档、充值和服务状态。内部配置不出现在官网页面。</p>
         </section>
         """,
         settings=settings,
@@ -1204,21 +1196,21 @@ def admin_page(
           <div>
             <p class="eyebrow">Admin</p>
             <h1>运营面板</h1>
-            <p>上游状态、模型价格、流水和毛利监控。</p>
+            <p>服务状态、模型价格、流水和内部报表。</p>
           </div>
         </section>
         <section class="metrics">
           <div><strong>{overview['users']}</strong><span>用户</span></div>
           <div><strong>{overview['active_keys']}</strong><span>可用 Key</span></div>
-          <div><strong>{overview['active_providers']}</strong><span>活跃上游</span></div>
+          <div><strong>{overview['active_providers']}</strong><span>活跃服务</span></div>
           <div><strong>{overview['today_requests']}</strong><span>今日请求</span></div>
           <div><strong>{_money(overview['today_charge'], settings, decimals=4)}</strong><span>今日流水</span></div>
-          <div><strong>{_money(overview['today_margin'], settings, decimals=4)}</strong><span>今日毛利</span></div>
+          <div><strong>{_money(overview['today_margin'], settings, decimals=4)}</strong><span>今日差额</span></div>
         </section>
         <section class="table-wrap">
-          <h2>上游监控</h2>
+          <h2>服务监控</h2>
           <table>
-            <thead><tr><th>上游</th><th>状态</th><th>类型</th><th>余额</th><th>连续失败</th><th>错误率</th><th>最后错误</th></tr></thead>
+            <thead><tr><th>服务</th><th>状态</th><th>类型</th><th>余额</th><th>连续失败</th><th>错误率</th><th>最后错误</th></tr></thead>
             <tbody>{''.join(provider_rows)}</tbody>
           </table>
         </section>
@@ -1229,7 +1221,7 @@ def admin_page(
           </div>
           <div>
             <h2>近期日志</h2>
-            <table><thead><tr><th>时间</th><th>用户</th><th>模型</th><th>上游</th><th>状态</th><th>扣费</th><th>毛利</th><th>错误</th></tr></thead><tbody>{''.join(log_rows) if log_rows else _empty_row(8, '暂无日志')}</tbody></table>
+            <table><thead><tr><th>时间</th><th>用户</th><th>模型</th><th>服务</th><th>状态</th><th>扣费</th><th>差额</th><th>错误</th></tr></thead><tbody>{''.join(log_rows) if log_rows else _empty_row(8, '暂无日志')}</tbody></table>
           </div>
         </section>
         """,
@@ -1248,7 +1240,7 @@ def _pricing_plan_cards(settings: Settings) -> str:
             "class": "",
             "tagline": "最低 ¥10 充值，先跑通 API Key、Cursor 和 Claude Code。",
             "rights": ["注册不送额度", "支付后加赠 ¥5", "适合首单验证"],
-            "support": ["全天可用", "公开文档和示例", "异常订单人工补单"],
+            "support": ["全天可用", "公开文档和示例", "异常订单人工处理"],
             "rates": [("Claude", "按量"), ("GPT", "按量"), ("Gemini", "按量")],
             "cta": "立即充值",
         },
@@ -1260,7 +1252,7 @@ def _pricing_plan_cards(settings: Settings) -> str:
             "class": "",
             "tagline": "给小白和轻度 Cursor 用户一个低门槛月卡。",
             "rights": ["到账 ¥34 等值额度", "适合日常问答和轻量代码", "微信支付即可开通"],
-            "support": ["全天可用", "工单处理", "异常订单人工补单"],
+            "support": ["全天可用", "工单处理", "异常订单人工处理"],
             "rates": [("Claude", "标准"), ("GPT", "标准"), ("Gemini", "标准")],
             "cta": "立即购买",
         },
@@ -1322,7 +1314,7 @@ def _pricing_plan_cards(settings: Settings) -> str:
                 <ul>{support}</ul>
               </div>
               <div class="plan-section">
-                <h3>模型倍率</h3>
+                <h3>模型使用</h3>
                 <div class="mini-rates">{rates}</div>
               </div>
               <a class="button primary full" href="{escape(settings.register_url)}">{escape(plan['cta'])}</a>
@@ -1337,7 +1329,7 @@ def _growth_funnel_cards(settings: Settings) -> str:
         (
             "注册风控",
             "注册 ¥0",
-            "新用户注册不再直接送额度，批量注册账号无法白嫖额度，先把爬虫成本抬起来。",
+            "新用户注册后需要先完成充值，减少异常注册带来的滥用。",
         ),
         (
             "充值转化",
@@ -1347,7 +1339,7 @@ def _growth_funnel_cards(settings: Settings) -> str:
         (
             "复购激励",
             "≥¥100 送 ¥10",
-            "大额充值和团队月卡只做固定加赠，避免早期折扣过深导致毛利失控。",
+            "大额充值和团队月卡使用固定加赠，权益清晰，不设置复杂规则。",
         ),
     ]
     return "".join(
@@ -1412,11 +1404,11 @@ def _referral_rules(settings: Settings) -> str:
 
 def _pricing_rate_rows(settings: Settings) -> str:
     rows = [
-        (spec.model, f"{spec.multiplier:.2f}x", f"{spec.display_name}，上游成本 × {spec.multiplier:g}。")
+        (spec.model, spec.line_type, spec.description)
         for spec in FIRST_WAVE_MODEL_SPECS
     ]
     rendered = [
-        "<div class='rate-row head'><span>模型</span><span>成本倍率</span><span>说明</span></div>"
+        "<div class='rate-row head'><span>模型</span><span>类型</span><span>说明</span></div>"
     ]
     rendered.extend(
         "<div class='rate-row'>"
@@ -1434,10 +1426,10 @@ def _pricing_rate_rows(settings: Settings) -> str:
 
 def _capacity_cards() -> str:
     items = [
-        ("NewAPI 底座", "用户、Token、充值、日志和模型倍率交给 NewAPI，官网只负责获客和转化。"),
-        ("多上游冗余", "Claude / GPT / Gemini 首发模型至少保留 2 个渠道，低价线补充，稳定线兜底。"),
-        ("限流与分组", "Pay Go / Starter / Builder / Team 分组设置 RPM、TPM、倍率和高峰期优先级。"),
-        ("监控与补单", "支付回调、余额异常、上游失败和毛利波动都需要后台可见并能人工处理。"),
+        ("统一账户", "余额、API Key、用量记录和充值入口集中在控制台里。"),
+        ("稳定体验", "面向持续开发和自动化调用优化，减少频繁切换工具的麻烦。"),
+        ("清晰额度", "充值后余额实时展示，调用扣费可在后台查看。"),
+        ("人工支持", "充值异常、接入问题和工具配置问题都可以联系处理。"),
     ]
     return "".join(
         f"""
@@ -1472,20 +1464,20 @@ def _model_card(model: dict[str, Any], settings: Settings, *, featured: bool) ->
 
 def _provider_hint(model_name: str) -> str:
     if "claude" in model_name:
-        return "RightCode / PoloAPI / jiekou"
+        return "Claude 系列"
     if "gpt" in model_name:
-        return "RightCode / PoloAPI / weelinking"
+        return "GPT 系列"
     if "gemini" in model_name:
-        return "Gemini via Stable Mix"
-    return "Auto Route"
+        return "Gemini 系列"
+    return "通用模型"
 
 
 def _provider_mix_cards() -> str:
     items = [
-        ("RightCode", "极致低价", "Claude / GPT / Gemini 低价补充，适合省成本和赚差价，但必须低权重。"),
-        ("PoloAPI / weelinking", "稳定中价", "稳定渠道权重更高，承接 Claude、GPT、Gemini 主力请求和企业用户。"),
-        ("jiekou.ai / APIMart", "全能补充", "模型补货、备用模型、Claude Code 兼容性测试，适合做覆盖面和应急切换。"),
-        ("SiliconFlow", "后续国产", "DeepSeek、Qwen、豆包等国产线路第二阶段再开放，先不放进首发模型池。"),
+        ("Claude Code 友好", "AI 编程", "提供 Claude 系列模型和命令行工具接入教程，适合代码生成、重构和项目分析。"),
+        ("OpenAI 兼容", "标准接口", "兼容常见 OpenAI SDK、Cursor、Cline、Cherry Studio 等工具。"),
+        ("人民币余额", "清晰扣费", "余额、充值和用量记录集中展示，方便控制预算。"),
+        ("快速上手", "文档示例", "提供 curl、Python SDK、Cursor 和 Claude Code 配置示例。"),
     ]
     return "".join(f"<div><h2>{escape(name)}</h2><strong>{escape(tag)}</strong><p>{escape(desc)}</p></div>" for name, tag, desc in items)
 
@@ -1502,40 +1494,35 @@ def _model_category_cards() -> str:
 
 def _upstream_strategy_rows() -> str:
     rows = [
-        ("1", "PoloAPI / weelinking", "稳定中价", "Claude、GPT、Gemini", "稳定主力、高权重、企业用户优先"),
-        ("2", "RightCode", "极致低价", "Claude Opus / Sonnet、GPT、Gemini", "低价补充、利润优化、Claude Code 专线测试"),
-        ("3", "jiekou.ai / APIMart / token.chhai.cn", "全能补充", "御三家、备用模型", "补货、备用、模型丰富度"),
-        ("4", "SiliconFlow", "后续国产", "DeepSeek、Qwen、豆包、GLM、Embedding", "第二阶段开放，不进首发模型池"),
+        ("www.996tokens.com", "公开官网", "首页 / 价格 / 文档 / 状态 / 关于", "给访客了解产品和接入方式"),
+        ("app.996tokens.com", "用户控制台", "登录 / 注册 / 充值 / API Key / 用量", "给注册用户日常使用"),
+        ("api.996tokens.com", "API 入口", "OpenAI 兼容接口", "给 SDK 和开发工具调用"),
     ]
     return "".join(
         "<tr>"
-        f"<td>{escape(priority)}</td>"
-        f"<td><strong>{escape(platform)}</strong></td>"
-        f"<td>{escape(kind)}</td>"
-        f"<td>{escape(models)}</td>"
-        f"<td>{escape(use)}</td>"
+        f"<td><strong>{escape(domain)}</strong></td>"
+        f"<td>{escape(purpose)}</td>"
+        f"<td>{escape(surface)}</td>"
+        f"<td>{escape(note)}</td>"
         "</tr>"
-        for priority, platform, kind, models, use in rows
+        for domain, purpose, surface, note in rows
     )
 
 
 def _newapi_route_rows() -> str:
     rows = [
-        ("claude-opus-4-7", "PoloAPI / weelinking", "RightCode", "jiekou.ai", "上游成本 × 1.6，重任务和高价值用户。"),
-        ("claude-sonnet-4-6", "PoloAPI / weelinking", "RightCode", "jiekou.ai", "上游成本 × 1.35，Claude Code / Cursor 主力。"),
-        ("claude-haiku-4-5", "PoloAPI / weelinking", "RightCode", "jiekou.ai", "上游成本 × 1.3，轻量快速调用。"),
-        ("gpt-5.5 / gpt-5.4 / mini", "PoloAPI / weelinking", "RightCode", "APIMart", "分别按 1.5 / 1.35 / 1.3 加价。"),
-        ("gemini-3.5-flash", "PoloAPI / weelinking", "RightCode Gemini", "APIMart", "上游成本 × 1.3，低延迟轻量任务。"),
+        ("Claude", "claude-opus-4-7 / claude-sonnet-4-6 / claude-haiku-4-5", "AI 编程、复杂分析、长文本", "Claude Code 和 Cursor 常用"),
+        ("GPT", "gpt-5.5 / gpt-5.4 / gpt-5.4-mini", "通用对话、代码、Agent", "适合日常开发与自动化任务"),
+        ("Gemini", "gemini-3.5-flash", "快速响应、轻量任务", "适合低延迟使用场景"),
     ]
     return "".join(
         "<tr>"
-        f"<td><strong>{escape(model)}</strong></td>"
-        f"<td>{escape(primary)}</td>"
-        f"<td>{escape(cheap)}</td>"
-        f"<td>{escape(backup)}</td>"
+        f"<td><strong>{escape(series)}</strong></td>"
+        f"<td>{escape(models)}</td>"
+        f"<td>{escape(use)}</td>"
         f"<td>{escape(note)}</td>"
         "</tr>"
-        for model, primary, cheap, backup, note in rows
+        for series, models, use, note in rows
     )
 
 
@@ -1610,7 +1597,7 @@ def layout(
     elif variant == "admin":
         nav = [
             ("admin", "/admin", "运营面板"),
-            ("newapi", "/newapi", "New API 方案"),
+            ("deploy", "/newapi", "部署方案"),
             ("status", "/status", "状态页"),
             ("models", "/", "官网"),
         ]

@@ -46,7 +46,7 @@ FIRST_WAVE_MODEL_SPECS: tuple[LaunchModelSpec, ...] = (
         3.0,
         15.0,
         1.35,
-        "Claude Code / Cursor 主力模型，兼顾质量、速度和成本。",
+        "Claude Code / Cursor 主力模型，兼顾质量、速度和日常使用体验。",
     ),
     LaunchModelSpec(
         "claude-haiku-4-5",
@@ -56,7 +56,7 @@ FIRST_WAVE_MODEL_SPECS: tuple[LaunchModelSpec, ...] = (
         1.0,
         5.0,
         1.3,
-        "轻量 Claude 线路，适合快速问答、摘要、标题和低成本辅助调用。",
+        "轻量 Claude 线路，适合快速问答、摘要、标题和辅助调用。",
     ),
     LaunchModelSpec(
         "gpt-5.5",
@@ -86,7 +86,7 @@ FIRST_WAVE_MODEL_SPECS: tuple[LaunchModelSpec, ...] = (
         0.75,
         4.5,
         1.3,
-        "低成本 GPT 线路，适合批量轻任务和小白用户入门。",
+        "轻量 GPT 线路，适合批量轻任务和新用户入门。",
     ),
     LaunchModelSpec(
         "gemini-3.5-flash",

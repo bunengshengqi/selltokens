@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Apply 996 Tokens branding options to the NewAPI SQLite database."""
+"""Apply 996 Tokens branding options to the application SQLite database."""
 
 from __future__ import annotations
 
@@ -463,11 +463,11 @@ ABOUT_HTML = r"""
         </div>
         <div class="nt-route">
           <div class="nt-dot">2</div>
-          <div><strong>NewAPI 控制台</strong><span>余额、Token、用量、充值、模型权限集中管理</span></div>
+          <div><strong>用户控制台</strong><span>余额、API Key、用量、充值和模型列表集中管理</span></div>
         </div>
         <div class="nt-route">
           <div class="nt-dot">3</div>
-          <div><strong>多上游模型池</strong><span>稳定线路优先，低价线路补充，失败自动切换</span></div>
+          <div><strong>模型服务</strong><span>Claude、GPT、Gemini 系列模型统一接入</span></div>
         </div>
       </div>
     </div>
@@ -484,15 +484,15 @@ ABOUT_HTML = r"""
     <div class="nt-section-head">
       <div>
         <span class="nt-chip">核心能力</span>
-        <h2>不是简单转发，而是可运营的 API 生意底座</h2>
-        <p>页面、计费、路由、上游、充值和客服都围绕“可稳定交付、可持续盈利”来设计。</p>
+        <h2>一个账户，接入常用大模型</h2>
+        <p>页面、计费、充值、文档和客服都围绕开发者日常使用体验来设计。</p>
       </div>
     </div>
     <div class="nt-card-grid">
       <div class="nt-card"><div class="nt-card-mark">A</div><h3>统一接入</h3><p>一个 API Key 调用 Claude、GPT、Gemini 首发模型，兼容 OpenAI Chat Completions。</p></div>
-      <div class="nt-card"><div class="nt-card-mark">B</div><h3>成本控制</h3><p>按模型和渠道设置倍率，首发模型按上游成本加价，先保证体验和利润。</p></div>
-      <div class="nt-card"><div class="nt-card-mark">C</div><h3>稳定优先</h3><p>每个热门模型配置多条上游线路，失败自动切换，降低单渠道波动风险。</p></div>
-      <div class="nt-card"><div class="nt-card-mark">D</div><h3>人民币余额</h3><p>账户以人民币展示，保留微信支付、兑换码、人工补单，降低第一版充值摩擦。</p></div>
+      <div class="nt-card"><div class="nt-card-mark">B</div><h3>余额清晰</h3><p>账户以人民币展示，充值、扣费和用量记录清晰可查。</p></div>
+      <div class="nt-card"><div class="nt-card-mark">C</div><h3>体验稳定</h3><p>面向高频开发和自动化调用场景，持续优化响应体验。</p></div>
+      <div class="nt-card"><div class="nt-card-mark">D</div><h3>充值方便</h3><p>保留微信支付、兑换码和人工处理入口，方便处理异常订单。</p></div>
       <div class="nt-card"><div class="nt-card-mark">E</div><h3>开发者友好</h3><p>重点适配 Cursor、Claude Code、Cline、Cherry Studio 和常见 SDK。</p></div>
       <div class="nt-card"><div class="nt-card-mark">F</div><h3>运营留存</h3><p>注册不送额度，充值和月卡支付成功后加赠，帮助减少批量注册薅羊毛。</p></div>
     </div>
@@ -532,7 +532,7 @@ ABOUT_HTML = r"""
           <div class="nt-doc-icon">SDK</div><strong>OpenAI SDK</strong><span>Python / Node.js 只改 base_url，其余代码基本不变。</span>
         </a>
         <a class="nt-doc-card" href="/pricing">
-          <div class="nt-doc-icon">¥</div><strong>模型价格</strong><span>在模型广场查看可用模型、倍率和人民币计价。</span>
+          <div class="nt-doc-icon">¥</div><strong>模型价格</strong><span>在模型广场查看可用模型和人民币计价。</span>
         </a>
       </div>
     </div>
@@ -548,7 +548,7 @@ ABOUT_HTML = r"""
     <div class="nt-flow">
       <div class="nt-flow-step"><b>01</b><strong>公开官网</strong><span>展示品牌、价格、模型、Claude Code 教程和注册入口。</span></div>
       <div class="nt-flow-step"><b>02</b><strong>用户后台</strong><span>管理余额、充值、API Key、调用日志、用量统计和模型权限。</span></div>
-      <div class="nt-flow-step"><b>03</b><strong>管理后台</strong><span>配置用户、订单、渠道、倍率、模型路由、日志和风控。</span></div>
+      <div class="nt-flow-step"><b>03</b><strong>服务支持</strong><span>处理充值异常、接入问题和账户使用问题。</span></div>
       <div class="nt-flow-step"><b>04</b><strong>API 网关</strong><span>通过 api.996tokens.com 对外提供 OpenAI 兼容调用入口。</span></div>
     </div>
   </section>
@@ -557,7 +557,7 @@ ABOUT_HTML = r"""
     <div class="nt-band">
       <div>
         <h2>服务声明</h2>
-        <p>996 Tokens 当前只向海外用户开放。平台不参与上游资金清算，仅提供 API 分发、用量统计、账户充值和技术接入服务；企业合作、兑换码或异常订单请联系管理员确认。</p>
+        <p>996 Tokens 当前只向海外用户开放。企业合作、兑换码或异常订单请联系管理员确认。</p>
       </div>
       <div class="nt-band-list">
         <span>官网 <b>996tokens.com</b></span>
@@ -609,7 +609,7 @@ def main() -> None:
         upsert_option(conn, "DocsLink", DOCS_LINK)
         upsert_option(conn, "general_setting.docs_link", DOCS_LINK)
         conn.commit()
-    print(f"Updated NewAPI branding options in {DB_PATH}")
+    print(f"Updated 996 Tokens branding options in {DB_PATH}")
 
 
 if __name__ == "__main__":

@@ -957,7 +957,7 @@ def about_page(settings: Settings, *, portal: bool = False) -> str:
             <div class="acs-card">
               <div class="acs-icon">💬</div>
               <strong>QQ 客服</strong>
-              <p><a class="acs-link" href="/support">61943181 →</a></p>
+              <p><span class="acs-code">61943181</span></p>
               <p style="margin-top:6px;color:var(--muted);font-size:13px;">充值、Key、扣费或接入问题都可以联系处理。</p>
             </div>
             <div class="acs-card">
@@ -987,7 +987,6 @@ def about_page(settings: Settings, *, portal: bool = False) -> str:
 
 def support_page(settings: Settings, *, portal: bool = False) -> str:
     qq = "61943181"
-    qq_url = f"https://wpa.qq.com/msgrd?v=3&uin={qq}&site=qq&menu=yes"
     console = escape(settings.app_base_url.rstrip("/") + "/console")
     topup = escape(settings.app_base_url.rstrip("/") + "/console/topup")
     primary_href = console if portal else escape(settings.register_url)
@@ -1013,7 +1012,7 @@ def support_page(settings: Settings, *, portal: bool = False) -> str:
           <div>
             <p class="eyebrow">Support</p>
             <h1>联系客服</h1>
-            <p>使用过程中遇到充值、API Key、扣费或接入配置问题，可以直接联系 QQ 客服。</p>
+            <p>使用过程中遇到充值、API Key、扣费或接入配置问题，请打开 QQ 搜索客服号并添加好友。</p>
           </div>
           <a class="button primary" href="{primary_href}">{escape(primary_text)}</a>
         </section>
@@ -1021,9 +1020,8 @@ def support_page(settings: Settings, *, portal: bool = False) -> str:
           <div class="support-main">
             <span class="support-label">QQ 客服</span>
             <strong>{qq}</strong>
-            <p>建议联系时附上注册邮箱、订单金额、问题截图和出现问题的页面地址，方便快速定位。</p>
+            <p>请复制 QQ 号，在 QQ 里搜索并添加好友。联系时建议附上注册邮箱、订单金额、问题截图和出现问题的页面地址，方便快速定位。</p>
             <div class="support-actions">
-              <a class="button primary" href="{escape(qq_url)}" target="_blank" rel="noopener noreferrer">打开 QQ 咨询</a>
               <a class="button" href="{topup}">充值页面</a>
               <a class="button" href="/docs">接入文档</a>
             </div>

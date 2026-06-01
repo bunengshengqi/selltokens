@@ -557,10 +557,10 @@ ABOUT_HTML = r"""
     <div class="nt-section-head">
       <div>
         <span class="nt-chip">客服支持</span>
-        <h2>遇到问题，直接联系 QQ 客服</h2>
-        <p>充值不到账、Key 无法使用、扣费疑问或接入失败，都可以联系处理。</p>
+        <h2>遇到问题，添加 QQ 客服</h2>
+        <p>充值不到账、Key 无法使用、扣费疑问或接入失败，请打开 QQ 搜索客服号并添加好友。</p>
       </div>
-      <a class="nt-btn primary" href="https://wpa.qq.com/msgrd?v=3&uin=61943181&site=qq&menu=yes" target="_blank" rel="noopener noreferrer">QQ 61943181 ↗</a>
+      <span class="nt-btn primary">QQ 61943181</span>
     </div>
     <div class="nt-card-grid">
       <div class="nt-card"><div class="nt-card-mark">QQ</div><h3>客服 QQ</h3><p>61943181</p></div>

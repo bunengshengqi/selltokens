@@ -149,7 +149,7 @@ def pricing_page(models: Iterable[dict[str, Any]], settings: Settings) -> str:
           <div>
             <p class="eyebrow">Referral</p>
             <h2>邀请裂变规则</h2>
-            <p>先用固定额度奖励快速上线，等真实订单稳定后再接首充返佣。这样能控制薅羊毛风险，同时让 Cursor / Claude Code 社群传播更快。</p>
+            <p>邀请规则会围绕真实充值订单发放奖励，具体额度以活动页和控制台展示为准。</p>
           </div>
           <div class="referral-rules">{referral_rules}</div>
         </section>
@@ -956,8 +956,9 @@ def about_page(settings: Settings, *, portal: bool = False) -> str:
           <div class="acs-grid">
             <div class="acs-card">
               <div class="acs-icon">💬</div>
-              <strong>微信客服</strong>
-              <p>扫码添加微信，或在控制台提交工单，工作时间内快速响应。</p>
+              <strong>QQ 客服</strong>
+              <p><a class="acs-link" href="/support">61943181 →</a></p>
+              <p style="margin-top:6px;color:var(--muted);font-size:13px;">充值、Key、扣费或接入问题都可以联系处理。</p>
             </div>
             <div class="acs-card">
               <div class="acs-icon">📚</div>
@@ -977,6 +978,70 @@ def about_page(settings: Settings, *, portal: bool = False) -> str:
               <p>996 Tokens 当前只向海外用户开放；如需企业合作、兑换码或异常订单处理，请先联系管理员确认。</p>
             </div>
           </div>
+        </section>
+        """,
+        settings=settings,
+        variant="portal" if portal else "public",
+    )
+
+
+def support_page(settings: Settings, *, portal: bool = False) -> str:
+    qq = "61943181"
+    qq_url = f"https://wpa.qq.com/msgrd?v=3&uin={qq}&site=qq&menu=yes"
+    console = escape(settings.app_base_url.rstrip("/") + "/console")
+    topup = escape(settings.app_base_url.rstrip("/") + "/console/topup")
+    primary_href = console if portal else escape(settings.register_url)
+    primary_text = "返回控制台 →" if portal else "登录/注册控制台 →"
+    common_cases = [
+        ("充值问题", "支付后余额未到账、订单异常、兑换码无法使用。"),
+        ("接入问题", "Cursor、Claude Code、Cline、SDK 配置失败。"),
+        ("账户问题", "API Key 创建、余额显示、调用记录查询。"),
+        ("企业合作", "团队额度、批量接入、长期使用咨询。"),
+    ]
+    case_cards = "".join(
+        f"""<div>
+          <h2>{escape(title)}</h2>
+          <p>{escape(desc)}</p>
+        </div>"""
+        for title, desc in common_cases
+    )
+    return layout(
+        "客服",
+        "support",
+        f"""
+        <section class="page-title">
+          <div>
+            <p class="eyebrow">Support</p>
+            <h1>联系客服</h1>
+            <p>使用过程中遇到充值、API Key、扣费或接入配置问题，可以直接联系 QQ 客服。</p>
+          </div>
+          <a class="button primary" href="{primary_href}">{escape(primary_text)}</a>
+        </section>
+        <section class="support-card">
+          <div class="support-main">
+            <span class="support-label">QQ 客服</span>
+            <strong>{qq}</strong>
+            <p>建议联系时附上注册邮箱、订单金额、问题截图和出现问题的页面地址，方便快速定位。</p>
+            <div class="support-actions">
+              <a class="button primary" href="{escape(qq_url)}" target="_blank" rel="noopener noreferrer">打开 QQ 咨询</a>
+              <a class="button" href="{topup}">充值页面</a>
+              <a class="button" href="/docs">接入文档</a>
+            </div>
+          </div>
+          <div class="support-side">
+            <span>服务范围</span>
+            <b>充值 / API Key / 用量 / 接入</b>
+            <small>当前服务只向海外用户开放。</small>
+          </div>
+        </section>
+        <section class="center-head compact">
+          <p class="eyebrow">Help Topics</p>
+          <h1>常见咨询类型</h1>
+        </section>
+        <section class="feature-grid">{case_cards}</section>
+        <section class="pricing-note">
+          <strong>联系客服前建议准备</strong>
+          <p>注册邮箱、订单号或支付金额、API Key 前 8 位、报错截图。不要把完整 API Key 发给任何人。</p>
         </section>
         """,
         settings=settings,
@@ -1596,6 +1661,7 @@ def layout(
             ("keys", "/keys", "API Keys"),
             ("usage", "/usage", "用量"),
             ("docs", "/docs", "文档"),
+            ("support", "/support", "客服"),
         ]
         actions = f"<a class='button ghost' href='/'>返回官网</a>"
     elif variant == "portal":
@@ -1605,6 +1671,7 @@ def layout(
             ("pricing", f"{app_root}/pricing", "模型广场"),
             ("docs", "/docs", "文档"),
             ("claude", "/docs/claude-code-cli", "Claude Code"),
+            ("support", "/support", "客服"),
             ("about", "/about", "关于"),
         ]
         actions = f"<a class='button primary' href='{escape(app_root)}/console'>返回控制台</a>"
@@ -1626,6 +1693,7 @@ def layout(
             ("docs", "/docs", "文档"),
             ("claude", "/claude-code", "Claude Code"),
             ("status", "/status", "状态"),
+            ("support", "/support", "客服"),
             ("about", "/about", "关于"),
         ]
         actions = (
@@ -1760,6 +1828,15 @@ def layout(
     .button.primary, button.primary, .pay-card button {{ background: var(--blue); color: white; border-color: var(--blue); }}
     .button.ghost {{ background: #fff; color: var(--ink); }}
     .button.full {{ width: 100%; margin-top: 14px; }}
+    .support-card {{ margin: 18px 0 32px; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(280px, .55fr); gap: 18px; align-items: stretch; border: 1px solid var(--line); border-radius: 18px; padding: 28px; background: linear-gradient(135deg, #ffffff, #f8fbff); box-shadow: 0 22px 70px rgba(37,99,235,.12); }}
+    .support-main strong {{ display: block; margin: 8px 0 12px; color: var(--blue-dark); font-size: 46px; line-height: 1.05; letter-spacing: 0; }}
+    .support-main p {{ max-width: 720px; color: var(--muted); line-height: 1.7; }}
+    .support-label {{ display: inline-flex; padding: 5px 10px; border-radius: 999px; background: #dbeafe; color: var(--blue-dark); font-size: 13px; font-weight: 900; }}
+    .support-actions {{ display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }}
+    .support-side {{ border: 1px solid #bfdbfe; border-radius: 14px; padding: 22px; background: #eff6ff; display: grid; align-content: center; gap: 10px; }}
+    .support-side span {{ color: var(--blue-dark); font-weight: 900; }}
+    .support-side b {{ font-size: 20px; line-height: 1.35; }}
+    .support-side small {{ color: var(--muted); line-height: 1.6; }}
     .model-grid {{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 26px; }}
     .model-card {{ min-height: 255px; border: 1px solid var(--line); border-radius: 12px; background: #fff; padding: 28px; box-shadow: var(--shadow); display: flex; flex-direction: column; }}
     .model-card.featured {{ border-color: #86efac; }}
@@ -1973,7 +2050,7 @@ def layout(
     @media (max-width: 980px) {{
       header {{ align-items: flex-start; flex-direction: column; }}
       nav {{ justify-content: flex-start; }}
-      .landing-hero, .conversion-strip, .conversion-grid, .funnel-panel, .referral-panel, .referral-rules, .plan-grid, .capacity-panel, .capacity-grid, .rate-panel, .model-grid, .quickstart, .docs-grid, .tool-grid, .two, .steps, .feature-grid, .about-stack, .about-features, .contact-grid {{ grid-template-columns: 1fr; }}
+      .landing-hero, .conversion-strip, .conversion-grid, .funnel-panel, .referral-panel, .referral-rules, .plan-grid, .capacity-panel, .capacity-grid, .rate-panel, .model-grid, .quickstart, .docs-grid, .tool-grid, .two, .steps, .feature-grid, .about-stack, .about-features, .contact-grid, .support-card {{ grid-template-columns: 1fr; }}
       .plan-card {{ min-height: 0; }}
       .rate-row, .ladder-row {{ grid-template-columns: 1fr; }}
       .metrics, .action-grid, .pay-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
@@ -1989,6 +2066,8 @@ def layout(
       .pricing-stage {{ margin-left: -14px; margin-right: -14px; padding: 36px 14px 28px; border-radius: 0 0 20px 20px; }}
       .billing-toggle {{ width: 100%; }}
       .billing-toggle span {{ min-width: 0; flex: 1; }}
+      .support-card {{ padding: 20px; }}
+      .support-main strong {{ font-size: 34px; }}
       .model-card {{ padding: 20px; min-height: 0; }}
       .metrics, .action-grid, .pay-grid {{ grid-template-columns: 1fr; }}
       table {{ display: block; overflow-x: auto; }}

@@ -449,12 +449,12 @@ ABOUT_HTML = r"""
         <div class="nt-actions">
           <a class="nt-btn primary" href="/console">返回控制台</a>
           <a class="nt-btn" href="/console/topup">账户充值</a>
-          <a class="nt-btn" href="#docs">查看文档</a>
+          <a class="nt-btn" href="#support">联系客服</a>
         </div>
       </div>
       <div class="nt-panel">
         <div class="nt-panel-head">
-          <strong>生产路由视图</strong>
+          <strong>使用流程</strong>
           <span class="nt-live">ONLINE</span>
         </div>
         <div class="nt-route">
@@ -494,7 +494,7 @@ ABOUT_HTML = r"""
       <div class="nt-card"><div class="nt-card-mark">C</div><h3>体验稳定</h3><p>面向高频开发和自动化调用场景，持续优化响应体验。</p></div>
       <div class="nt-card"><div class="nt-card-mark">D</div><h3>充值方便</h3><p>保留微信支付、兑换码和人工处理入口，方便处理异常订单。</p></div>
       <div class="nt-card"><div class="nt-card-mark">E</div><h3>开发者友好</h3><p>重点适配 Cursor、Claude Code、Cline、Cherry Studio 和常见 SDK。</p></div>
-      <div class="nt-card"><div class="nt-card-mark">F</div><h3>运营留存</h3><p>注册不送额度，充值和月卡支付成功后加赠，帮助减少批量注册薅羊毛。</p></div>
+      <div class="nt-card"><div class="nt-card-mark">F</div><h3>客服支持</h3><p>充值、API Key、扣费和接入问题都可以联系 QQ 客服协助处理。</p></div>
     </div>
   </section>
 
@@ -553,11 +553,28 @@ ABOUT_HTML = r"""
     </div>
   </section>
 
+  <section class="nt-section" id="support">
+    <div class="nt-section-head">
+      <div>
+        <span class="nt-chip">客服支持</span>
+        <h2>遇到问题，直接联系 QQ 客服</h2>
+        <p>充值不到账、Key 无法使用、扣费疑问或接入失败，都可以联系处理。</p>
+      </div>
+      <a class="nt-btn primary" href="https://wpa.qq.com/msgrd?v=3&uin=61943181&site=qq&menu=yes" target="_blank" rel="noopener noreferrer">QQ 61943181 ↗</a>
+    </div>
+    <div class="nt-card-grid">
+      <div class="nt-card"><div class="nt-card-mark">QQ</div><h3>客服 QQ</h3><p>61943181</p></div>
+      <div class="nt-card"><div class="nt-card-mark">1</div><h3>充值问题</h3><p>支付成功但余额未到账，请带上注册邮箱、订单金额和截图。</p></div>
+      <div class="nt-card"><div class="nt-card-mark">2</div><h3>接入问题</h3><p>Cursor、Claude Code、Cline 或 SDK 报错时，请附上错误提示。</p></div>
+      <div class="nt-card"><div class="nt-card-mark">3</div><h3>账户问题</h3><p>API Key、余额、用量记录等问题可联系人工确认。</p></div>
+    </div>
+  </section>
+
   <section class="nt-section">
     <div class="nt-band">
       <div>
         <h2>服务声明</h2>
-        <p>996 Tokens 当前只向海外用户开放。企业合作、兑换码或异常订单请联系管理员确认。</p>
+        <p>996 Tokens 当前只向海外用户开放。企业合作、兑换码或异常订单请联系 QQ 客服 61943181 确认。</p>
       </div>
       <div class="nt-band-list">
         <span>官网 <b>996tokens.com</b></span>

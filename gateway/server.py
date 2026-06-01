@@ -24,6 +24,7 @@ from .pages import (
     recharge_page,
     register_page,
     status_page,
+    support_page,
     usage_page,
 )
 from .router import AppError, GatewayRouter
@@ -74,6 +75,8 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 self._send_html(pricing_page(models, self.app_settings))
             elif path == "/about":
                 self._send_html(about_page(self.app_settings, portal=self._is_app_host()))
+            elif path == "/support":
+                self._send_html(support_page(self.app_settings, portal=self._is_app_host()))
             elif path == "/docs":
                 self._send_html(docs_page(self.app_settings, portal=self._is_app_host()))
             elif path == "/docs/cursor":

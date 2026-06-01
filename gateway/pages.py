@@ -8,7 +8,7 @@ from .policy import FIRST_WAVE_MODEL_SPECS, recharge_bonus_amount
 
 
 def home_page(settings: Settings, models: Iterable[dict[str, Any]]) -> str:
-    model_list = list(models)
+    model_list = _launch_model_rows()
     cards = "".join(_model_card(model, settings, featured=index < 6) for index, model in enumerate(model_list[:9]))
     mix_cards = _provider_mix_cards()
     category_cards = _model_category_cards()
@@ -49,7 +49,7 @@ def home_page(settings: Settings, models: Iterable[dict[str, Any]]) -> str:
           <div>
             <p class="eyebrow">New User Bonus</p>
             <h1>先充值，再加赠，再邀请</h1>
-            <p>注册不再直接送额度，避免批量注册薅羊毛。新用户完成充值或购买月卡后自动加赠：100 元以下送 5 元，100 元及以上送 10 元。</p>
+            <p>新用户完成充值或购买月卡后自动加赠：100 元以下送 5 元，100 元及以上送 10 元。注册后可先查看文档和价格，再决定充值。</p>
           </div>
           <div class="conversion-grid">{funnel_cards}</div>
         </section>
@@ -94,7 +94,7 @@ def pricing_page(models: Iterable[dict[str, Any]], settings: Settings) -> str:
     ladder_rows = _pricing_ladder_table(settings)
     referral_rules = _referral_rules(settings)
     rows = []
-    for model in models:
+    for model in _launch_model_rows():
         rows.append(
             "<tr>"
             f"<td><strong>{escape(model['internal_model'])}</strong><small>{escape(model['description'] or '')}</small></td>"
@@ -1327,9 +1327,9 @@ def _pricing_plan_cards(settings: Settings) -> str:
 def _growth_funnel_cards(settings: Settings) -> str:
     items = [
         (
-            "注册风控",
-            "注册 ¥0",
-            "新用户注册后需要先完成充值，减少异常注册带来的滥用。",
+            "注册账户",
+            "先了解",
+            "注册后可查看文档、价格和控制台入口，充值后再发放加赠额度。",
         ),
         (
             "充值转化",
@@ -1356,7 +1356,7 @@ def _growth_funnel_cards(settings: Settings) -> str:
 
 def _pricing_ladder_table(settings: Settings) -> str:
     rows = [
-        ("注册账户", "¥0", "¥0", "注册不送额度，防批量爬虫注册"),
+        ("注册账户", "¥0", "¥0", "可查看文档和控制台，首充后发放加赠"),
         ("小额充值", "¥10", "¥15 等值额度", "验证支付和 API Key，适合首单"),
         ("入门月卡", "¥29/月", "¥34 等值额度", "主推小白转化，适合轻度 Cursor 使用"),
         ("开发者月卡", "¥69/月", "¥74 等值额度", "主推套餐，适合日常 Claude Code / Agent 测试"),
@@ -1384,11 +1384,11 @@ def _pricing_ladder_table(settings: Settings) -> str:
 
 def _referral_rules(settings: Settings) -> str:
     rows = [
-        ("新用户", "注册 ¥0", "必须完成真实支付订单后才发加赠。"),
+        ("新用户", "注册 ¥0", "完成充值或月卡购买后自动发放加赠。"),
         ("充值 <¥100", "+¥5", "按量充值和月卡都适用。"),
         ("充值 ≥¥100", "+¥10", "固定加赠，不做高比例折扣。"),
-        ("邀请奖励", "绑定首充", "第二阶段接首充返佣，未首充不发放邀请奖励。"),
-        ("风控", "订单驱动", "异常注册不发放奖励，可转人工审核。"),
+        ("邀请奖励", "绑定首充", "邀请奖励以后续活动页和控制台展示为准。"),
+        ("异常订单", "人工处理", "充值未到账或订单异常时可联系管理员处理。"),
     ]
     return "".join(
         f"""
@@ -1422,6 +1422,20 @@ def _pricing_rate_rows(settings: Settings) -> str:
         f"<div class='rate-foot'>最低充值 {_money(settings.min_recharge_amount, settings, decimals=2)}，余额按 {escape(settings.billing_currency)} 扣费。</div>"
     )
     return "".join(rendered)
+
+
+def _launch_model_rows() -> list[dict[str, Any]]:
+    return [
+        {
+            "internal_model": spec.model,
+            "display_name": spec.display_name,
+            "line_type": spec.line_type,
+            "input_price": spec.input_price,
+            "output_price": spec.output_price,
+            "description": spec.description,
+        }
+        for spec in FIRST_WAVE_MODEL_SPECS
+    ]
 
 
 def _capacity_cards() -> str:
@@ -1487,7 +1501,7 @@ def _model_category_cards() -> str:
         ("Claude", "claude-opus-4-7、claude-sonnet-4-6、claude-haiku-4-5。"),
         ("GPT", "gpt-5.5、gpt-5.4、gpt-5.4-mini。"),
         ("Gemini", "gemini-3.5-flash，负责低延迟轻量请求。"),
-        ("后续扩展", "国产模型、图像、视频和 Embedding 第二阶段逐步开放。"),
+        ("首发范围", "第一版只展示以上 7 个核心模型，后续按用户需求逐步扩展。"),
     ]
     return "".join(f"<div><h2>{escape(name)}</h2><p>{escape(desc)}</p></div>" for name, desc in items)
 

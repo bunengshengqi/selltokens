@@ -41,11 +41,44 @@ class Database:
         with self.connect() as conn:
             conn.executescript(SCHEMA)
             self._migrate(conn)
+            self._sync_model_prices(conn)
 
     def _migrate(self, conn: sqlite3.Connection) -> None:
         existing = {row["name"] for row in conn.execute("PRAGMA table_info(recharge_orders)").fetchall()}
         if "currency" not in existing:
             conn.execute("ALTER TABLE recharge_orders ADD COLUMN currency TEXT DEFAULT 'CNY'")
+
+    def _sync_model_prices(self, conn: sqlite3.Connection) -> None:
+        now = utc_now_iso()
+        model_prices = model_price_rows()
+        for model in model_prices:
+            conn.execute(
+                """
+                INSERT INTO model_prices (
+                    internal_model, display_name, line_type, input_price, output_price,
+                    currency, min_margin, enabled, description, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, 'CNY', ?, 1, ?, ?)
+                ON CONFLICT(internal_model) DO UPDATE SET
+                    display_name = excluded.display_name,
+                    line_type = excluded.line_type,
+                    input_price = excluded.input_price,
+                    output_price = excluded.output_price,
+                    currency = excluded.currency,
+                    min_margin = excluded.min_margin,
+                    enabled = excluded.enabled,
+                    description = excluded.description,
+                    updated_at = excluded.updated_at
+                """,
+                (*model, now),
+            )
+
+        model_names = [row[0] for row in model_prices]
+        placeholders = ",".join("?" for _ in model_names)
+        conn.execute(
+            f"UPDATE model_prices SET enabled = 0, updated_at = ? WHERE internal_model NOT IN ({placeholders})",
+            (now, *model_names),
+        )
 
     def seed_demo(self) -> str:
         self.initialize()

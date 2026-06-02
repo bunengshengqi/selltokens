@@ -119,7 +119,7 @@ def apply_billing_policy(conn: sqlite3.Connection) -> dict[str, Any]:
         upsert_option(conn, "general_setting.quota_display_type", ACCOUNT_CURRENCY)
         upsert_option(conn, "DisplayInCurrencyEnabled", "true")
         upsert_option(conn, "USDExchangeRate", f"{USD_CNY_EXCHANGE_RATE:g}")
-        upsert_option(conn, "CustomCurrencyExchangeRate", "1")
+        upsert_option(conn, "CustomCurrencyExchangeRate", f"{USD_CNY_EXCHANGE_RATE:g}")
         upsert_option(conn, "CustomCurrencySymbol", "$")
         upsert_option(conn, "MinTopUp", "1")
         upsert_option(conn, "TopupAmounts", ",".join(str(amount) for amount in TOPUP_USD_AMOUNTS))

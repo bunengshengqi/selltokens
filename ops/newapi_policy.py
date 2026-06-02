@@ -106,7 +106,7 @@ def apply_launch_policy(conn: sqlite3.Connection) -> dict[str, Any]:
 
 def apply_billing_policy(conn: sqlite3.Connection) -> dict[str, Any]:
     unit = quota_per_unit(conn)
-    price = price_per_unit(conn)
+    price = USD_CNY_EXCHANGE_RATE
     now = int(time.time())
     start_at = option_value(conn, BILLING_BONUS_START_OPTION, "")
     if not start_at:
@@ -136,7 +136,7 @@ def apply_billing_policy(conn: sqlite3.Connection) -> dict[str, Any]:
                         custom_seconds, enabled, sort_order, total_amount, quota_reset_period,
                         quota_reset_custom_seconds, created_at, updated_at
                     )
-                    VALUES (?, ?, ?, ?, ?, 'month', 1, 0, 1, ?, ?, 'never', 0, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, 'month', 1, 0, 0, ?, ?, 'never', 0, ?, ?)
                     ON CONFLICT(id) DO UPDATE SET
                         title = excluded.title,
                         subtitle = excluded.subtitle,
@@ -165,17 +165,14 @@ def apply_billing_policy(conn: sqlite3.Connection) -> dict[str, Any]:
                     ),
                 )
                 updated_plans += 1
-            keep_ids = tuple(range(1, len(SUBSCRIPTION_PLAN_SPECS) + 1))
-            conn.execute(
-                f"UPDATE subscription_plans SET enabled = 0, updated_at = ? WHERE id NOT IN ({','.join('?' for _ in keep_ids)})",
-                (now, *keep_ids),
-            )
+            conn.execute("UPDATE subscription_plans SET enabled = 0, updated_at = ?", (now,))
 
     return {
         "billing_currency": ACCOUNT_CURRENCY,
         "usd_cny_exchange_rate": USD_CNY_EXCHANGE_RATE,
+        "payment_price_cny_per_usd": price,
         "topup_amounts": list(TOPUP_USD_AMOUNTS),
-        "subscription_plans": updated_plans,
+        "subscription_plans_disabled": updated_plans,
         "first_paid_bonus_usd": FIRST_RECHARGE_BONUS_USD,
         "bonus_start_at": int(start_at),
     }

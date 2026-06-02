@@ -4,7 +4,7 @@ from html import escape
 from typing import Any, Iterable
 
 from .config import Settings, settings as default_settings
-from .policy import FIRST_RECHARGE_BONUS_USD, FIRST_WAVE_MODEL_SPECS, SUBSCRIPTION_PLAN_SPECS, TOPUP_USD_AMOUNTS
+from .policy import FIRST_RECHARGE_BONUS_USD, FIRST_WAVE_MODEL_SPECS, TOPUP_USD_AMOUNTS
 
 
 def home_page(settings: Settings, models: Iterable[dict[str, Any]]) -> str:
@@ -49,7 +49,7 @@ def home_page(settings: Settings, models: Iterable[dict[str, Any]]) -> str:
           <div>
             <p class="eyebrow">New User Bonus</p>
             <h1>先充值，再加赠，再邀请</h1>
-            <p>新用户完成首笔充值或购买月卡后自动加赠 $1 美元额度。账户余额按 USD 展示，微信支付时按固定汇率折算成人民币。</p>
+            <p>新用户完成首笔充值后自动加赠 $1 美元额度。账户余额按 USD 展示，微信支付时按固定汇率折算成人民币。</p>
           </div>
           <div class="conversion-grid">{funnel_cards}</div>
         </section>
@@ -112,9 +112,9 @@ def pricing_page(models: Iterable[dict[str, Any]], settings: Settings) -> str:
             <p class="eyebrow">Claude Code API Pricing</p>
             <h1>为高强度 AI 编程准备的模型额度方案</h1>
             <p>第一版聚焦 Claude、GPT、Gemini 七个核心模型。账户余额和模型单价按 USD 计费，微信支付按固定汇率折算成人民币。</p>
-            <div class="billing-toggle" aria-label="计费周期">
-              <span class="active">按月付</span>
-              <span>按年付 <b>省 2 个月</b></span>
+            <div class="billing-toggle" aria-label="充值方式">
+              <span class="active">额度充值</span>
+              <span>微信支付按汇率折算</span>
             </div>
             <div class="hero-stats">
               <span><strong>100</strong> 人同时在线目标</span>
@@ -134,14 +134,14 @@ def pricing_page(models: Iterable[dict[str, Any]], settings: Settings) -> str:
         </section>
         <section class="pricing-note">
           <strong>计费说明</strong>
-          <p>余额按美元展示并按实际调用扣费。充值或购买月卡时按固定汇率折算成人民币支付，新用户首笔付款后加赠 $1 美元额度。</p>
-          <a class="text-link" href="{escape(settings.register_url)}">进入控制台购买套餐 →</a>
+          <p>余额按美元展示并按实际调用扣费。充值时按固定汇率折算成人民币支付，新用户首笔充值后加赠 $1 美元额度。</p>
+          <a class="text-link" href="{escape(settings.register_url)}">进入控制台充值额度 →</a>
         </section>
         <section class="funnel-panel">
           <div>
             <p class="eyebrow">Recharge Ladder</p>
             <h2>阶梯收费标准</h2>
-            <p>按量充值用于小额尝试和日常补余额；月卡用于锁定复购。所有加赠都绑定真实支付订单，注册本身不再发放免费额度。</p>
+            <p>按量充值用于小额尝试和日常补余额。所有加赠都绑定真实支付订单，注册本身不再发放免费额度。</p>
           </div>
           <div class="ladder-table">{ladder_rows}</div>
         </section>
@@ -215,7 +215,6 @@ def recharge_page(
     notice_kind: str = "success",
 ) -> str:
     amounts = list(TOPUP_USD_AMOUNTS)
-    plans = [(plan.title, plan.usd_amount, plan.subtitle) for plan in SUBSCRIPTION_PLAN_SPECS]
     min_amount = float(settings.min_recharge_amount)
     currency = escape(settings.billing_currency)
     pay_currency = escape(settings.payment_currency)
@@ -246,18 +245,6 @@ def recharge_page(
           <button type="submit">自定义充值</button>
         </form>
     """
-    plan_cards = "".join(
-        f"""
-        <form class="pay-card plan-pay" method="post" action="/recharge">
-          <input type="hidden" name="amount" value="{amount}">
-          <strong>{escape(name)}</strong>
-          <span>{escape(desc)}</span>
-          <b>{_money(amount, settings, decimals=2)} 额度 · 实付 {_payment_money(amount, settings)}</b>
-          <button type="submit">演示购买</button>
-        </form>
-        """
-        for name, amount, desc in plans
-    )
     rows = []
     for order in orders:
         rows.append(
@@ -283,10 +270,6 @@ def recharge_page(
         </section>
         {_notice(notice, notice_kind)}
         <section class="pay-grid">{amount_cards}{custom_card}</section>
-        <section class="table-wrap">
-          <h2>套餐建议</h2>
-          <div class="pay-grid">{plan_cards}</div>
-        </section>
         <section class="table-wrap">
           <h2>充值订单</h2>
           <table>
@@ -1292,23 +1275,23 @@ def admin_page(
 
 def _pricing_plan_cards(settings: Settings) -> str:
     plans = []
-    for index, spec in enumerate(SUBSCRIPTION_PLAN_SPECS):
+    for amount in TOPUP_USD_AMOUNTS:
         plans.append(
             {
-                "name": spec.title,
-                "price": spec.usd_amount,
-                "yearly": f"实付 {_payment_money(spec.usd_amount, settings)}",
-                "badge": "推荐" if spec.usd_amount == 5 else "",
-                "class": "featured" if spec.usd_amount == 5 else "top-tier" if spec.usd_amount == 30 else "",
-                "tagline": spec.subtitle,
+                "name": f"{_money(amount, settings, decimals=0)} 额度",
+                "price": amount,
+                "payment": f"实付 {_payment_money(amount, settings)}",
+                "badge": "推荐" if amount == 5 else "",
+                "class": "featured" if amount == 5 else "top-tier" if amount == 30 else "",
+                "tagline": "充值后按实际调用扣费",
                 "rights": [
-                    f"到账 {_money(spec.usd_amount, settings, decimals=2)} 美元额度",
+                    f"到账 {_money(amount, settings, decimals=2)} 美元额度",
                     "新用户首笔付款后加赠 $1",
                     "微信支付按固定汇率折算",
                 ],
                 "support": ["全天可用", "用量记录可查", "异常订单人工处理"],
                 "rates": [("Claude", "按量"), ("GPT", "按量"), ("Gemini", "按量")],
-                "cta": "立即购买" if index else "立即充值",
+                "cta": "立即充值",
             }
         )
     cards = []
@@ -1332,11 +1315,11 @@ def _pricing_plan_cards(settings: Settings) -> str:
               </div>
               <div class="plan-price">
                 <strong>{_money(plan['price'], settings, decimals=0)}</strong>
-                <span>/ 月</span>
+                <span>额度</span>
               </div>
-              <div class="plan-year">{escape(plan['yearly'])}</div>
+              <div class="plan-year">{escape(plan['payment'])}</div>
               <div class="plan-section">
-                <h3>套餐权益</h3>
+                <h3>充值说明</h3>
                 <ul>{rights}</ul>
               </div>
               <div class="plan-section">
@@ -1364,7 +1347,7 @@ def _growth_funnel_cards(settings: Settings) -> str:
         (
             "充值转化",
             "首笔送 $1",
-            "按量充值和月卡都绑定真实支付订单，微信支付按固定汇率折算。",
+            "额度充值绑定真实支付订单，微信支付按固定汇率折算。",
         ),
         (
             "复购激励",
@@ -1387,12 +1370,12 @@ def _growth_funnel_cards(settings: Settings) -> str:
 def _pricing_ladder_table(settings: Settings) -> str:
     rows = [
         ("注册账户", "$0", "无免费额度", "可查看文档和控制台，首笔付款后发放加赠"),
-        ("试用月卡", "$1", f"$1 额度 / 实付 {_payment_money(1, settings)}", "验证支付和 API Key，适合首单"),
-        ("入门月卡", "$3", f"$3 额度 / 实付 {_payment_money(3, settings)}", "轻量 Cursor / Claude Code 使用"),
-        ("开发者月卡", "$5", f"$5 额度 / 实付 {_payment_money(5, settings)}", "主推套餐，适合日常 AI 编程"),
-        ("专业月卡", "$10", f"$10 额度 / 实付 {_payment_money(10, settings)}", "适合高频调用和长上下文调试"),
-        ("工作室月卡", "$20", f"$20 额度 / 实付 {_payment_money(20, settings)}", "适合多工具和多 Key 使用"),
-        ("团队月卡", "$30", f"$30 额度 / 实付 {_payment_money(30, settings)}", "适合工作室共享额度池和优先支持"),
+        ("试用充值", "$1", f"$1 额度 / 实付 {_payment_money(1, settings)}", "验证支付和 API Key，适合首单"),
+        ("入门充值", "$3", f"$3 额度 / 实付 {_payment_money(3, settings)}", "轻量 Cursor / Claude Code 使用"),
+        ("开发者充值", "$5", f"$5 额度 / 实付 {_payment_money(5, settings)}", "主推档位，适合日常 AI 编程"),
+        ("专业充值", "$10", f"$10 额度 / 实付 {_payment_money(10, settings)}", "适合高频调用和长上下文调试"),
+        ("工作室充值", "$20", f"$20 额度 / 实付 {_payment_money(20, settings)}", "适合多工具和多 Key 使用"),
+        ("团队充值", "$30", f"$30 额度 / 实付 {_payment_money(30, settings)}", "适合工作室共享额度池和优先支持"),
     ]
     rendered = [
         "<div class='ladder-row head'><span>档位</span><span>用户支付</span><span>到账/权益</span><span>定位</span></div>"
@@ -1415,7 +1398,7 @@ def _pricing_ladder_table(settings: Settings) -> str:
 def _referral_rules(settings: Settings) -> str:
     rows = [
         ("新用户", "注册 $0", "注册本身不发放免费额度，防止无效注册消耗。"),
-        ("首笔付款", "+$1", "充值或购买月卡都适用，每个账户仅限一次。"),
+        ("首笔充值", "+$1", "用户完成首笔充值后发放，每个账户仅限一次。"),
         ("后续充值", "按实到账", "后续订单不重复发放首充奖励。"),
         ("邀请奖励", "绑定首充", "邀请奖励以后续活动页和控制台展示为准。"),
         ("异常订单", "人工处理", "充值未到账或订单异常时可联系管理员处理。"),

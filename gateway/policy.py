@@ -139,9 +139,8 @@ def usd_to_cny(usd_amount: float) -> float:
 
 
 def quota_for_usd(usd_amount: float, quota_per_unit: int = 500000, price: float = 1.0) -> int:
-    if price <= 0:
-        price = 1.0
-    return int(round(float(usd_amount) * quota_per_unit / price))
+    _ = price
+    return int(round(float(usd_amount) * quota_per_unit))
 
 
 def model_price_rows() -> tuple[tuple[str, str, str, float, float, float, str], ...]:
@@ -160,7 +159,7 @@ def model_price_rows() -> tuple[tuple[str, str, str, float, float, float, str], 
 
 
 def newapi_model_ratio() -> dict[str, float]:
-    # NewAPI 当前按 Price=1、QuotaPerUnit=500000 展示时，ModelRatio 约等于输入单价的一半。
+    # QuotaPerUnit 表示 1 USD 额度对应的内部额度，ModelRatio 约等于输入单价的一半。
     return {spec.model: round(spec.input_price / 2, 6) for spec in FIRST_WAVE_MODEL_SPECS}
 
 

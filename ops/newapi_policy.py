@@ -21,6 +21,7 @@ from gateway.policy import (  # noqa: E402
     ACCOUNT_CURRENCY,
     FIRST_RECHARGE_BONUS_USD,
     FIRST_WAVE_MODEL_NAMES,
+    MIN_TOPUP_USD_AMOUNT,
     SUBSCRIPTION_PLAN_SPECS,
     TOPUP_USD_AMOUNTS,
     USD_CNY_EXCHANGE_RATE,
@@ -121,7 +122,7 @@ def apply_billing_policy(conn: sqlite3.Connection) -> dict[str, Any]:
         upsert_option(conn, "USDExchangeRate", f"{USD_CNY_EXCHANGE_RATE:g}")
         upsert_option(conn, "CustomCurrencyExchangeRate", f"{USD_CNY_EXCHANGE_RATE:g}")
         upsert_option(conn, "CustomCurrencySymbol", "$")
-        upsert_option(conn, "MinTopUp", "1")
+        upsert_option(conn, "MinTopUp", str(MIN_TOPUP_USD_AMOUNT))
         upsert_option(conn, "TopupAmounts", ",".join(str(amount) for amount in TOPUP_USD_AMOUNTS))
         upsert_option(conn, BILLING_BONUS_START_OPTION, start_at)
 
@@ -171,6 +172,7 @@ def apply_billing_policy(conn: sqlite3.Connection) -> dict[str, Any]:
         "billing_currency": ACCOUNT_CURRENCY,
         "usd_cny_exchange_rate": USD_CNY_EXCHANGE_RATE,
         "payment_price_cny_per_usd": price,
+        "min_topup_usd": MIN_TOPUP_USD_AMOUNT,
         "topup_amounts": list(TOPUP_USD_AMOUNTS),
         "subscription_plans_disabled": updated_plans,
         "first_paid_bonus_usd": FIRST_RECHARGE_BONUS_USD,

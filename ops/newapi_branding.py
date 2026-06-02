@@ -476,7 +476,7 @@ ABOUT_HTML = r"""
   <div class="nt-metrics">
     <div class="nt-metric"><strong>7</strong><span>首发核心模型</span></div>
     <div class="nt-metric"><strong>USD</strong><span>美元余额展示</span></div>
-    <div class="nt-metric"><strong>$1</strong><span>最低充值门槛</span></div>
+    <div class="nt-metric"><strong>$3</strong><span>最低充值门槛</span></div>
     <div class="nt-metric"><strong>100</strong><span>第一版并发目标</span></div>
   </div>
 

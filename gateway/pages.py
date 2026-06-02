@@ -836,7 +836,7 @@ def about_page(settings: Settings, *, portal: bool = False) -> str:
     stats = [
         ("7", "首发核心模型"),
         ("USD", "美元余额"),
-        ("$1", "最低充值"),
+        ("$3", "最低充值"),
         ("海外", "只向海外用户开放"),
     ]
     feature_html = "".join(

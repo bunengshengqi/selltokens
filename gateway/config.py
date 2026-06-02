@@ -7,6 +7,7 @@ from pathlib import Path
 from .policy import (
     ACCOUNT_CURRENCY,
     ACCOUNT_SYMBOL,
+    MIN_TOPUP_USD_AMOUNT,
     PAYMENT_CURRENCY,
     PAYMENT_SYMBOL,
     USD_CNY_EXCHANGE_RATE,
@@ -46,7 +47,7 @@ class Settings:
     payment_currency: str = PAYMENT_CURRENCY
     payment_symbol: str = PAYMENT_SYMBOL
     usd_cny_exchange_rate: float = USD_CNY_EXCHANGE_RATE
-    min_recharge_amount: float = 1.0
+    min_recharge_amount: float = float(MIN_TOPUP_USD_AMOUNT)
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -73,7 +74,7 @@ class Settings:
             payment_currency=(os.getenv("PAYMENT_CURRENCY", PAYMENT_CURRENCY) or PAYMENT_CURRENCY).strip().upper(),
             payment_symbol=os.getenv("PAYMENT_SYMBOL", PAYMENT_SYMBOL) or PAYMENT_SYMBOL,
             usd_cny_exchange_rate=float(os.getenv("USD_CNY_EXCHANGE_RATE", str(USD_CNY_EXCHANGE_RATE))),
-            min_recharge_amount=float(os.getenv("MIN_RECHARGE_AMOUNT", "1")),
+            min_recharge_amount=float(os.getenv("MIN_RECHARGE_AMOUNT", str(MIN_TOPUP_USD_AMOUNT))),
         )
 
 

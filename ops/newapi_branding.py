@@ -444,8 +444,8 @@ ABOUT_HTML = r"""
     <div class="nt-hero-inner">
       <div>
         <div class="nt-kicker">ABOUT 996 TOKENS</div>
-        <h1>为 AI 编程和 Agent 调用而设计的多模型 API 平台</h1>
-        <p>996 Tokens 第一版只开放 Claude、GPT、Gemini 七个核心模型。用户只需要一个 API Key，就能在 Cursor、Claude Code、Cline、脚本和业务系统里切换模型。</p>
+        <h1>一个 API Key，接入 Claude、GPT、Gemini</h1>
+        <p>996 Tokens 面向 AI 编程、自动化脚本和 Agent 开发者。用户只需要一个 API Key，就能在 Cursor、Claude Code、Cline、脚本和业务系统里统一调用常用模型。</p>
         <div class="nt-actions">
           <a class="nt-btn primary" href="/console">返回控制台</a>
           <a class="nt-btn" href="/console/topup">账户充值</a>
@@ -454,20 +454,20 @@ ABOUT_HTML = r"""
       </div>
       <div class="nt-panel">
         <div class="nt-panel-head">
-          <strong>使用流程</strong>
+          <strong>接入路径</strong>
           <span class="nt-live">ONLINE</span>
         </div>
         <div class="nt-route">
           <div class="nt-dot">1</div>
-          <div><strong>用户请求</strong><span>Cursor / Claude Code / OpenAI SDK 统一接入</span></div>
+          <div><strong>创建 API Key</strong><span>在控制台创建 Key，只在创建时完整显示一次</span></div>
         </div>
         <div class="nt-route">
           <div class="nt-dot">2</div>
-          <div><strong>用户控制台</strong><span>余额、API Key、用量、充值和模型列表集中管理</span></div>
+          <div><strong>填写 Base URL</strong><span>在工具或 SDK 中填入 https://api.996tokens.com/v1</span></div>
         </div>
         <div class="nt-route">
           <div class="nt-dot">3</div>
-          <div><strong>模型服务</strong><span>Claude、GPT、Gemini 系列模型统一接入</span></div>
+          <div><strong>选择模型调用</strong><span>从模型广场复制模型名，调用后查看用量记录</span></div>
         </div>
       </div>
     </div>
@@ -477,7 +477,7 @@ ABOUT_HTML = r"""
     <div class="nt-metric"><strong>7</strong><span>首发核心模型</span></div>
     <div class="nt-metric"><strong>USD</strong><span>美元余额展示</span></div>
     <div class="nt-metric"><strong>$3</strong><span>最低充值门槛</span></div>
-    <div class="nt-metric"><strong>100</strong><span>第一版并发目标</span></div>
+    <div class="nt-metric"><strong>QQ</strong><span>61943181 客服</span></div>
   </div>
 
   <section class="nt-section">
@@ -492,7 +492,7 @@ ABOUT_HTML = r"""
       <div class="nt-card"><div class="nt-card-mark">A</div><h3>统一接入</h3><p>一个 API Key 调用 Claude、GPT、Gemini 首发模型，兼容 OpenAI Chat Completions。</p></div>
       <div class="nt-card"><div class="nt-card-mark">B</div><h3>余额清晰</h3><p>账户以美元展示，充值、扣费和用量记录清晰可查；微信支付按固定汇率折算人民币。</p></div>
       <div class="nt-card"><div class="nt-card-mark">C</div><h3>体验稳定</h3><p>面向高频开发和自动化调用场景，持续优化响应体验。</p></div>
-      <div class="nt-card"><div class="nt-card-mark">D</div><h3>充值方便</h3><p>保留微信支付、兑换码和人工处理入口，方便处理异常订单。</p></div>
+      <div class="nt-card"><div class="nt-card-mark">D</div><h3>充值方便</h3><p>美元余额展示，微信支付按固定汇率折算人民币；最低 $3 起充，首笔付款后加赠 $1。</p></div>
       <div class="nt-card"><div class="nt-card-mark">E</div><h3>开发者友好</h3><p>重点适配 Cursor、Claude Code、Cline、Cherry Studio 和常见 SDK。</p></div>
       <div class="nt-card"><div class="nt-card-mark">F</div><h3>客服支持</h3><p>充值、API Key、扣费和接入问题都可以联系 QQ 客服协助处理。</p></div>
     </div>
@@ -502,10 +502,10 @@ ABOUT_HTML = r"""
     <div class="nt-section-head">
       <div>
         <span class="nt-chip">接入文档</span>
-        <h2>在后台里完成第一步，不用跳出控制台</h2>
-        <p>这里保留最常用的接入信息。完整公开文档仍在官网，适合发给用户或写教程。</p>
+        <h2>在后台查看接入信息，不用跳出控制台</h2>
+        <p>这里保留最常用的 Base URL、模型选择和工具配置方式。先跑通一个最小请求，再切换到日常模型。</p>
       </div>
-      <a class="nt-btn primary" href="https://www.996tokens.com/docs" target="_blank" rel="noopener noreferrer">公开文档 ↗</a>
+      <a class="nt-btn primary" href="/console/token">创建 API Key</a>
     </div>
     <div class="nt-docs">
       <div class="nt-doc-main">
@@ -516,19 +516,19 @@ ABOUT_HTML = r"""
           <code>https://api.996tokens.com/v1</code>
         </div>
         <div class="nt-mini-steps">
-          <div><b>1</b><span>进入控制台，创建或复制你的 API Key。</span></div>
-          <div><b>2</b><span>在 Cursor、Cline、Cherry Studio 或 SDK 中填写 Base URL。</span></div>
-          <div><b>3</b><span>选择模型后发起测试请求，后台可查看日志和扣费。</span></div>
+          <div><b>1</b><span>进入令牌管理，创建或复制你的 API Key。</span></div>
+          <div><b>2</b><span>在 Cursor、Cline、Claude Code 或 SDK 中填写 Base URL。</span></div>
+          <div><b>3</b><span>从模型广场复制模型名，发起测试请求后查看用量日志。</span></div>
         </div>
       </div>
       <div class="nt-doc-grid">
-        <a class="nt-doc-card" href="https://www.996tokens.com/docs/cursor" target="_blank" rel="noopener noreferrer">
+        <a class="nt-doc-card" href="/about#docs">
           <div class="nt-doc-icon">C</div><strong>Cursor / Cline</strong><span>图形界面接入，适合 AI 编程日常使用。</span>
         </a>
-        <a class="nt-doc-card" href="https://www.996tokens.com/docs/claude-code-cli" target="_blank" rel="noopener noreferrer">
+        <a class="nt-doc-card" href="/about#docs">
           <div class="nt-doc-icon">CC</div><strong>Claude Code CLI</strong><span>命令行 Agent 编码，配置环境变量后启动。</span>
         </a>
-        <a class="nt-doc-card" href="https://www.996tokens.com/docs#sdk" target="_blank" rel="noopener noreferrer">
+        <a class="nt-doc-card" href="/about#docs">
           <div class="nt-doc-icon">SDK</div><strong>OpenAI SDK</strong><span>Python / Node.js 只改 base_url，其余代码基本不变。</span>
         </a>
         <a class="nt-doc-card" href="/pricing">

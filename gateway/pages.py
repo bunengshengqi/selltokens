@@ -366,11 +366,11 @@ def docs_page(settings: Settings, *, portal: bool = False) -> str:
     topup = escape(settings.app_base_url.rstrip("/") + "/console/topup")
     models = escape(settings.app_base_url.rstrip("/") + "/pricing")
     primary_href = console if portal else register
-    primary_text = "返回控制台 →" if portal else "注册并获取 API Key →"
+    primary_text = "返回控制台" if portal else "注册并获取 API Key"
     secondary_href = topup if portal else app
     secondary_text = "账户充值" if portal else "已登录？进控制台"
     cta_title = "继续使用后台"
-    cta_desc = "你已经在用户后台，可以一边看文档一边回到控制台创建 Key、充值或查看用量。"
+    cta_desc = "你可以在控制台创建 API Key、充值美元余额、查看用量和扣费记录。"
     cta_primary_href = models
     cta_primary_text = "打开模型广场"
     cta_secondary_href = console
@@ -382,14 +382,34 @@ def docs_page(settings: Settings, *, portal: bool = False) -> str:
         cta_primary_text = "注册并充值"
         cta_secondary_href = app
         cta_secondary_text = "进控制台"
-    tools = [
-        ("/docs/cursor", "🖱️", "Cursor / Cline", "图形界面接入", "覆盖 Base URL 即可调用所有平台模型，3 步完成。"),
-        ("/docs/claude-code-cli", "⌨️", "Claude Code CLI", "命令行 Agent 接入", "设置环境变量后直接 claude 启动，支持完整 Agent 编码。"),
-        ("#sdk", "🐍", "OpenAI SDK", "Python / Node.js", "换一行 base_url，其他代码零改动。"),
-        ("#curl", "🔧", "curl / HTTP", "任意语言直调", "标准 Bearer Token 鉴权，与 OpenAI API 格式完全一致。"),
+    steps = [
+        ("01", "创建账户", "注册后进入控制台，完成首笔充值即可获得可用余额。"),
+        ("02", "复制 API Key", "在令牌管理中创建 Key，只在创建时完整显示一次，请妥善保存。"),
+        ("03", "填写 Base URL", f"在工具或 SDK 中填写 {settings.public_api_base}/v1。"),
+        ("04", "选择模型名", "从模型广场复制模型名，先用轻量模型测试，再切换到主力模型。"),
     ]
+    tools = [
+        ("/docs/cursor", "CU", "Cursor / Cline", "图形界面接入", "覆盖 Base URL，添加模型名，即可在 AI 编程工具里调用。"),
+        ("/docs/claude-code-cli", "CC", "Claude Code CLI", "命令行 Agent 接入", "设置环境变量后启动 claude，适合完整项目开发。"),
+        ("#sdk", "SDK", "OpenAI SDK", "Python / Node.js", "只改 base_url 和 api_key，保留原有 Chat Completions 代码。"),
+        ("#curl", "HTTP", "curl / HTTP", "任意语言直调", "标准 Bearer Token 鉴权，适合脚本、后端服务和自动化任务。"),
+    ]
+    faqs = [
+        ("余额为什么显示美元？", "平台模型按美元计价，账户余额和扣费统一显示为 USD，方便和模型价格直接对应。"),
+        ("微信支付怎么计算？", "微信实际支付人民币，系统会按固定汇率把你选择的美元充值金额折算成人民币发起支付。"),
+        ("新用户有免费额度吗？", "为避免无效注册，首笔成功付款后自动加赠 $1 美元额度，每个账户仅赠送一次。"),
+        ("调用失败怎么排查？", "先确认 Key、余额、Base URL 和模型名是否正确，再到控制台使用日志查看请求状态。"),
+    ]
+    step_html = "".join(
+        f"""<div class="doc-step-card">
+          <span>{escape(num)}</span>
+          <strong>{escape(title)}</strong>
+          <p>{escape(desc)}</p>
+        </div>"""
+        for num, title, desc in steps
+    )
     tool_html = "".join(
-        f"""<a class="doc-tool-card" href="{href}" id="{href.lstrip('/').replace('/', '-').lstrip('#')}">
+        f"""<a class="doc-tool-card" href="{href}" id="doc-tool-{href.lstrip('/').replace('/', '-').lstrip('#')}">
           <div class="dtc-icon">{icon}</div>
           <div class="dtc-body">
             <strong>{escape(name)}</strong>
@@ -400,6 +420,13 @@ def docs_page(settings: Settings, *, portal: bool = False) -> str:
         </a>"""
         for href, icon, name, tag, desc in tools
     )
+    faq_html = "".join(
+        f"""<div class="doc-faq-card">
+          <strong>{escape(question)}</strong>
+          <p>{escape(answer)}</p>
+        </div>"""
+        for question, answer in faqs
+    )
     return layout(
         "Docs",
         "docs",
@@ -408,17 +435,32 @@ def docs_page(settings: Settings, *, portal: bool = False) -> str:
           <div class="ddh-bg"></div>
           <div class="ddh-content">
             <p class="ddh-eyebrow">接入文档</p>
-            <h1>一个 API Key，接入首发七个核心模型</h1>
-            <p class="ddh-sub">100% 兼容 OpenAI Chat Completions — Cursor、Cline、Claude Code、任意 SDK 不需要修改现有代码。</p>
+            <h1>5 分钟接入 996 Tokens API</h1>
+            <p class="ddh-sub">一个 API Key 调用 Claude、GPT、Gemini。兼容 OpenAI Chat Completions，适配 Cursor、Cline、Claude Code 和常见 SDK。</p>
             <div class="ddh-endpoint">
               <span class="ddh-label">Base URL</span>
               <code class="ddh-url">{base}/v1</code>
+            </div>
+            <div class="ddh-meta-row">
+              <span>美元余额</span>
+              <span>$3 起充</span>
+              <span>微信按汇率折算人民币支付</span>
+              <span>首笔付款加赠 $1</span>
             </div>
             <div class="ddh-actions">
               <a class="button ddh-btn-primary" href="{primary_href}">{escape(primary_text)}</a>
               <a class="button ddh-btn-ghost" href="{secondary_href}">{escape(secondary_text)}</a>
             </div>
           </div>
+        </section>
+
+        <section class="docs-steps-section">
+          <div class="dts-head">
+            <p class="eyebrow">Start Here</p>
+            <h2>四步完成接入</h2>
+            <p>先跑通一个最小请求，再根据场景切换模型和工具。</p>
+          </div>
+          <div class="doc-steps-grid">{step_html}</div>
         </section>
 
         <section class="docs-tools-section">
@@ -482,6 +524,14 @@ export ANTHROPIC_MODEL=claude-sonnet-4-6
 claude  # 直接启动</pre>
             </article>
           </div>
+        </section>
+
+        <section class="docs-faq-section">
+          <div class="dcs-head">
+            <p class="eyebrow">FAQ</p>
+            <h2>常见问题</h2>
+          </div>
+          <div class="doc-faq-grid">{faq_html}</div>
         </section>
 
         <section class="docs-cta-strip">
@@ -817,27 +867,33 @@ def about_page(settings: Settings, *, portal: bool = False) -> str:
     console = escape(settings.app_base_url.rstrip("/") + "/console")
     topup = escape(settings.app_base_url.rstrip("/") + "/console/topup")
     primary_href = console if portal else escape(settings.register_url)
-    primary_text = "返回控制台 →" if portal else "注册并充值 →"
+    primary_text = "返回控制台" if portal else "注册并充值"
     secondary_href = topup if portal else "/docs"
     secondary_text = "账户充值" if portal else "查看接入文档"
     features = [
-        ("🔌", "统一接口", "兼容 OpenAI Chat Completions，常见 SDK 和开发工具都能快速接入。"),
-        ("🧠", "精选模型", "提供 Claude、GPT、Gemini 系列模型，覆盖编程、推理、写作和轻量任务。"),
-        ("💳", "美元余额", "账户余额以 USD 展示，充值、扣费和用量记录清晰可查。微信支付按固定汇率折算人民币。"),
-        ("⚡", "流式输出", "完整支持 SSE streaming，Claude Code / Cursor 打字机效果无卡顿。"),
-        ("🧰", "工具友好", "提供 Cursor、Claude Code、Cline、Cherry Studio 和常见 SDK 教程。"),
-        ("🌍", "海外开放", "当前服务只向海外用户开放，如需企业合作请先联系管理员确认。"),
+        ("API", "统一接口", "兼容 OpenAI Chat Completions，常见 SDK 和开发工具都能快速接入。"),
+        ("AI", "精选模型", "提供 Claude、GPT、Gemini 系列模型，覆盖编程、推理、写作和轻量任务。"),
+        ("USD", "美元余额", "账户余额以 USD 展示，充值、扣费和用量记录清晰可查。"),
+        ("SSE", "流式输出", "支持 SSE streaming，Claude Code 和 Cursor 对话体验更顺畅。"),
+        ("KEY", "权限清晰", "用户可以在控制台创建 API Key，并按模型和余额控制使用范围。"),
+        ("OS", "海外开放", "当前服务只向海外用户开放，如需企业合作请先联系管理员确认。"),
     ]
     model_groups = [
         ("C", "Claude 系列", "claude", "Opus、Sonnet、Haiku，适合 AI 编程、复杂分析和长文本任务。"),
-        ("G", "GPT 系列", "gpt", "GPT-5.5、GPT-5.4、GPT-5.4 Mini，适合通用对话、代码和 Agent。"),
-        ("M", "Gemini 系列", "extra", "Gemini 3.5 Flash，适合快速响应和轻量任务。"),
+        ("G", "GPT 系列", "gpt", "适合通用对话、代码生成、Agent 和自动化工作流。"),
+        ("M", "Gemini 系列", "extra", "适合快速响应、轻量任务和多工具组合调用。"),
     ]
     stats = [
         ("7", "首发核心模型"),
         ("USD", "美元余额"),
         ("$3", "最低充值"),
-        ("海外", "只向海外用户开放"),
+        ("QQ", "61943181 客服"),
+    ]
+    billing_cards = [
+        ("01", "美元余额", "模型价格、账户余额和扣费记录统一以 USD 展示，便于直接对照模型广场价格。"),
+        ("02", "人民币支付", "微信支付会按固定汇率把美元充值金额折算成人民币，支付后入账美元余额。"),
+        ("03", "$3 起充", "低门槛试用，先用小额充值验证工具配置和模型效果，再按需加额。"),
+        ("04", "首充赠送", "新用户首笔成功付款后自动加赠 $1 美元额度，每个账户仅一次。"),
     ]
     feature_html = "".join(
         f"""<div class="af-card">
@@ -862,6 +918,14 @@ def about_page(settings: Settings, *, portal: bool = False) -> str:
         </div>"""
         for val, label in stats
     )
+    billing_html = "".join(
+        f"""<div class="billing-card">
+          <span>{escape(num)}</span>
+          <strong>{escape(title)}</strong>
+          <p>{escape(desc)}</p>
+        </div>"""
+        for num, title, desc in billing_cards
+    )
     return layout(
         "About",
         "about",
@@ -870,9 +934,8 @@ def about_page(settings: Settings, *, portal: bool = False) -> str:
           <div class="adh-bg"></div>
           <div class="adh-content">
             <p class="adh-eyebrow">About 996 Tokens</p>
-            <h1>面向 AI 编程的<br>多模型 API 网关</h1>
-            <p class="adh-sub">996 Tokens 是为 Claude Code、Cursor、Cline 和 AI Agent 开发者设计的 API 服务。<br>
-            一个 API Key，第一版统一接入 Claude、GPT、Gemini 七个核心模型；账户以美元余额展示，本服务只向海外用户开放。</p>
+            <h1>一个账号，接入 Claude、GPT、Gemini</h1>
+            <p class="adh-sub">996 Tokens 面向 AI 编程、自动化脚本和 Agent 开发者。你只需要一个 API Key，就能在 Cursor、Claude Code、Cline、OpenAI SDK 和后端服务中统一调用常用模型。</p>
             <div class="adh-actions">
               <a class="button primary adh-btn-primary" href="{primary_href}">{escape(primary_text)}</a>
               <a class="button adh-btn-ghost" href="{secondary_href}">{escape(secondary_text)}</a>
@@ -893,9 +956,9 @@ def about_page(settings: Settings, *, portal: bool = False) -> str:
         <section class="about-arch-section">
           <div class="aas-inner">
             <div class="aas-left">
-              <p class="eyebrow">How It Works</p>
-              <h2>使用流程</h2>
-              <p>注册账户、充值余额、创建 API Key，然后在你的开发工具里替换 Base URL 即可开始调用。</p>
+              <p class="eyebrow">Getting Started</p>
+              <h2>从注册到调用</h2>
+              <p>注册账户、充值美元余额、创建 API Key，然后在你的开发工具里替换 Base URL 即可开始调用。</p>
               <div class="arch-diagram">
                 <div class="arch-node arch-user">用户请求</div>
                 <div class="arch-arrow">↓</div>
@@ -921,10 +984,19 @@ def about_page(settings: Settings, *, portal: bool = False) -> str:
             <div class="aas-right">
               <p class="eyebrow">Models</p>
               <h2>支持模型</h2>
-              <p>第一版先提供最常用的 Claude、GPT、Gemini 模型，后续会逐步扩展更多类型。</p>
+              <p>第一版先提供最常用的 Claude、GPT、Gemini 模型，保持模型列表精简、清晰、可直接使用。</p>
               <div class="up-grid">{model_group_html}</div>
             </div>
           </div>
+        </section>
+
+        <section class="about-billing-section">
+          <div class="about-section-head">
+            <p class="eyebrow">Billing</p>
+            <h2>计费与充值</h2>
+            <p>余额按美元展示，支付按人民币完成，用户看到的扣费和模型价格保持一致。</p>
+          </div>
+          <div class="billing-grid">{billing_html}</div>
         </section>
 
         <section class="about-contact-section">
@@ -935,25 +1007,25 @@ def about_page(settings: Settings, *, portal: bool = False) -> str:
           </div>
           <div class="acs-grid">
             <div class="acs-card">
-              <div class="acs-icon">💬</div>
+              <div class="acs-icon">QQ</div>
               <strong>QQ 客服</strong>
               <p><span class="acs-code">61943181</span></p>
               <p style="margin-top:6px;color:var(--muted);font-size:13px;">充值、Key、扣费或接入问题都可以联系处理。</p>
             </div>
             <div class="acs-card">
-              <div class="acs-icon">📚</div>
+              <div class="acs-icon">DOC</div>
               <strong>接入文档</strong>
-              <p><a class="acs-link" href="/docs">www.996tokens.com/docs →</a></p>
+              <p><a class="acs-link" href="/docs">www.996tokens.com/docs</a></p>
               <p style="margin-top:6px;color:var(--muted);font-size:13px;">Cursor、Claude Code、OpenAI SDK 接入教程。</p>
             </div>
             <div class="acs-card">
-              <div class="acs-icon">🔗</div>
+              <div class="acs-icon">API</div>
               <strong>API Base URL</strong>
               <p><code class="acs-code">{base}/v1</code></p>
               <p style="margin-top:6px;color:var(--muted);font-size:13px;">兼容 OpenAI Chat Completions，换一行即接入。</p>
             </div>
             <div class="acs-card">
-              <div class="acs-icon">🌍</div>
+              <div class="acs-icon">OS</div>
               <strong>服务声明</strong>
               <p>996 Tokens 当前只向海外用户开放；如需企业合作、兑换码或异常订单处理，请先联系管理员确认。</p>
             </div>
@@ -1876,22 +1948,31 @@ def layout(
     .ddh-endpoint {{ width: min(760px, 100%); margin: 26px auto 0; display: grid; grid-template-columns: 130px 1fr; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,.12); border-radius: 14px; padding: 10px; background: rgba(255,255,255,.08); box-shadow: 0 24px 70px rgba(0,0,0,.2); backdrop-filter: blur(12px); text-align: left; }}
     .ddh-label {{ color: #cbd5e1; font-weight: 900; text-align: center; }}
     .ddh-url {{ display: block; background: rgba(255,255,255,.12); color: #fff; padding: 12px 14px; border-radius: 10px; overflow-wrap: anywhere; }}
+    .ddh-meta-row {{ width: min(820px, 100%); margin: 16px auto 0; display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; }}
+    .ddh-meta-row span {{ display: inline-flex; align-items: center; min-height: 30px; border: 1px solid rgba(255,255,255,.14); border-radius: 999px; padding: 0 12px; color: #dbeafe; background: rgba(255,255,255,.07); font-size: 13px; font-weight: 800; }}
     .ddh-actions, .cli-hero-actions, .docs-cta-btns {{ display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 24px; }}
     .ddh-btn-primary {{ background: #2563eb; border-color: #2563eb; color: #fff; box-shadow: 0 14px 34px rgba(37,99,235,.36); }}
     .ddh-btn-ghost {{ background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.18); color: #e2e8f0; }}
-    .docs-tools-section, .docs-code-section, .cli-steps-section, .cli-models-section, .cli-faq-section {{ max-width: 1180px; margin: 0 auto; padding: 54px 0 0; }}
+    .docs-steps-section, .docs-tools-section, .docs-code-section, .docs-faq-section, .cli-steps-section, .cli-models-section, .cli-faq-section {{ max-width: 1180px; margin: 0 auto; padding: 54px 0 0; }}
     .dts-head, .dcs-head, .css-head {{ margin-bottom: 20px; }}
     .dts-head h2, .dcs-head h2, .css-head h2 {{ font-size: 30px; margin-bottom: 8px; }}
+    .dts-head p:not(.eyebrow), .dcs-head p:not(.eyebrow) {{ color: var(--muted); line-height: 1.7; }}
+    .doc-steps-grid {{ display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }}
+    .doc-step-card, .doc-faq-card {{ border: 1px solid var(--line); border-radius: 16px; background: #fff; padding: 22px; box-shadow: var(--shadow); }}
+    .doc-step-card span {{ display: grid; place-items: center; width: 36px; height: 36px; margin-bottom: 16px; border-radius: 50%; background: var(--blue); color: #fff; font-weight: 900; font-size: 13px; }}
+    .doc-step-card strong, .doc-faq-card strong {{ display: block; color: var(--ink); font-size: 17px; margin-bottom: 9px; }}
+    .doc-step-card p, .doc-faq-card p {{ margin: 0; color: var(--muted); line-height: 1.65; }}
     .doc-tools-grid {{ display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }}
     .doc-tool-card {{ min-height: 210px; display: flex; flex-direction: column; gap: 14px; position: relative; border: 1px solid var(--line); border-radius: 16px; background: #fff; padding: 22px; color: var(--ink); text-decoration: none; box-shadow: var(--shadow); transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }}
     .doc-tool-card:hover {{ transform: translateY(-4px); border-color: #bfdbfe; box-shadow: 0 18px 48px rgba(37,99,235,.14); }}
-    .dtc-icon {{ width: 46px; height: 46px; display: grid; place-items: center; border-radius: 12px; background: #edf2ff; font-size: 23px; }}
+    .dtc-icon {{ width: 46px; height: 46px; display: grid; place-items: center; border-radius: 12px; background: #edf2ff; color: var(--blue-dark); font-size: 13px; font-weight: 900; letter-spacing: 0; }}
     .dtc-body strong {{ display: block; font-size: 19px; margin-bottom: 8px; }}
     .dtc-tag {{ display: inline-flex; width: fit-content; border-radius: 999px; background: #e0f2fe; color: #0369a1; padding: 4px 9px; font-size: 12px; font-weight: 900; }}
     .dtc-body p {{ margin: 12px 0 0; color: var(--muted); line-height: 1.6; }}
     .dtc-arrow {{ margin-top: auto; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; background: #f1f5f9; color: var(--blue); font-weight: 900; }}
     .docs-code-section article {{ min-height: 340px; display: flex; flex-direction: column; gap: 14px; }}
     .docs-code-section article pre {{ flex: 1; min-height: 230px; }}
+    .doc-faq-grid {{ display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }}
     .docs-cta-strip {{ max-width: 1180px; margin: 54px auto 0; border-radius: 18px; background: linear-gradient(135deg, #0f172a, #1e3a8a); color: #fff; padding: 26px; box-shadow: 0 28px 70px rgba(15,23,42,.18); }}
     .docs-cta-inner {{ display: flex; align-items: center; justify-content: space-between; gap: 18px; }}
     .docs-cta-inner strong {{ display: block; font-size: 22px; margin-bottom: 6px; }}
@@ -1931,14 +2012,14 @@ def layout(
     .about-stat strong {{ display: block; font-size: 28px; font-weight: 900; color: #fff; line-height: 1.1; }}
     .about-stat span {{ display: block; margin-top: 4px; color: #94a3b8; font-size: 13px; }}
     /* Features section */
-    .about-section {{ max-width: 1240px; margin: 0 auto; padding: 64px 18px 32px; }}
+    .about-section, .about-billing-section {{ max-width: 1240px; margin: 0 auto; padding: 64px 18px 32px; }}
     .about-section-head {{ text-align: center; margin-bottom: 40px; }}
     .about-section-head h2 {{ font-size: 32px; margin-bottom: 10px; }}
     .about-section-head p {{ color: var(--muted); font-size: 16px; max-width: 560px; margin: 0 auto; }}
     .af-grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }}
     .af-card {{ border: 1px solid var(--line); border-radius: 16px; background: #fff; padding: 28px; box-shadow: 0 4px 20px rgba(15,23,42,.06); transition: transform .2s, box-shadow .2s; }}
     .af-card:hover {{ transform: translateY(-4px); box-shadow: 0 12px 40px rgba(15,23,42,.12); }}
-    .af-icon {{ font-size: 32px; margin-bottom: 16px; }}
+    .af-icon {{ width: 48px; height: 48px; display: grid; place-items: center; border-radius: 14px; background: #eef2ff; color: var(--blue-dark); font-size: 13px; font-weight: 900; margin-bottom: 16px; letter-spacing: 0; }}
     .af-card h3 {{ font-size: 17px; font-weight: 800; margin: 0 0 10px; color: var(--ink); }}
     .af-card p {{ color: var(--muted); line-height: 1.65; margin: 0; font-size: 14px; }}
     /* Architecture section */
@@ -1968,6 +2049,12 @@ def layout(
     .up-claude {{ border-left: 3px solid #2563eb; }}
     .up-siliconflow {{ border-left: 3px solid #16a34a; }}
     .up-extra {{ border-left: 3px solid #d97706; }}
+    .about-billing-section {{ padding-top: 56px; }}
+    .billing-grid {{ display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }}
+    .billing-card {{ border: 1px solid var(--line); border-radius: 16px; background: linear-gradient(180deg, #fff, #f8fafc); padding: 24px; box-shadow: var(--shadow); }}
+    .billing-card span {{ display: inline-flex; align-items: center; justify-content: center; min-width: 36px; height: 30px; margin-bottom: 18px; border-radius: 999px; background: #dbeafe; color: var(--blue-dark); font-weight: 900; font-size: 12px; }}
+    .billing-card strong {{ display: block; color: var(--ink); font-size: 18px; margin-bottom: 10px; }}
+    .billing-card p {{ margin: 0; color: var(--muted); line-height: 1.7; font-size: 14px; }}
     /* Contact section */
     .about-contact-section {{ max-width: 1240px; margin: 0 auto; padding: 64px 18px 80px; }}
     .acs-head {{ text-align: center; margin-bottom: 36px; }}
@@ -1976,7 +2063,7 @@ def layout(
     .acs-grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }}
     .acs-card {{ border: 1px solid var(--line); border-radius: 16px; padding: 28px; background: #fff; box-shadow: var(--shadow); transition: transform .2s, box-shadow .2s; }}
     .acs-card:hover {{ transform: translateY(-3px); box-shadow: 0 12px 36px rgba(15,23,42,.1); }}
-    .acs-icon {{ font-size: 30px; margin-bottom: 14px; }}
+    .acs-icon {{ width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; background: #eef2ff; color: var(--blue-dark); font-size: 12px; font-weight: 900; margin-bottom: 14px; letter-spacing: 0; }}
     .acs-card strong {{ display: block; font-size: 16px; font-weight: 800; margin-bottom: 10px; color: var(--ink); }}
     .acs-card p {{ color: var(--muted); font-size: 14px; line-height: 1.65; margin: 0; }}
     .acs-link {{ color: var(--blue); font-weight: 700; text-decoration: none; }}
@@ -1986,19 +2073,19 @@ def layout(
       .about-dark-hero {{ padding: 60px 18px 48px; }}
       .about-dark-hero h1 {{ font-size: 38px; }}
       .about-stats-row {{ grid-template-columns: repeat(2, 1fr); }}
-      .af-grid, .aas-inner, .acs-grid {{ grid-template-columns: 1fr; }}
+      .af-grid, .aas-inner, .acs-grid, .billing-grid {{ grid-template-columns: 1fr; }}
       .arch-branches {{ grid-template-columns: 1fr; }}
       .docs-dark-hero, .cli-hero {{ padding: 56px 18px 46px; }}
       .docs-dark-hero h1, .cli-hero h1 {{ font-size: 38px; }}
-      .doc-tools-grid, .cli-hero, .cli-steps-grid, .cli-faq-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+      .doc-steps-grid, .doc-tools-grid, .doc-faq-grid, .cli-hero, .cli-steps-grid, .cli-faq-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
       .docs-cta-inner {{ align-items: flex-start; flex-direction: column; }}
     }}
     @media (max-width: 560px) {{
       .about-dark-hero h1 {{ font-size: 28px; }}
       .about-stats-row {{ grid-template-columns: repeat(2, 1fr); gap: 10px; }}
-      .about-section, .about-arch-section, .about-contact-section {{ padding-top: 40px; padding-bottom: 32px; }}
+      .about-section, .about-arch-section, .about-billing-section, .about-contact-section {{ padding-top: 40px; padding-bottom: 32px; }}
       .docs-dark-hero h1, .cli-hero h1 {{ font-size: 30px; }}
-      .ddh-endpoint, .doc-tools-grid, .cli-hero, .cli-steps-grid, .cli-faq-grid {{ grid-template-columns: 1fr; }}
+      .ddh-endpoint, .doc-steps-grid, .doc-tools-grid, .doc-faq-grid, .cli-hero, .cli-steps-grid, .cli-faq-grid {{ grid-template-columns: 1fr; }}
       .ddh-label {{ text-align: left; padding-left: 4px; }}
     }}
     @media (max-width: 980px) {{

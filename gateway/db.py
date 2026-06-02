@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterable
 
-from .policy import model_price_rows
+from .policy import ACCOUNT_CURRENCY, model_price_rows
 from .security import generate_api_key, hash_secret, key_prefix, utc_now_iso
 
 
@@ -46,7 +46,7 @@ class Database:
     def _migrate(self, conn: sqlite3.Connection) -> None:
         existing = {row["name"] for row in conn.execute("PRAGMA table_info(recharge_orders)").fetchall()}
         if "currency" not in existing:
-            conn.execute("ALTER TABLE recharge_orders ADD COLUMN currency TEXT DEFAULT 'CNY'")
+            conn.execute(f"ALTER TABLE recharge_orders ADD COLUMN currency TEXT DEFAULT '{ACCOUNT_CURRENCY}'")
 
     def _sync_model_prices(self, conn: sqlite3.Connection) -> None:
         now = utc_now_iso()
@@ -58,7 +58,7 @@ class Database:
                     internal_model, display_name, line_type, input_price, output_price,
                     currency, min_margin, enabled, description, updated_at
                 )
-                VALUES (?, ?, ?, ?, ?, 'CNY', ?, 1, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
                 ON CONFLICT(internal_model) DO UPDATE SET
                     display_name = excluded.display_name,
                     line_type = excluded.line_type,
@@ -70,7 +70,7 @@ class Database:
                     description = excluded.description,
                     updated_at = excluded.updated_at
                 """,
-                (*model, now),
+                (*model[:5], ACCOUNT_CURRENCY, *model[5:], now),
             )
 
         model_names = [row[0] for row in model_prices]
@@ -327,7 +327,7 @@ class Database:
                         internal_model, display_name, line_type, input_price, output_price,
                         currency, min_margin, enabled, description, updated_at
                     )
-                    VALUES (?, ?, ?, ?, ?, 'CNY', ?, 1, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
                     ON CONFLICT(internal_model) DO UPDATE SET
                         display_name = excluded.display_name,
                         line_type = excluded.line_type,
@@ -339,7 +339,7 @@ class Database:
                         description = excluded.description,
                         updated_at = excluded.updated_at
                     """,
-                    (*model, now),
+                    (*model[:5], ACCOUNT_CURRENCY, *model[5:], now),
                 )
 
             model_names = [row[0] for row in model_prices]
@@ -444,7 +444,7 @@ class Database:
                 cached_input_cost, currency, supports_stream, supports_tools, supports_vision,
                 stability_score, avg_latency_ms, error_rate, balance, status, updated_at
             )
-            VALUES (?, ?, ?, ?, ?, 0, 'CNY', 1, 1, 0, ?, ?, 0, 9999, 'active', ?)
+            VALUES (?, ?, ?, ?, ?, 0, ?, 1, 1, 0, ?, ?, 0, 9999, 'active', ?)
             ON CONFLICT(provider_id, internal_model, provider_model) DO UPDATE SET
                 input_cost = excluded.input_cost,
                 output_cost = excluded.output_cost,
@@ -460,6 +460,7 @@ class Database:
                 internal_model,
                 input_cost,
                 output_cost,
+                ACCOUNT_CURRENCY,
                 stability_score,
                 avg_latency_ms,
                 now,
@@ -591,7 +592,7 @@ class Database:
                 (user_id, limit),
             ).fetchall()
 
-    def recharge_user(self, user_id: int, *, amount: float, channel: str = "mock", currency: str = "CNY") -> Row:
+    def recharge_user(self, user_id: int, *, amount: float, channel: str = "mock", currency: str = ACCOUNT_CURRENCY) -> Row:
         if amount <= 0:
             raise ValueError("Recharge amount must be positive")
         now = utc_now_iso()
@@ -971,7 +972,7 @@ CREATE TABLE IF NOT EXISTS provider_model_cost (
     input_cost REAL NOT NULL,
     output_cost REAL NOT NULL,
     cached_input_cost REAL DEFAULT 0,
-    currency TEXT DEFAULT 'CNY',
+    currency TEXT DEFAULT 'USD',
     supports_stream INTEGER DEFAULT 1,
     supports_tools INTEGER DEFAULT 0,
     supports_vision INTEGER DEFAULT 0,
@@ -992,7 +993,7 @@ CREATE TABLE IF NOT EXISTS model_prices (
     line_type TEXT NOT NULL,
     input_price REAL NOT NULL,
     output_price REAL NOT NULL,
-    currency TEXT DEFAULT 'CNY',
+    currency TEXT DEFAULT 'USD',
     min_margin REAL DEFAULT 0.3,
     enabled INTEGER DEFAULT 1,
     description TEXT DEFAULT '',
@@ -1026,7 +1027,7 @@ CREATE TABLE IF NOT EXISTS recharge_orders (
     order_no TEXT NOT NULL UNIQUE,
     amount REAL NOT NULL,
     channel TEXT DEFAULT 'mock',
-    currency TEXT DEFAULT 'CNY',
+    currency TEXT DEFAULT 'USD',
     status TEXT DEFAULT 'pending',
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     paid_at TEXT,

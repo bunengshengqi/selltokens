@@ -4,7 +4,7 @@ from html import escape
 from typing import Any, Iterable
 
 from .config import Settings, settings as default_settings
-from .policy import FIRST_WAVE_MODEL_SPECS, recharge_bonus_amount
+from .policy import FIRST_RECHARGE_BONUS_USD, FIRST_WAVE_MODEL_SPECS, SUBSCRIPTION_PLAN_SPECS, TOPUP_USD_AMOUNTS
 
 
 def home_page(settings: Settings, models: Iterable[dict[str, Any]]) -> str:
@@ -49,7 +49,7 @@ def home_page(settings: Settings, models: Iterable[dict[str, Any]]) -> str:
           <div>
             <p class="eyebrow">New User Bonus</p>
             <h1>先充值，再加赠，再邀请</h1>
-            <p>新用户完成充值或购买月卡后自动加赠：100 元以下送 5 元，100 元及以上送 10 元。注册后可先查看文档和价格，再决定充值。</p>
+            <p>新用户完成首笔充值或购买月卡后自动加赠 $1 美元额度。账户余额按 USD 展示，微信支付时按固定汇率折算成人民币。</p>
           </div>
           <div class="conversion-grid">{funnel_cards}</div>
         </section>
@@ -78,7 +78,7 @@ def home_page(settings: Settings, models: Iterable[dict[str, Any]]) -> str:
         </section>
         <section class="feature-grid">
           <div><h2>接入简单</h2><p>兼容 OpenAI 格式，常见 SDK 和工具只需要替换 Base URL。</p></div>
-          <div><h2>余额清晰</h2><p>人民币余额展示，充值、扣费和用量记录都能在控制台查看。</p></div>
+          <div><h2>余额清晰</h2><p>美元余额展示，充值、扣费和用量记录都能在控制台查看；人民币只作为微信支付实付金额。</p></div>
           <div><h2>模型精选</h2><p>默认只展示常用模型，减少选择困扰。</p></div>
           <div><h2>新手友好</h2><p>提供文档、示例命令和常见工具配置教程。</p></div>
         </section>
@@ -111,7 +111,7 @@ def pricing_page(models: Iterable[dict[str, Any]], settings: Settings) -> str:
           <div class="pricing-hero">
             <p class="eyebrow">Claude Code API Pricing</p>
             <h1>为高强度 AI 编程准备的模型额度方案</h1>
-            <p>第一版聚焦 Claude、GPT、Gemini 七个核心模型。人民币余额计费，充值和月卡支付成功后再加赠，适合个人开发者、工作室和自动化 Agent 团队。</p>
+            <p>第一版聚焦 Claude、GPT、Gemini 七个核心模型。账户余额和模型单价按 USD 计费，微信支付按固定汇率折算成人民币。</p>
             <div class="billing-toggle" aria-label="计费周期">
               <span class="active">按月付</span>
               <span>按年付 <b>省 2 个月</b></span>
@@ -119,7 +119,7 @@ def pricing_page(models: Iterable[dict[str, Any]], settings: Settings) -> str:
             <div class="hero-stats">
               <span><strong>100</strong> 人同时在线目标</span>
               <span><strong>7</strong> 个首发模型</span>
-              <span><strong>CNY</strong> 余额和支付</span>
+              <span><strong>USD</strong> 余额与扣费</span>
             </div>
           </div>
           <section class="plan-grid">{plan_cards}</section>
@@ -134,7 +134,7 @@ def pricing_page(models: Iterable[dict[str, Any]], settings: Settings) -> str:
         </section>
         <section class="pricing-note">
           <strong>计费说明</strong>
-          <p>余额按人民币展示并按实际调用扣费。充值或购买月卡后会自动加赠额度，第一版支付方式保持微信支付。</p>
+          <p>余额按美元展示并按实际调用扣费。充值或购买月卡时按固定汇率折算成人民币支付，新用户首笔付款后加赠 $1 美元额度。</p>
           <a class="text-link" href="{escape(settings.register_url)}">进入控制台购买套餐 →</a>
         </section>
         <section class="funnel-panel">
@@ -214,20 +214,17 @@ def recharge_page(
     notice: str = "",
     notice_kind: str = "success",
 ) -> str:
-    amounts = [10, 50, 100, 500]
-    plans = [
-        ("Starter", 29, "支付后加赠 ¥5，适合轻度 Cursor 用户"),
-        ("Builder", 69, "支付后加赠 ¥5，适合 Claude Code 主力用户"),
-        ("Team", 199, "支付后加赠 ¥10，适合工作室和团队使用"),
-    ]
+    amounts = list(TOPUP_USD_AMOUNTS)
+    plans = [(plan.title, plan.usd_amount, plan.subtitle) for plan in SUBSCRIPTION_PLAN_SPECS]
     min_amount = float(settings.min_recharge_amount)
     currency = escape(settings.billing_currency)
+    pay_currency = escape(settings.payment_currency)
     amount_cards = "".join(
         f"""
         <form class="pay-card" method="post" action="/recharge">
           <input type="hidden" name="amount" value="{amount}">
-          <strong>{_money(amount, settings, decimals=0)}</strong>
-          <span>支付后加赠 {_money(recharge_bonus_amount(amount), settings, decimals=0)}，合计 {_money(amount + recharge_bonus_amount(amount), settings, decimals=2)}</span>
+          <strong>{_money(amount, settings, decimals=0)} 额度</strong>
+          <span>预计实付 {_payment_money(amount, settings)} {pay_currency}，首笔付款加赠 {_money(FIRST_RECHARGE_BONUS_USD, settings, decimals=0)}</span>
           <button type="submit">演示充值</button>
         </form>
         """
@@ -236,7 +233,7 @@ def recharge_page(
     custom_card = f"""
         <form class="pay-card custom-pay" method="post" action="/recharge">
           <strong>自定义金额</strong>
-          <span>账户币种：{currency}，最低 {_money(min_amount, settings, decimals=2)}；100 以下送 5，100 以上送 10</span>
+          <span>账户币种：{currency}，最低 {_money(min_amount, settings, decimals=2)}；按汇率折算为人民币支付</span>
           <input
             name="amount"
             type="number"
@@ -255,7 +252,7 @@ def recharge_page(
           <input type="hidden" name="amount" value="{amount}">
           <strong>{escape(name)}</strong>
           <span>{escape(desc)}</span>
-          <b>{_money(amount + recharge_bonus_amount(amount), settings, decimals=2)} 等值额度</b>
+          <b>{_money(amount, settings, decimals=2)} 额度 · 实付 {_payment_money(amount, settings)}</b>
           <button type="submit">演示购买</button>
         </form>
         """
@@ -280,7 +277,7 @@ def recharge_page(
           <div>
             <p class="eyebrow">Billing</p>
             <h1>账户充值</h1>
-            <p>第一版账户按 {currency} 计费，最低 {_money(min_amount, settings, decimals=2)}；注册不送额度，充值或月卡支付成功后再加赠：100 元以下送 5 元，100 元及以上送 10 元。</p>
+            <p>账户按 {currency} 计费，最低 {_money(min_amount, settings, decimals=2)}；微信支付按固定汇率 1 USD = {_payment_money(1, settings)} 折算。注册不送额度，新用户首笔付款后加赠 {_money(FIRST_RECHARGE_BONUS_USD, settings, decimals=2)}。</p>
           </div>
           <div class="balance-pill">余额 {_money(user['balance'], settings, decimals=4)}</div>
         </section>
@@ -397,7 +394,7 @@ def docs_page(settings: Settings, *, portal: bool = False) -> str:
     cta_secondary_text = "返回控制台"
     if not portal:
         cta_title = "准备好了吗？"
-        cta_desc = "注册后先充值再获得加赠额度，100 元以下送 5 元，100 元及以上送 10 元。"
+        cta_desc = "注册后先充值再获得可用额度，新用户首笔付款后加赠 $1 美元额度。"
         cta_primary_href = register
         cta_primary_text = "注册并充值"
         cta_secondary_href = app
@@ -721,7 +718,7 @@ def claude_code_cli_page(settings: Settings, *, portal: bool = False) -> str:
           <div class="cli-hero-text">
             <p class="eyebrow">Guide · Claude Code CLI</p>
             <h1>在 Claude Code 接入 996 Tokens</h1>
-            <p>通过环境变量把官方 Claude Code CLI 指向本平台，人民币计费，4 步完成完整 Agent 编码接入。</p>
+            <p>通过环境变量把官方 Claude Code CLI 指向本平台，美元余额计费，4 步完成完整 Agent 编码接入。</p>
             <div class="cli-hero-actions">
               <a class="button primary" href="{primary_href}">{escape(primary_text)}</a>
               <a class="button" href="{secondary_href}">{escape(secondary_text)}</a>
@@ -843,7 +840,7 @@ def about_page(settings: Settings, *, portal: bool = False) -> str:
     features = [
         ("🔌", "统一接口", "兼容 OpenAI Chat Completions，常见 SDK 和开发工具都能快速接入。"),
         ("🧠", "精选模型", "提供 Claude、GPT、Gemini 系列模型，覆盖编程、推理、写作和轻量任务。"),
-        ("💳", "人民币余额", "账户余额以 CNY 展示，充值、扣费和用量记录清晰可查。"),
+        ("💳", "美元余额", "账户余额以 USD 展示，充值、扣费和用量记录清晰可查。微信支付按固定汇率折算人民币。"),
         ("⚡", "流式输出", "完整支持 SSE streaming，Claude Code / Cursor 打字机效果无卡顿。"),
         ("🧰", "工具友好", "提供 Cursor、Claude Code、Cline、Cherry Studio 和常见 SDK 教程。"),
         ("🌍", "海外开放", "当前服务只向海外用户开放，如需企业合作请先联系管理员确认。"),
@@ -855,8 +852,8 @@ def about_page(settings: Settings, *, portal: bool = False) -> str:
     ]
     stats = [
         ("7", "首发核心模型"),
-        ("CNY", "人民币结算"),
-        ("¥10", "最低充值"),
+        ("USD", "美元余额"),
+        ("$1", "最低充值"),
         ("海外", "只向海外用户开放"),
     ]
     feature_html = "".join(
@@ -892,7 +889,7 @@ def about_page(settings: Settings, *, portal: bool = False) -> str:
             <p class="adh-eyebrow">About 996 Tokens</p>
             <h1>面向 AI 编程的<br>多模型 API 网关</h1>
             <p class="adh-sub">996 Tokens 是为 Claude Code、Cursor、Cline 和 AI Agent 开发者设计的 API 服务。<br>
-            一个 API Key，第一版统一接入 Claude、GPT、Gemini 七个核心模型；账户以人民币余额展示，本服务只向海外用户开放。</p>
+            一个 API Key，第一版统一接入 Claude、GPT、Gemini 七个核心模型；账户以美元余额展示，本服务只向海外用户开放。</p>
             <div class="adh-actions">
               <a class="button primary adh-btn-primary" href="{primary_href}">{escape(primary_text)}</a>
               <a class="button adh-btn-ghost" href="{secondary_href}">{escape(secondary_text)}</a>
@@ -1294,56 +1291,26 @@ def admin_page(
 
 
 def _pricing_plan_cards(settings: Settings) -> str:
-    plans = [
-        {
-            "name": "Pay Go",
-            "price": 10,
-            "yearly": "充值 <¥100 加赠 ¥5",
-            "badge": "",
-            "class": "",
-            "tagline": "最低 ¥10 充值，先跑通 API Key、Cursor 和 Claude Code。",
-            "rights": ["注册不送额度", "支付后加赠 ¥5", "适合首单验证"],
-            "support": ["全天可用", "公开文档和示例", "异常订单人工处理"],
-            "rates": [("Claude", "按量"), ("GPT", "按量"), ("Gemini", "按量")],
-            "cta": "立即充值",
-        },
-        {
-            "name": "Starter",
-            "price": 29,
-            "yearly": "月卡支付后加赠 ¥5",
-            "badge": "",
-            "class": "",
-            "tagline": "给小白和轻度 Cursor 用户一个低门槛月卡。",
-            "rights": ["到账 ¥34 等值额度", "适合日常问答和轻量代码", "微信支付即可开通"],
-            "support": ["全天可用", "工单处理", "异常订单人工处理"],
-            "rates": [("Claude", "标准"), ("GPT", "标准"), ("Gemini", "标准")],
-            "cta": "立即购买",
-        },
-        {
-            "name": "Builder",
-            "price": 69,
-            "yearly": "月卡支付后加赠 ¥5",
-            "badge": "推荐",
-            "class": "featured",
-            "tagline": "主推套餐，覆盖大多数 AI 编程和 Agent 测试。",
-            "rights": ["到账 ¥74 等值额度", "适合 Claude Code / Cursor 日常开发", "热门模型优先支持"],
-            "support": ["全天可用", "优先排障", "协助配置 Claude Code / Cursor"],
-            "rates": [("Claude", "标准"), ("GPT", "标准"), ("Gemini", "标准")],
-            "cta": "立即购买",
-        },
-        {
-            "name": "Team",
-            "price": 199,
-            "yearly": "月卡支付后加赠 ¥10",
-            "badge": "顶级",
-            "class": "top-tier",
-            "tagline": "工作室、RPA、Agent 批量调用和小团队共享。",
-            "rights": ["到账 ¥209 等值额度", "更高 RPM / TPM", "支持专属模型白名单"],
-            "support": ["专属人工支持", "上线接入协助", "异常调用优先处理"],
-            "rates": [("Claude", "优先"), ("GPT", "优先"), ("Gemini", "优先")],
-            "cta": "联系开通",
-        },
-    ]
+    plans = []
+    for index, spec in enumerate(SUBSCRIPTION_PLAN_SPECS):
+        plans.append(
+            {
+                "name": spec.title,
+                "price": spec.usd_amount,
+                "yearly": f"实付 {_payment_money(spec.usd_amount, settings)}",
+                "badge": "推荐" if spec.usd_amount == 5 else "",
+                "class": "featured" if spec.usd_amount == 5 else "top-tier" if spec.usd_amount == 30 else "",
+                "tagline": spec.subtitle,
+                "rights": [
+                    f"到账 {_money(spec.usd_amount, settings, decimals=2)} 美元额度",
+                    "新用户首笔付款后加赠 $1",
+                    "微信支付按固定汇率折算",
+                ],
+                "support": ["全天可用", "用量记录可查", "异常订单人工处理"],
+                "rates": [("Claude", "按量"), ("GPT", "按量"), ("Gemini", "按量")],
+                "cta": "立即购买" if index else "立即充值",
+            }
+        )
     cards = []
     for plan in plans:
         rights = "".join(f"<li>{escape(item)}</li>" for item in plan["rights"])
@@ -1396,13 +1363,13 @@ def _growth_funnel_cards(settings: Settings) -> str:
         ),
         (
             "充值转化",
-            "<¥100 送 ¥5",
-            "按量充值和月卡都按真实支付金额加赠，支付方式保持微信支付不变。",
+            "首笔送 $1",
+            "按量充值和月卡都绑定真实支付订单，微信支付按固定汇率折算。",
         ),
         (
             "复购激励",
-            "≥¥100 送 ¥10",
-            "大额充值和团队月卡使用固定加赠，权益清晰，不设置复杂规则。",
+            "$1 起充",
+            "1 / 3 / 5 / 10 / 20 / 30 美元档位，低门槛跑通接入。",
         ),
     ]
     return "".join(
@@ -1419,13 +1386,13 @@ def _growth_funnel_cards(settings: Settings) -> str:
 
 def _pricing_ladder_table(settings: Settings) -> str:
     rows = [
-        ("注册账户", "¥0", "¥0", "可查看文档和控制台，首充后发放加赠"),
-        ("小额充值", "¥10", "¥15 等值额度", "验证支付和 API Key，适合首单"),
-        ("入门月卡", "¥29/月", "¥34 等值额度", "主推小白转化，适合轻度 Cursor 使用"),
-        ("开发者月卡", "¥69/月", "¥74 等值额度", "主推套餐，适合日常 Claude Code / Agent 测试"),
-        ("专业月卡", "¥129/月", "¥139 等值额度", "适合高频调用和长上下文调试"),
-        ("团队月卡", "¥299/月", "¥309 等值额度", "适合工作室共享额度池和优先支持"),
-        ("大额充值", "¥500", "¥510 等值额度", "仅建议熟客/团队使用，人工风控"),
+        ("注册账户", "$0", "无免费额度", "可查看文档和控制台，首笔付款后发放加赠"),
+        ("试用月卡", "$1", f"$1 额度 / 实付 {_payment_money(1, settings)}", "验证支付和 API Key，适合首单"),
+        ("入门月卡", "$3", f"$3 额度 / 实付 {_payment_money(3, settings)}", "轻量 Cursor / Claude Code 使用"),
+        ("开发者月卡", "$5", f"$5 额度 / 实付 {_payment_money(5, settings)}", "主推套餐，适合日常 AI 编程"),
+        ("专业月卡", "$10", f"$10 额度 / 实付 {_payment_money(10, settings)}", "适合高频调用和长上下文调试"),
+        ("工作室月卡", "$20", f"$20 额度 / 实付 {_payment_money(20, settings)}", "适合多工具和多 Key 使用"),
+        ("团队月卡", "$30", f"$30 额度 / 实付 {_payment_money(30, settings)}", "适合工作室共享额度池和优先支持"),
     ]
     rendered = [
         "<div class='ladder-row head'><span>档位</span><span>用户支付</span><span>到账/权益</span><span>定位</span></div>"
@@ -1440,16 +1407,16 @@ def _pricing_ladder_table(settings: Settings) -> str:
         for name, price, value, note in rows
     )
     rendered.append(
-        f"<div class='rate-foot'>按量充值最低 {_money(settings.min_recharge_amount, settings, decimals=2)}；支付金额大于 0 且小于 ¥100 加赠 ¥5，达到 ¥100 加赠 ¥10。</div>"
+        f"<div class='rate-foot'>按量充值最低 {_money(settings.min_recharge_amount, settings, decimals=2)}；当前固定汇率 1 USD = {_payment_money(1, settings)}，新用户首笔付款后加赠 {_money(FIRST_RECHARGE_BONUS_USD, settings, decimals=2)}。</div>"
     )
     return "".join(rendered)
 
 
 def _referral_rules(settings: Settings) -> str:
     rows = [
-        ("新用户", "注册 ¥0", "完成充值或月卡购买后自动发放加赠。"),
-        ("充值 <¥100", "+¥5", "按量充值和月卡都适用。"),
-        ("充值 ≥¥100", "+¥10", "固定加赠，不做高比例折扣。"),
+        ("新用户", "注册 $0", "注册本身不发放免费额度，防止无效注册消耗。"),
+        ("首笔付款", "+$1", "充值或购买月卡都适用，每个账户仅限一次。"),
+        ("后续充值", "按实到账", "后续订单不重复发放首充奖励。"),
         ("邀请奖励", "绑定首充", "邀请奖励以后续活动页和控制台展示为准。"),
         ("异常订单", "人工处理", "充值未到账或订单异常时可联系管理员处理。"),
     ]
@@ -1482,7 +1449,7 @@ def _pricing_rate_rows(settings: Settings) -> str:
         for model, rate, note in rows
     )
     rendered.append(
-        f"<div class='rate-foot'>最低充值 {_money(settings.min_recharge_amount, settings, decimals=2)}，余额按 {escape(settings.billing_currency)} 扣费。</div>"
+        f"<div class='rate-foot'>最低充值 {_money(settings.min_recharge_amount, settings, decimals=2)}，余额按 {escape(settings.billing_currency)} 扣费，微信支付按 1 USD = {_payment_money(1, settings)} 折算。</div>"
     )
     return "".join(rendered)
 
@@ -1553,7 +1520,7 @@ def _provider_mix_cards() -> str:
     items = [
         ("Claude Code 友好", "AI 编程", "提供 Claude 系列模型和命令行工具接入教程，适合代码生成、重构和项目分析。"),
         ("OpenAI 兼容", "标准接口", "兼容常见 OpenAI SDK、Cursor、Cline、Cherry Studio 等工具。"),
-        ("人民币余额", "清晰扣费", "余额、充值和用量记录集中展示，方便控制预算。"),
+        ("美元余额", "清晰扣费", "余额、充值和用量记录集中展示，人民币只用于支付结算。"),
         ("快速上手", "文档示例", "提供 curl、Python SDK、Cursor 和 Claude Code 配置示例。"),
     ]
     return "".join(f"<div><h2>{escape(name)}</h2><strong>{escape(tag)}</strong><p>{escape(desc)}</p></div>" for name, tag, desc in items)
@@ -1610,6 +1577,12 @@ def _line_badge(line_type: str) -> str:
 def _money(amount: float | int | str, settings: Settings, *, decimals: int = 2) -> str:
     symbol = escape(settings.billing_symbol)
     return f"{symbol}{float(amount):.{decimals}f}"
+
+
+def _payment_money(usd_amount: float | int | str, settings: Settings, *, decimals: int = 2) -> str:
+    symbol = escape(settings.payment_symbol)
+    amount = float(usd_amount) * float(settings.usd_cny_exchange_rate)
+    return f"{symbol}{amount:.{decimals}f}"
 
 
 def _order_money(order: dict[str, Any], settings: Settings) -> str:

@@ -3,6 +3,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 
+ACCOUNT_CURRENCY = "USD"
+ACCOUNT_SYMBOL = "$"
+PAYMENT_CURRENCY = "CNY"
+PAYMENT_SYMBOL = "¥"
+USD_CNY_EXCHANGE_RATE = 7.40
+FIRST_RECHARGE_BONUS_USD = 1.0
+TOPUP_USD_AMOUNTS = (1, 3, 5, 10, 20, 30)
+
+
 @dataclass(frozen=True)
 class LaunchModelSpec:
     model: str
@@ -103,6 +112,38 @@ FIRST_WAVE_MODEL_SPECS: tuple[LaunchModelSpec, ...] = (
 FIRST_WAVE_MODEL_NAMES = tuple(spec.model for spec in FIRST_WAVE_MODEL_SPECS)
 
 
+@dataclass(frozen=True)
+class SubscriptionPlanSpec:
+    title: str
+    usd_amount: float
+    subtitle: str
+    sort_order: int
+
+    @property
+    def pay_cny(self) -> float:
+        return usd_to_cny(self.usd_amount)
+
+
+SUBSCRIPTION_PLAN_SPECS: tuple[SubscriptionPlanSpec, ...] = (
+    SubscriptionPlanSpec("Trial 月卡", 1, "含 $1 美元额度，适合首次验证支付和 API Key", 10),
+    SubscriptionPlanSpec("Starter 月卡", 3, "含 $3 美元额度，适合轻量问答和低成本模型体验", 20),
+    SubscriptionPlanSpec("Builder 月卡", 5, "含 $5 美元额度，适合 Cursor / Claude Code 日常测试", 30),
+    SubscriptionPlanSpec("Pro 月卡", 10, "含 $10 美元额度，适合日常开发和 Agent 调用", 40),
+    SubscriptionPlanSpec("Studio 月卡", 20, "含 $20 美元额度，适合高频调用和长上下文调试", 50),
+    SubscriptionPlanSpec("Team 月卡", 30, "含 $30 美元额度，适合工作室和小团队共享", 60),
+)
+
+
+def usd_to_cny(usd_amount: float) -> float:
+    return round(float(usd_amount) * USD_CNY_EXCHANGE_RATE, 2)
+
+
+def quota_for_usd(usd_amount: float, quota_per_unit: int = 500000, price: float = 1.0) -> int:
+    if price <= 0:
+        price = 1.0
+    return int(round(float(usd_amount) * quota_per_unit / price))
+
+
 def model_price_rows() -> tuple[tuple[str, str, str, float, float, float, str], ...]:
     return tuple(
         (
@@ -128,8 +169,4 @@ def newapi_completion_ratio() -> dict[str, float]:
 
 
 def recharge_bonus_amount(paid_amount: float) -> float:
-    if paid_amount >= 100:
-        return 10.0
-    if paid_amount > 0:
-        return 5.0
-    return 0.0
+    return FIRST_RECHARGE_BONUS_USD if paid_amount > 0 else 0.0

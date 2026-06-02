@@ -18,9 +18,15 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from gateway.policy import (  # noqa: E402
+    ACCOUNT_CURRENCY,
+    FIRST_RECHARGE_BONUS_USD,
     FIRST_WAVE_MODEL_NAMES,
+    SUBSCRIPTION_PLAN_SPECS,
+    TOPUP_USD_AMOUNTS,
+    USD_CNY_EXCHANGE_RATE,
     newapi_completion_ratio,
     newapi_model_ratio,
+    quota_for_usd,
     recharge_bonus_amount,
 )
 
@@ -28,6 +34,7 @@ from gateway.policy import (  # noqa: E402
 DB_PATH = Path(os.environ.get("NEWAPI_DB", "/opt/selltokens/data/new-api/one-api.db"))
 CRON_PATH = Path("/etc/cron.d/996tokens-newapi-bonus")
 COMPLETE_STATUSES = {"1", "2", "true", "paid", "success", "succeeded", "completed", "complete", "finished", "finish", "done"}
+BILLING_BONUS_START_OPTION = "FirstTopupBonusStartAt"
 
 
 def connect() -> sqlite3.Connection:
@@ -54,6 +61,13 @@ def upsert_option(conn: sqlite3.Connection, key: str, value: str) -> None:
         """,
         (key, value),
     )
+
+
+def option_value(conn: sqlite3.Connection, key: str, default: str = "") -> str:
+    if not table_exists(conn, "options"):
+        return default
+    row = conn.execute("SELECT value FROM options WHERE `key` = ?", (key,)).fetchone()
+    return str(row["value"]) if row and row["value"] is not None else default
 
 
 def apply_launch_policy(conn: sqlite3.Connection) -> dict[str, Any]:
@@ -90,6 +104,83 @@ def apply_launch_policy(conn: sqlite3.Connection) -> dict[str, Any]:
     }
 
 
+def apply_billing_policy(conn: sqlite3.Connection) -> dict[str, Any]:
+    unit = quota_per_unit(conn)
+    price = price_per_unit(conn)
+    now = int(time.time())
+    start_at = option_value(conn, BILLING_BONUS_START_OPTION, "")
+    if not start_at:
+        start_at = str(now)
+
+    with conn:
+        upsert_option(conn, "Price", f"{price:g}")
+        upsert_option(conn, "QuotaPerUnit", str(unit))
+        upsert_option(conn, "QuotaDisplayType", ACCOUNT_CURRENCY)
+        upsert_option(conn, "general_setting.quota_display_type", ACCOUNT_CURRENCY)
+        upsert_option(conn, "DisplayInCurrencyEnabled", "true")
+        upsert_option(conn, "USDExchangeRate", f"{USD_CNY_EXCHANGE_RATE:g}")
+        upsert_option(conn, "CustomCurrencyExchangeRate", "1")
+        upsert_option(conn, "CustomCurrencySymbol", "$")
+        upsert_option(conn, "MinTopUp", "1")
+        upsert_option(conn, "TopupAmounts", ",".join(str(amount) for amount in TOPUP_USD_AMOUNTS))
+        upsert_option(conn, BILLING_BONUS_START_OPTION, start_at)
+
+        updated_plans = 0
+        if table_exists(conn, "subscription_plans"):
+            for plan_id, plan in enumerate(SUBSCRIPTION_PLAN_SPECS, start=1):
+                quota = quota_for_usd(plan.usd_amount, unit, price)
+                conn.execute(
+                    """
+                    INSERT INTO subscription_plans (
+                        id, title, subtitle, price_amount, currency, duration_unit, duration_value,
+                        custom_seconds, enabled, sort_order, total_amount, quota_reset_period,
+                        quota_reset_custom_seconds, created_at, updated_at
+                    )
+                    VALUES (?, ?, ?, ?, ?, 'month', 1, 0, 1, ?, ?, 'never', 0, ?, ?)
+                    ON CONFLICT(id) DO UPDATE SET
+                        title = excluded.title,
+                        subtitle = excluded.subtitle,
+                        price_amount = excluded.price_amount,
+                        currency = excluded.currency,
+                        duration_unit = excluded.duration_unit,
+                        duration_value = excluded.duration_value,
+                        custom_seconds = excluded.custom_seconds,
+                        enabled = excluded.enabled,
+                        sort_order = excluded.sort_order,
+                        total_amount = excluded.total_amount,
+                        quota_reset_period = excluded.quota_reset_period,
+                        quota_reset_custom_seconds = excluded.quota_reset_custom_seconds,
+                        updated_at = excluded.updated_at
+                    """,
+                    (
+                        plan_id,
+                        plan.title,
+                        plan.subtitle,
+                        plan.usd_amount,
+                        ACCOUNT_CURRENCY,
+                        plan.sort_order,
+                        quota,
+                        now,
+                        now,
+                    ),
+                )
+                updated_plans += 1
+            keep_ids = tuple(range(1, len(SUBSCRIPTION_PLAN_SPECS) + 1))
+            conn.execute(
+                f"UPDATE subscription_plans SET enabled = 0, updated_at = ? WHERE id NOT IN ({','.join('?' for _ in keep_ids)})",
+                (now, *keep_ids),
+            )
+
+    return {
+        "billing_currency": ACCOUNT_CURRENCY,
+        "usd_cny_exchange_rate": USD_CNY_EXCHANGE_RATE,
+        "topup_amounts": list(TOPUP_USD_AMOUNTS),
+        "subscription_plans": updated_plans,
+        "first_paid_bonus_usd": FIRST_RECHARGE_BONUS_USD,
+        "bonus_start_at": int(start_at),
+    }
+
+
 def quota_per_unit(conn: sqlite3.Connection) -> int:
     row = conn.execute("SELECT value FROM options WHERE key = 'QuotaPerUnit'").fetchone()
     if row is None:
@@ -98,6 +189,35 @@ def quota_per_unit(conn: sqlite3.Connection) -> int:
         return int(float(row["value"]))
     except (TypeError, ValueError):
         return 500000
+
+
+def price_per_unit(conn: sqlite3.Connection) -> float:
+    row = conn.execute("SELECT value FROM options WHERE key = 'Price'").fetchone()
+    if row is None:
+        return 1.0
+    try:
+        price = float(row["value"])
+    except (TypeError, ValueError):
+        return 1.0
+    return price if price > 0 else 1.0
+
+
+def bonus_start_at(conn: sqlite3.Connection) -> int:
+    try:
+        return int(float(option_value(conn, BILLING_BONUS_START_OPTION, "0")))
+    except (TypeError, ValueError):
+        return 0
+
+
+def row_created_at(row: sqlite3.Row) -> int:
+    keys = set(row.keys())
+    for key in ("complete_time", "created_at", "create_time"):
+        if key in keys and row[key] not in (None, ""):
+            try:
+                return int(float(row[key]))
+            except (TypeError, ValueError):
+                continue
+    return 0
 
 
 def is_complete_status(value: Any) -> bool:
@@ -187,14 +307,18 @@ def award_bonus_for_row(conn: sqlite3.Connection, source: str, row: sqlite3.Row,
     keys = set(row.keys())
     if "user_id" not in keys:
         return False
+    user_id = int(row["user_id"])
+    if row_created_at(row) < bonus_start_at(conn):
+        return False
+    if conn.execute("SELECT 1 FROM bonus_awards WHERE user_id = ? LIMIT 1", (user_id,)).fetchone():
+        return False
     amount = paid_amount(row)
     bonus_amount = recharge_bonus_amount(amount)
     if bonus_amount <= 0:
         return False
     key = order_key(row)
     marker = f"bonus:{source}:{key}"
-    bonus_quota = int(round(bonus_amount * unit))
-    user_id = int(row["user_id"])
+    bonus_quota = quota_for_usd(bonus_amount, unit, price_per_unit(conn))
     now = int(time.time())
     try:
         conn.execute(
@@ -210,7 +334,7 @@ def award_bonus_for_row(conn: sqlite3.Connection, source: str, row: sqlite3.Row,
     cursor = conn.execute("UPDATE users SET quota = quota + ? WHERE id = ?", (bonus_quota, user_id))
     if cursor.rowcount != 1:
         return False
-    insert_quota_log(conn, user_id, bonus_quota, f"支付后加赠 ¥{bonus_amount:.2f}，订单 {key}", marker)
+    insert_quota_log(conn, user_id, bonus_quota, f"首笔付款加赠 ${bonus_amount:.2f}，订单 {key}", marker)
     return True
 
 
@@ -255,17 +379,22 @@ def install_cron() -> dict[str, str]:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--apply", action="store_true", help="apply registration bonus and model policy")
+    parser.add_argument("--apply-billing", action="store_true", help="apply USD billing, top-up, and subscription plan policy")
     parser.add_argument("--award-bonuses", action="store_true", help="award paid-order recharge bonuses")
     parser.add_argument("--install-cron", action="store_true", help="install a cron job for paid-order bonuses")
     args = parser.parse_args()
 
-    run_apply = args.apply or not (args.apply or args.award_bonuses or args.install_cron)
-    run_awards = args.award_bonuses or not (args.apply or args.award_bonuses or args.install_cron)
+    has_explicit_action = args.apply or args.apply_billing or args.award_bonuses or args.install_cron
+    run_apply = args.apply or not has_explicit_action
+    run_billing = args.apply_billing
+    run_awards = args.award_bonuses or not has_explicit_action
     result: dict[str, Any] = {"db": str(DB_PATH)}
 
     with connect() as conn:
         if run_apply:
             result["policy"] = apply_launch_policy(conn)
+        if run_billing:
+            result["billing"] = apply_billing_policy(conn)
         if run_awards:
             result["bonuses"] = award_paid_order_bonuses(conn)
     if args.install_cron:

@@ -475,8 +475,8 @@ ABOUT_HTML = r"""
 
   <div class="nt-metrics">
     <div class="nt-metric"><strong>7</strong><span>首发核心模型</span></div>
-    <div class="nt-metric"><strong>CNY</strong><span>人民币余额展示</span></div>
-    <div class="nt-metric"><strong>¥10</strong><span>最低充值门槛</span></div>
+    <div class="nt-metric"><strong>USD</strong><span>美元余额展示</span></div>
+    <div class="nt-metric"><strong>$1</strong><span>最低充值门槛</span></div>
     <div class="nt-metric"><strong>100</strong><span>第一版并发目标</span></div>
   </div>
 
@@ -490,7 +490,7 @@ ABOUT_HTML = r"""
     </div>
     <div class="nt-card-grid">
       <div class="nt-card"><div class="nt-card-mark">A</div><h3>统一接入</h3><p>一个 API Key 调用 Claude、GPT、Gemini 首发模型，兼容 OpenAI Chat Completions。</p></div>
-      <div class="nt-card"><div class="nt-card-mark">B</div><h3>余额清晰</h3><p>账户以人民币展示，充值、扣费和用量记录清晰可查。</p></div>
+      <div class="nt-card"><div class="nt-card-mark">B</div><h3>余额清晰</h3><p>账户以美元展示，充值、扣费和用量记录清晰可查；微信支付按固定汇率折算人民币。</p></div>
       <div class="nt-card"><div class="nt-card-mark">C</div><h3>体验稳定</h3><p>面向高频开发和自动化调用场景，持续优化响应体验。</p></div>
       <div class="nt-card"><div class="nt-card-mark">D</div><h3>充值方便</h3><p>保留微信支付、兑换码和人工处理入口，方便处理异常订单。</p></div>
       <div class="nt-card"><div class="nt-card-mark">E</div><h3>开发者友好</h3><p>重点适配 Cursor、Claude Code、Cline、Cherry Studio 和常见 SDK。</p></div>
@@ -532,7 +532,7 @@ ABOUT_HTML = r"""
           <div class="nt-doc-icon">SDK</div><strong>OpenAI SDK</strong><span>Python / Node.js 只改 base_url，其余代码基本不变。</span>
         </a>
         <a class="nt-doc-card" href="/pricing">
-          <div class="nt-doc-icon">¥</div><strong>模型价格</strong><span>在模型广场查看可用模型和人民币计价。</span>
+          <div class="nt-doc-icon">$</div><strong>模型价格</strong><span>在模型广场查看可用模型和美元计价。</span>
         </a>
       </div>
     </div>

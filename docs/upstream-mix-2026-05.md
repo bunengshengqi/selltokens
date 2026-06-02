@@ -15,8 +15,8 @@
 - 一个 API Key，接入 Claude / GPT / Gemini。
 - 兼容 OpenAI Chat Completions。
 - 支持 Cursor、Claude Code、Cline、Cherry Studio 和常见 SDK。
-- 账户余额以人民币展示。
-- 注册不直接赠送额度，充值或购买月卡后按规则加赠。
+- 账户余额以美元展示，人民币只用于微信支付实付结算。
+- 注册不直接赠送额度，新用户首笔充值或购买月卡后加赠 $1。
 
 ## 不对外展示
 

@@ -8,7 +8,7 @@ import sqlite3
 
 
 DB_PATH = os.environ.get("NEWAPI_DB", "/opt/selltokens/data/new-api/one-api.db")
-DOCS_LINK = "https://app.996tokens.com/about?tab=docs#third-party"
+DOCS_LINK = "https://app.996tokens.com/docs"
 
 ABOUT_HTML = r"""
 <style>
@@ -558,7 +558,7 @@ ABOUT_HTML = r"""
         <p>996 Tokens 是面向海外开发者的大模型 API 接入服务，重点支持 AI 编程、自动化脚本和 Agent 工作流。你可以在一个账户里管理余额、API Key、模型调用和用量记录。</p>
         <div class="nt-actions">
           <a class="nt-btn primary" href="/console">返回控制台</a>
-          <a class="nt-btn" href="https://app.996tokens.com/about?tab=docs#third-party">查看集成教程</a>
+          <a class="nt-btn" href="https://app.996tokens.com/docs">查看集成教程</a>
           <a class="nt-btn" href="#support">联系客服</a>
         </div>
       </div>

@@ -388,11 +388,14 @@ def docs_page(settings: Settings, *, portal: bool = False) -> str:
         ("03", "填写 Base URL", f"在工具或 SDK 中填写 {settings.public_api_base}/v1。"),
         ("04", "选择模型名", "从模型广场复制模型名，先用轻量模型测试，再切换到主力模型。"),
     ]
-    tools = [
-        ("/docs/cursor", "CU", "Cursor / Cline", "图形界面接入", "覆盖 Base URL，添加模型名，即可在 AI 编程工具里调用。"),
-        ("/docs/claude-code-cli", "CC", "Claude Code CLI", "命令行 Agent 接入", "设置环境变量后启动 claude，适合完整项目开发。"),
-        ("#sdk", "SDK", "OpenAI SDK", "Python / Node.js", "只改 base_url 和 api_key，保留原有 Chat Completions 代码。"),
-        ("#curl", "HTTP", "curl / HTTP", "任意语言直调", "标准 Bearer Token 鉴权，适合脚本、后端服务和自动化任务。"),
+    integrations = [
+        ("guide-cursor", "Cursor 配置教程", "AI 编程", "在 Cursor 的模型配置中选择 OpenAI Compatible / Custom Provider，填入 Base URL、API Key 和模型名称。"),
+        ("guide-claude-code", "Claude Code 配置教程", "推荐", "适合命令行 Agent 编程。设置环境变量后直接启动 claude，适合完整项目开发和代码修改。"),
+        ("guide-cline", "Cline 配置教程", "VS Code", "在 Cline 中选择 OpenAI Compatible，填入 Base URL、API Key 和模型名称，先用小请求测试。"),
+        ("guide-aider", "Aider 配置教程", "终端编码", "Aider 支持 OpenAI 兼容接口，配置 API Key 和 Base URL 后，在启动参数中指定模型名。"),
+        ("guide-codex", "OpenAI Codex CLI 配置教程", "CLI", "如果工具支持自定义 OpenAI Base URL，保持 Bearer Token 鉴权并替换模型名称。"),
+        ("guide-gemini-cli", "Gemini CLI 配置教程", "Gemini", "选择支持 OpenAI 兼容接口的配置方式，模型名使用模型广场中可用的 Gemini 模型。"),
+        ("guide-cherry", "Cherry Studio 配置教程", "桌面客户端", "新增 OpenAI 兼容服务，填入 API Key 和 Base URL，保存后同步模型列表或手动添加模型名。"),
     ]
     faqs = [
         ("余额为什么显示美元？", "平台模型按美元计价，账户余额和扣费统一显示为 USD，方便和模型价格直接对应。"),
@@ -408,17 +411,19 @@ def docs_page(settings: Settings, *, portal: bool = False) -> str:
         </div>"""
         for num, title, desc in steps
     )
-    tool_html = "".join(
-        f"""<a class="doc-tool-card" href="{href}" id="doc-tool-{href.lstrip('/').replace('/', '-').lstrip('#')}">
-          <div class="dtc-icon">{icon}</div>
-          <div class="dtc-body">
-            <strong>{escape(name)}</strong>
-            <span class="dtc-tag">{escape(tag)}</span>
-            <p>{escape(desc)}</p>
+    integration_menu_html = "".join(
+        f"""<a class="integration-link {'active' if item_id == 'guide-claude-code' else ''}" href="#{item_id}">{escape(title)}</a>"""
+        for item_id, title, _tag, _desc in integrations
+    )
+    integration_card_html = "".join(
+        f"""<article class="integration-card {'featured' if item_id == 'guide-claude-code' else ''}" id="{item_id}">
+          <div class="integration-card-head">
+            <h3>{escape(title)}</h3>
+            <span>{escape(tag)}</span>
           </div>
-          <div class="dtc-arrow">→</div>
-        </a>"""
-        for href, icon, name, tag, desc in tools
+          <p>{escape(desc)}</p>
+        </article>"""
+        for item_id, title, tag, desc in integrations
     )
     faq_html = "".join(
         f"""<div class="doc-faq-card">
@@ -434,9 +439,9 @@ def docs_page(settings: Settings, *, portal: bool = False) -> str:
         <section class="docs-dark-hero">
           <div class="ddh-bg"></div>
           <div class="ddh-content">
-            <p class="ddh-eyebrow">接入文档</p>
-            <h1>5 分钟接入 996 Tokens API</h1>
-            <p class="ddh-sub">一个 API Key 调用 Claude、GPT、Gemini。兼容 OpenAI Chat Completions，适配 Cursor、Cline、Claude Code 和常见 SDK。</p>
+            <p class="ddh-eyebrow">第三方集成</p>
+            <h1>选择你的工具配置教程</h1>
+            <p class="ddh-sub">一个 API Key 调用 Claude、GPT、Gemini。支持 Cursor、Claude Code、Cline、Aider、OpenAI Codex CLI、Gemini CLI 和 Cherry Studio。</p>
             <div class="ddh-endpoint">
               <span class="ddh-label">Base URL</span>
               <code class="ddh-url">{base}/v1</code>
@@ -465,10 +470,24 @@ def docs_page(settings: Settings, *, portal: bool = False) -> str:
 
         <section class="docs-tools-section">
           <div class="dts-head">
-            <p class="eyebrow">Quick Start</p>
-            <h2>选择你的接入方式</h2>
+            <p class="eyebrow">Integrations</p>
+            <h2>第三方集成</h2>
           </div>
-          <div class="doc-tools-grid">{tool_html}</div>
+          <div class="integration-doc-layout">
+            <nav class="integration-doc-menu" aria-label="第三方集成教程">
+              <h3>第三方集成</h3>
+              {integration_menu_html}
+            </nav>
+            <div class="integration-doc-cards">
+              {integration_card_html}
+              <article class="integration-code-card">
+                <h3>通用配置</h3>
+                <pre>Base URL: {base}/v1
+API Key:   YOUR_API_KEY
+Model:     从模型广场复制模型名</pre>
+              </article>
+            </div>
+          </div>
         </section>
 
         <section class="docs-code-section">
@@ -1970,6 +1989,20 @@ def layout(
     .dtc-tag {{ display: inline-flex; width: fit-content; border-radius: 999px; background: #e0f2fe; color: #0369a1; padding: 4px 9px; font-size: 12px; font-weight: 900; }}
     .dtc-body p {{ margin: 12px 0 0; color: var(--muted); line-height: 1.6; }}
     .dtc-arrow {{ margin-top: auto; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; background: #f1f5f9; color: var(--blue); font-weight: 900; }}
+    .integration-doc-layout {{ display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 18px; align-items: start; }}
+    .integration-doc-menu {{ border: 1px solid var(--line); border-radius: 18px; background: #fff; padding: 18px; box-shadow: var(--shadow); }}
+    .integration-doc-menu h3 {{ margin: 0 0 18px; color: var(--ink); font-size: 22px; font-weight: 900; }}
+    .integration-link {{ display: flex; align-items: center; min-height: 52px; padding: 0 16px; border-radius: 16px; color: #334155; font-size: 18px; font-weight: 700; text-decoration: none; }}
+    .integration-link + .integration-link {{ margin-top: 8px; }}
+    .integration-link:hover, .integration-link.active {{ background: #dcf4ef; color: #059669; }}
+    .integration-doc-cards {{ display: grid; gap: 14px; }}
+    .integration-card, .integration-code-card {{ border: 1px solid var(--line); border-radius: 18px; background: #fff; padding: 22px; box-shadow: var(--shadow); }}
+    .integration-card.featured {{ border-color: rgba(5,150,105,.34); background: radial-gradient(circle at 92% 0%, rgba(16,185,129,.14), transparent 34%), #fff; }}
+    .integration-card-head {{ display: flex; justify-content: space-between; gap: 14px; align-items: center; margin-bottom: 10px; }}
+    .integration-card-head h3, .integration-code-card h3 {{ margin: 0; color: var(--ink); font-size: 21px; font-weight: 900; }}
+    .integration-card-head span {{ display: inline-flex; min-height: 28px; align-items: center; padding: 0 10px; border-radius: 999px; background: #ecfdf5; color: #047857; font-size: 12px; font-weight: 900; white-space: nowrap; }}
+    .integration-card p {{ margin: 0; color: var(--muted); line-height: 1.7; }}
+    .integration-code-card pre {{ margin-top: 14px; min-height: 0; }}
     .docs-code-section article {{ min-height: 340px; display: flex; flex-direction: column; gap: 14px; }}
     .docs-code-section article pre {{ flex: 1; min-height: 230px; }}
     .doc-faq-grid {{ display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }}
@@ -2078,6 +2111,7 @@ def layout(
       .docs-dark-hero, .cli-hero {{ padding: 56px 18px 46px; }}
       .docs-dark-hero h1, .cli-hero h1 {{ font-size: 38px; }}
       .doc-steps-grid, .doc-tools-grid, .doc-faq-grid, .cli-hero, .cli-steps-grid, .cli-faq-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+      .integration-doc-layout {{ grid-template-columns: 1fr; }}
       .docs-cta-inner {{ align-items: flex-start; flex-direction: column; }}
     }}
     @media (max-width: 560px) {{
@@ -2086,6 +2120,7 @@ def layout(
       .about-section, .about-arch-section, .about-billing-section, .about-contact-section {{ padding-top: 40px; padding-bottom: 32px; }}
       .docs-dark-hero h1, .cli-hero h1 {{ font-size: 30px; }}
       .ddh-endpoint, .doc-steps-grid, .doc-tools-grid, .doc-faq-grid, .cli-hero, .cli-steps-grid, .cli-faq-grid {{ grid-template-columns: 1fr; }}
+      .integration-card-head {{ align-items: flex-start; flex-direction: column; }}
       .ddh-label {{ text-align: left; padding-left: 4px; }}
     }}
     @media (max-width: 980px) {{

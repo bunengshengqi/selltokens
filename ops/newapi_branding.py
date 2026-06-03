@@ -8,7 +8,7 @@ import sqlite3
 
 
 DB_PATH = os.environ.get("NEWAPI_DB", "/opt/selltokens/data/new-api/one-api.db")
-DOCS_LINK = "https://app.996tokens.com/about#docs"
+DOCS_LINK = "https://app.996tokens.com/about?tab=docs#third-party"
 
 ABOUT_HTML = r"""
 <style>
@@ -346,6 +346,115 @@ ABOUT_HTML = r"""
   }
   .nt-doc-card strong { display: block; margin-bottom: 8px; font-size: 16px; }
   .nt-doc-card span { color: var(--nt-muted); line-height: 1.6; font-size: 14px; }
+  .nt-integration-layout {
+    display: grid;
+    grid-template-columns: 330px minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+  }
+  .nt-integration-menu {
+    border: 1px solid var(--nt-line);
+    border-radius: 22px;
+    background: #fff;
+    padding: 18px;
+    box-shadow: 0 14px 40px rgba(15, 23, 42, .06);
+  }
+  .nt-integration-menu h3 {
+    margin: 0 0 18px;
+    color: var(--nt-ink);
+    font-size: 20px;
+    font-weight: 900;
+  }
+  .nt-integration-menu a {
+    display: flex;
+    align-items: center;
+    min-height: 52px;
+    padding: 0 16px;
+    border-radius: 16px;
+    color: #334155;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .nt-integration-menu a + a { margin-top: 8px; }
+  .nt-integration-menu a:hover,
+  .nt-integration-menu a.active {
+    background: #dcf4ef;
+    color: #059669;
+  }
+  .nt-guide-stack {
+    display: grid;
+    gap: 14px;
+  }
+  .nt-guide-card {
+    border: 1px solid var(--nt-line);
+    border-radius: 22px;
+    background: #fff;
+    padding: 24px;
+    box-shadow: 0 14px 40px rgba(15, 23, 42, .06);
+  }
+  .nt-guide-card.featured {
+    border-color: rgba(5, 150, 105, .32);
+    background:
+      radial-gradient(circle at 85% 0%, rgba(16, 185, 129, .14), transparent 34%),
+      #ffffff;
+  }
+  .nt-guide-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .nt-guide-title h3 {
+    margin: 0;
+    color: var(--nt-ink);
+    font-size: 22px;
+    font-weight: 900;
+  }
+  .nt-guide-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: #ecfdf5;
+    color: #047857;
+    font-size: 12px;
+    font-weight: 900;
+  }
+  .nt-guide-card p {
+    margin: 0;
+    color: var(--nt-muted);
+    line-height: 1.75;
+  }
+  .nt-code-box {
+    display: grid;
+    gap: 10px;
+    margin-top: 16px;
+    padding: 16px;
+    border-radius: 16px;
+    background: #0f172a;
+    color: #dbeafe;
+    overflow-wrap: anywhere;
+  }
+  .nt-code-box code { color: inherit; font-size: 13px; line-height: 1.7; }
+  .nt-guide-steps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .nt-guide-steps span {
+    display: block;
+    min-height: 88px;
+    padding: 14px;
+    border-radius: 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+    line-height: 1.55;
+    font-size: 14px;
+  }
   .nt-flow {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -428,13 +537,14 @@ ABOUT_HTML = r"""
     .nt-hero-inner, .nt-band { grid-template-columns: 1fr; padding: 32px; }
     .nt-hero h1 { font-size: 40px; }
     .nt-metrics, .nt-card-grid, .nt-flow, .nt-docs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .nt-integration-layout { grid-template-columns: 1fr; }
     .nt-flow-step:not(:last-child)::after { display: none; }
   }
   @media (max-width: 620px) {
     .nt-about { padding: 0 10px 42px; }
     .nt-hero-inner { padding: 24px; }
     .nt-hero h1 { font-size: 32px; }
-    .nt-metrics, .nt-card-grid, .nt-flow, .nt-docs, .nt-doc-grid { grid-template-columns: 1fr; }
+    .nt-metrics, .nt-card-grid, .nt-flow, .nt-docs, .nt-doc-grid, .nt-guide-steps { grid-template-columns: 1fr; }
     .nt-section-head { align-items: flex-start; flex-direction: column; }
   }
 </style>
@@ -444,37 +554,37 @@ ABOUT_HTML = r"""
     <div class="nt-hero-inner">
       <div>
         <div class="nt-kicker">ABOUT 996 TOKENS</div>
-        <h1>一个 API Key，接入 Claude、GPT、Gemini</h1>
-        <p>996 Tokens 面向 AI 编程、自动化脚本和 Agent 开发者。用户只需要一个 API Key，就能在 Cursor、Claude Code、Cline、脚本和业务系统里统一调用常用模型。</p>
+        <h1>关于 996 Tokens</h1>
+        <p>996 Tokens 是面向海外开发者的大模型 API 接入服务，重点支持 AI 编程、自动化脚本和 Agent 工作流。你可以在一个账户里管理余额、API Key、模型调用和用量记录。</p>
         <div class="nt-actions">
           <a class="nt-btn primary" href="/console">返回控制台</a>
-          <a class="nt-btn" href="/console/topup">账户充值</a>
+          <a class="nt-btn" href="https://app.996tokens.com/about?tab=docs#third-party">查看集成教程</a>
           <a class="nt-btn" href="#support">联系客服</a>
         </div>
       </div>
       <div class="nt-panel">
         <div class="nt-panel-head">
-          <strong>接入路径</strong>
+          <strong>服务信息</strong>
           <span class="nt-live">ONLINE</span>
         </div>
         <div class="nt-route">
-          <div class="nt-dot">1</div>
-          <div><strong>创建 API Key</strong><span>在控制台创建 Key，只在创建时完整显示一次</span></div>
+          <div class="nt-dot">API</div>
+          <div><strong>OpenAI 兼容接口</strong><span>Base URL: https://api.996tokens.com/v1</span></div>
         </div>
         <div class="nt-route">
-          <div class="nt-dot">2</div>
-          <div><strong>填写 Base URL</strong><span>在工具或 SDK 中填入 https://api.996tokens.com/v1</span></div>
+          <div class="nt-dot">$</div>
+          <div><strong>美元余额展示</strong><span>充值时微信按固定汇率折算人民币支付</span></div>
         </div>
         <div class="nt-route">
-          <div class="nt-dot">3</div>
-          <div><strong>选择模型调用</strong><span>从模型广场复制模型名，调用后查看用量记录</span></div>
+          <div class="nt-dot">QQ</div>
+          <div><strong>人工客服支持</strong><span>充值、扣费、接入问题可联系 QQ 61943181</span></div>
         </div>
       </div>
     </div>
   </section>
 
   <div class="nt-metrics">
-    <div class="nt-metric"><strong>7</strong><span>首发核心模型</span></div>
+    <div class="nt-metric"><strong>3</strong><span>Claude / GPT / Gemini</span></div>
     <div class="nt-metric"><strong>USD</strong><span>美元余额展示</span></div>
     <div class="nt-metric"><strong>$3</strong><span>最低充值门槛</span></div>
     <div class="nt-metric"><strong>QQ</strong><span>61943181 客服</span></div>
@@ -498,42 +608,102 @@ ABOUT_HTML = r"""
     </div>
   </section>
 
-  <section class="nt-section" id="docs">
+  <section class="nt-section" id="third-party">
     <div class="nt-section-head">
       <div>
-        <span class="nt-chip">接入文档</span>
-        <h2>在后台查看接入信息，不用跳出控制台</h2>
-        <p>这里保留最常用的 Base URL、模型选择和工具配置方式。先跑通一个最小请求，再切换到日常模型。</p>
+        <span class="nt-chip">第三方集成</span>
+        <h2>选择你的工具配置教程</h2>
+        <p>先在令牌管理中创建 API Key，再按工具类型填写 Base URL 和模型名称。遇到配置问题可以直接联系 QQ 客服。</p>
       </div>
       <a class="nt-btn primary" href="/console/token">创建 API Key</a>
     </div>
-    <div class="nt-docs">
-      <div class="nt-doc-main">
-        <h3>OpenAI 兼容入口</h3>
-        <p>绝大多数客户端只需要替换 Base URL，然后填入后台创建的 API Key。</p>
-        <div class="nt-endpoint">
-          <span>BASE URL</span>
-          <code>https://api.996tokens.com/v1</code>
-        </div>
-        <div class="nt-mini-steps">
-          <div><b>1</b><span>进入令牌管理，创建或复制你的 API Key。</span></div>
-          <div><b>2</b><span>在 Cursor、Cline、Claude Code 或 SDK 中填写 Base URL。</span></div>
-          <div><b>3</b><span>从模型广场复制模型名，发起测试请求后查看用量日志。</span></div>
-        </div>
-      </div>
-      <div class="nt-doc-grid">
-        <a class="nt-doc-card" href="/about#docs">
-          <div class="nt-doc-icon">C</div><strong>Cursor / Cline</strong><span>图形界面接入，适合 AI 编程日常使用。</span>
-        </a>
-        <a class="nt-doc-card" href="/about#docs">
-          <div class="nt-doc-icon">CC</div><strong>Claude Code CLI</strong><span>命令行 Agent 编码，配置环境变量后启动。</span>
-        </a>
-        <a class="nt-doc-card" href="/about#docs">
-          <div class="nt-doc-icon">SDK</div><strong>OpenAI SDK</strong><span>Python / Node.js 只改 base_url，其余代码基本不变。</span>
-        </a>
-        <a class="nt-doc-card" href="/pricing">
-          <div class="nt-doc-icon">$</div><strong>模型价格</strong><span>在模型广场查看可用模型和美元计价。</span>
-        </a>
+    <div class="nt-integration-layout">
+      <nav class="nt-integration-menu" aria-label="第三方集成教程">
+        <h3>第三方集成</h3>
+        <a href="#guide-cursor">Cursor 配置教程</a>
+        <a class="active" href="#guide-claude-code">Claude Code 配置教程</a>
+        <a href="#guide-cline">Cline 配置教程</a>
+        <a href="#guide-aider">Aider 配置教程</a>
+        <a href="#guide-codex">OpenAI Codex CLI 配置教程</a>
+        <a href="#guide-gemini-cli">Gemini CLI 配置教程</a>
+        <a href="#guide-cherry">Cherry Studio 配置教程</a>
+      </nav>
+
+      <div class="nt-guide-stack">
+        <article class="nt-guide-card featured" id="guide-claude-code">
+          <div class="nt-guide-title">
+            <h3>Claude Code 配置教程</h3>
+            <span class="nt-guide-pill">推荐</span>
+          </div>
+          <p>适合命令行 Agent 编程。配置时使用 996 Tokens 的 API Key 和 OpenAI 兼容 Base URL，再选择控制台中可用的 Claude 模型。</p>
+          <div class="nt-code-box">
+            <code>export OPENAI_API_KEY="你的 API Key"</code>
+            <code>export OPENAI_BASE_URL="https://api.996tokens.com/v1"</code>
+            <code>claude</code>
+          </div>
+          <div class="nt-guide-steps">
+            <span>1. 进入令牌管理，创建并复制 API Key。</span>
+            <span>2. 在终端写入环境变量，Base URL 填 996 Tokens API 地址。</span>
+            <span>3. 启动 Claude Code 后选择可用 Claude 模型测试。</span>
+          </div>
+        </article>
+
+        <article class="nt-guide-card" id="guide-cursor">
+          <div class="nt-guide-title">
+            <h3>Cursor 配置教程</h3>
+            <span class="nt-guide-pill">AI 编程</span>
+          </div>
+          <p>在 Cursor 的模型配置中选择 OpenAI Compatible / Custom Provider，填入 Base URL 和 API Key，然后把模型名称改成模型广场中复制的名称。</p>
+          <div class="nt-guide-steps">
+            <span>Provider 选择 OpenAI 兼容或自定义接口。</span>
+            <span>Base URL 填 https://api.996tokens.com/v1。</span>
+            <span>API Key 使用控制台创建的令牌。</span>
+          </div>
+        </article>
+
+        <article class="nt-guide-card" id="guide-cline">
+          <div class="nt-guide-title">
+            <h3>Cline 配置教程</h3>
+            <span class="nt-guide-pill">VS Code</span>
+          </div>
+          <p>在 Cline 的 API Provider 中选择 OpenAI Compatible，填入 Base URL、API Key 和模型名称。建议先用小请求测试，再处理长任务。</p>
+        </article>
+
+        <article class="nt-guide-card" id="guide-aider">
+          <div class="nt-guide-title">
+            <h3>Aider 配置教程</h3>
+            <span class="nt-guide-pill">终端编码</span>
+          </div>
+          <p>Aider 支持通过 OpenAI 兼容接口调用模型。设置 API Key 和 Base URL 后，在启动参数中指定模型名称即可。</p>
+          <div class="nt-code-box">
+            <code>export OPENAI_API_KEY="你的 API Key"</code>
+            <code>export OPENAI_BASE_URL="https://api.996tokens.com/v1"</code>
+          </div>
+        </article>
+
+        <article class="nt-guide-card" id="guide-codex">
+          <div class="nt-guide-title">
+            <h3>OpenAI Codex CLI 配置教程</h3>
+            <span class="nt-guide-pill">CLI</span>
+          </div>
+          <p>如果工具支持自定义 OpenAI Base URL，保持鉴权方式为 Bearer Token，并将模型名称替换为 996 Tokens 模型广场中的名称。</p>
+        </article>
+
+        <article class="nt-guide-card" id="guide-gemini-cli">
+          <div class="nt-guide-title">
+            <h3>Gemini CLI 配置教程</h3>
+            <span class="nt-guide-pill">Gemini</span>
+          </div>
+          <p>选择支持 OpenAI 兼容接口的配置方式，Base URL 填 996 Tokens API 地址，模型名使用模型广场中可用的 Gemini 模型。</p>
+        </article>
+
+        <article class="nt-guide-card" id="guide-cherry">
+          <div class="nt-guide-title">
+            <h3>Cherry Studio 配置教程</h3>
+            <span class="nt-guide-pill">桌面客户端</span>
+          </div>
+          <p>在 Cherry Studio 中新增 OpenAI 兼容服务，填入 API Key 和 Base URL，保存后同步模型列表或手动添加模型名称。</p>
+        </article>
       </div>
     </div>
   </section>
@@ -541,15 +711,15 @@ ABOUT_HTML = r"""
   <section class="nt-section">
     <div class="nt-section-head">
       <div>
-        <span class="nt-chip">系统分工</span>
-        <h2>三套视角，各司其职</h2>
+        <span class="nt-chip">使用流程</span>
+        <h2>从充值到调用，四步跑通</h2>
       </div>
     </div>
     <div class="nt-flow">
-      <div class="nt-flow-step"><b>01</b><strong>公开官网</strong><span>展示品牌、价格、模型、Claude Code 教程和注册入口。</span></div>
-      <div class="nt-flow-step"><b>02</b><strong>用户后台</strong><span>管理余额、充值、API Key、调用日志、用量统计和模型权限。</span></div>
-      <div class="nt-flow-step"><b>03</b><strong>服务支持</strong><span>处理充值异常、接入问题和账户使用问题。</span></div>
-      <div class="nt-flow-step"><b>04</b><strong>API 网关</strong><span>通过 api.996tokens.com 对外提供 OpenAI 兼容调用入口。</span></div>
+      <div class="nt-flow-step"><b>01</b><strong>账户充值</strong><span>选择美元额度，微信支付时自动折算为人民币金额。</span></div>
+      <div class="nt-flow-step"><b>02</b><strong>创建 API Key</strong><span>在令牌管理中创建 Key，并保存到自己的客户端或环境变量。</span></div>
+      <div class="nt-flow-step"><b>03</b><strong>接入工具</strong><span>在 Cursor、Claude Code、Cline 或 SDK 中填写 Base URL。</span></div>
+      <div class="nt-flow-step"><b>04</b><strong>查看用量</strong><span>调用后可在使用日志中查看请求、Token、扣费和模型信息。</span></div>
     </div>
   </section>
 

@@ -455,6 +455,7 @@ def docs_page(settings: Settings, *, portal: bool = False) -> str:
             <div class="ddh-actions">
               <a class="button ddh-btn-primary" href="{primary_href}">{escape(primary_text)}</a>
               <a class="button ddh-btn-ghost" href="{secondary_href}">{escape(secondary_text)}</a>
+              <a class="button ddh-btn-ghost" href="/support">配置问题？QQ 61943181</a>
             </div>
           </div>
         </section>
@@ -551,6 +552,21 @@ claude  # 直接启动</pre>
             <h2>常见问题</h2>
           </div>
           <div class="doc-faq-grid">{faq_html}</div>
+        </section>
+
+        <section class="docs-support-section">
+          <div class="docs-support-card">
+            <div>
+              <p class="eyebrow">Need Help</p>
+              <h2>接入失败或充值异常？联系 QQ 客服</h2>
+              <p>如果遇到 API Key 无效、模型名找不到、Claude Code / Cursor 无法调用、充值未到账等问题，请添加 QQ 客服，并附上注册邮箱、错误截图或请求时间。</p>
+            </div>
+            <div class="docs-support-side">
+              <span>客服 QQ</span>
+              <strong>61943181</strong>
+              <a class="button primary" href="/support">查看客服说明</a>
+            </div>
+          </div>
         </section>
 
         <section class="docs-cta-strip">
@@ -1829,6 +1845,13 @@ def layout(
     .docs-code-section article {{ min-height: 340px; display: flex; flex-direction: column; gap: 14px; }}
     .docs-code-section article pre {{ flex: 1; min-height: 230px; }}
     .doc-faq-grid {{ display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }}
+    .docs-support-section {{ max-width: 1180px; margin: 54px auto 0; }}
+    .docs-support-card {{ display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 22px; align-items: center; border: 1px solid #bfdbfe; border-radius: 18px; background: linear-gradient(135deg, #eff6ff, #ffffff); padding: 26px; box-shadow: 0 22px 60px rgba(37,99,235,.12); }}
+    .docs-support-card h2 {{ margin: 0 0 10px; color: var(--ink); font-size: 26px; }}
+    .docs-support-card p:not(.eyebrow) {{ margin: 0; color: var(--muted); line-height: 1.75; }}
+    .docs-support-side {{ display: grid; gap: 10px; justify-items: start; border: 1px solid #dbeafe; border-radius: 16px; background: #fff; padding: 20px; }}
+    .docs-support-side span {{ color: var(--blue-dark); font-weight: 900; }}
+    .docs-support-side strong {{ color: var(--ink); font-size: 32px; line-height: 1; }}
     .docs-cta-strip {{ max-width: 1180px; margin: 54px auto 0; border-radius: 18px; background: linear-gradient(135deg, #0f172a, #1e3a8a); color: #fff; padding: 26px; box-shadow: 0 28px 70px rgba(15,23,42,.18); }}
     .docs-cta-inner {{ display: flex; align-items: center; justify-content: space-between; gap: 18px; }}
     .docs-cta-inner strong {{ display: block; font-size: 22px; margin-bottom: 6px; }}
@@ -1934,6 +1957,7 @@ def layout(
       .docs-dark-hero, .cli-hero {{ padding: 56px 18px 46px; }}
       .docs-dark-hero h1, .cli-hero h1 {{ font-size: 38px; }}
       .doc-steps-grid, .doc-tools-grid, .doc-faq-grid, .cli-hero, .cli-steps-grid, .cli-faq-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+      .docs-support-card {{ grid-template-columns: 1fr; }}
       .integration-doc-layout {{ grid-template-columns: 1fr; }}
       .docs-cta-inner {{ align-items: flex-start; flex-direction: column; }}
     }}

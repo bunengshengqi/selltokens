@@ -9,7 +9,6 @@ from urllib.parse import parse_qs, urlencode, urlparse
 from .config import Settings, settings
 from .db import Database
 from .pages import (
-    about_page,
     admin_page,
     claude_code_cli_page,
     claude_code_page,
@@ -74,7 +73,8 @@ class GatewayHandler(BaseHTTPRequestHandler):
                 models = [dict(row) for row in self.database.list_models()]
                 self._send_html(pricing_page(models, self.app_settings))
             elif path == "/about":
-                self._send_html(about_page(self.app_settings, portal=self._is_app_host()))
+                self._redirect("/console" if self._is_app_host() else "/")
+                return
             elif path == "/support":
                 self._send_html(support_page(self.app_settings, portal=self._is_app_host()))
             elif path == "/docs":

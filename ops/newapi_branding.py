@@ -781,6 +781,9 @@ a[href*="newapi.pro"], a[href*="github.com/QuantumNous"] { display: none !import
 </div>
 """
 
+# The About page has been intentionally removed from the customer-facing app.
+ABOUT_HTML = ""
+
 
 def upsert_option(conn: sqlite3.Connection, key: str, value: str) -> None:
     conn.execute(

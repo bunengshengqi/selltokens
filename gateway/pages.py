@@ -881,181 +881,6 @@ curl {base}/v1/messages \\
     )
 
 
-def about_page(settings: Settings, *, portal: bool = False) -> str:
-    base = escape(settings.public_api_base)
-    console = escape(settings.app_base_url.rstrip("/") + "/console")
-    topup = escape(settings.app_base_url.rstrip("/") + "/console/topup")
-    primary_href = console if portal else escape(settings.register_url)
-    primary_text = "返回控制台" if portal else "注册并充值"
-    secondary_href = topup if portal else "/docs"
-    secondary_text = "账户充值" if portal else "查看接入文档"
-    features = [
-        ("API", "统一接口", "兼容 OpenAI Chat Completions，常见 SDK 和开发工具都能快速接入。"),
-        ("AI", "精选模型", "提供 Claude、GPT、Gemini 系列模型，覆盖编程、推理、写作和轻量任务。"),
-        ("USD", "美元余额", "账户余额以 USD 展示，充值、扣费和用量记录清晰可查。"),
-        ("SSE", "流式输出", "支持 SSE streaming，Claude Code 和 Cursor 对话体验更顺畅。"),
-        ("KEY", "权限清晰", "用户可以在控制台创建 API Key，并按模型和余额控制使用范围。"),
-        ("OS", "海外开放", "当前服务只向海外用户开放，如需企业合作请先联系管理员确认。"),
-    ]
-    model_groups = [
-        ("C", "Claude 系列", "claude", "Opus、Sonnet、Haiku，适合 AI 编程、复杂分析和长文本任务。"),
-        ("G", "GPT 系列", "gpt", "适合通用对话、代码生成、Agent 和自动化工作流。"),
-        ("M", "Gemini 系列", "extra", "适合快速响应、轻量任务和多工具组合调用。"),
-    ]
-    stats = [
-        ("7", "首发核心模型"),
-        ("USD", "美元余额"),
-        ("$3", "最低充值"),
-        ("QQ", "61943181 客服"),
-    ]
-    billing_cards = [
-        ("01", "美元余额", "模型价格、账户余额和扣费记录统一以 USD 展示，便于直接对照模型广场价格。"),
-        ("02", "人民币支付", "微信支付会按固定汇率把美元充值金额折算成人民币，支付后入账美元余额。"),
-        ("03", "$3 起充", "低门槛试用，先用小额充值验证工具配置和模型效果，再按需加额。"),
-        ("04", "首充赠送", "新用户首笔成功付款后自动加赠 $1 美元额度，每个账户仅一次。"),
-    ]
-    feature_html = "".join(
-        f"""<div class="af-card">
-          <div class="af-icon">{escape(icon)}</div>
-          <h3>{escape(title)}</h3>
-          <p>{escape(desc)}</p>
-        </div>"""
-        for icon, title, desc in features
-    )
-    model_group_html = "".join(
-        f"""<div class="up-card up-{slug}">
-          <div class="up-icon">{escape(icon)}</div>
-          <strong>{escape(name)}</strong>
-          <p>{escape(desc)}</p>
-        </div>"""
-        for icon, name, slug, desc in model_groups
-    )
-    stats_html = "".join(
-        f"""<div class="about-stat">
-          <strong>{escape(val)}</strong>
-          <span>{escape(label)}</span>
-        </div>"""
-        for val, label in stats
-    )
-    billing_html = "".join(
-        f"""<div class="billing-card">
-          <span>{escape(num)}</span>
-          <strong>{escape(title)}</strong>
-          <p>{escape(desc)}</p>
-        </div>"""
-        for num, title, desc in billing_cards
-    )
-    return layout(
-        "About",
-        "about",
-        f"""
-        <section class="about-dark-hero">
-          <div class="adh-bg"></div>
-          <div class="adh-content">
-            <p class="adh-eyebrow">About 996 Tokens</p>
-            <h1>一个账号，接入 Claude、GPT、Gemini</h1>
-            <p class="adh-sub">996 Tokens 面向 AI 编程、自动化脚本和 Agent 开发者。你只需要一个 API Key，就能在 Cursor、Claude Code、Cline、OpenAI SDK 和后端服务中统一调用常用模型。</p>
-            <div class="adh-actions">
-              <a class="button primary adh-btn-primary" href="{primary_href}">{escape(primary_text)}</a>
-              <a class="button adh-btn-ghost" href="{secondary_href}">{escape(secondary_text)}</a>
-            </div>
-            <div class="about-stats-row">{stats_html}</div>
-          </div>
-        </section>
-
-        <section class="about-section">
-          <div class="about-section-head">
-            <p class="eyebrow">Features</p>
-            <h2>六大核心能力</h2>
-            <p>每一项能力都围绕开发者实际接入和日常调用体验。</p>
-          </div>
-          <div class="af-grid">{feature_html}</div>
-        </section>
-
-        <section class="about-arch-section">
-          <div class="aas-inner">
-            <div class="aas-left">
-              <p class="eyebrow">Getting Started</p>
-              <h2>从注册到调用</h2>
-              <p>注册账户、充值美元余额、创建 API Key，然后在你的开发工具里替换 Base URL 即可开始调用。</p>
-              <div class="arch-diagram">
-                <div class="arch-node arch-user">用户请求</div>
-                <div class="arch-arrow">↓</div>
-                <div class="arch-node arch-nginx">996 Tokens</div>
-                <div class="arch-arrow">↓</div>
-                <div class="arch-branches">
-                  <div class="arch-branch">
-                    <div class="arch-node arch-www">官网<small>价格 / 文档 / 教程</small></div>
-                  </div>
-                  <div class="arch-branch">
-                    <div class="arch-node arch-api">API<small>OpenAI 兼容入口</small></div>
-                  </div>
-                  <div class="arch-branch">
-                    <div class="arch-node arch-app">控制台<small>充值 / Key / 用量</small></div>
-                  </div>
-                </div>
-                <div class="arch-arrow">↓</div>
-                <div class="arch-node arch-pool">模型服务<small>Claude / GPT / Gemini</small></div>
-                <div class="arch-arrow">↓</div>
-                <div class="arch-node arch-models">Claude · GPT · Gemini</div>
-              </div>
-            </div>
-            <div class="aas-right">
-              <p class="eyebrow">Models</p>
-              <h2>支持模型</h2>
-              <p>第一版先提供最常用的 Claude、GPT、Gemini 模型，保持模型列表精简、清晰、可直接使用。</p>
-              <div class="up-grid">{model_group_html}</div>
-            </div>
-          </div>
-        </section>
-
-        <section class="about-billing-section">
-          <div class="about-section-head">
-            <p class="eyebrow">Billing</p>
-            <h2>计费与充值</h2>
-            <p>余额按美元展示，支付按人民币完成，用户看到的扣费和模型价格保持一致。</p>
-          </div>
-          <div class="billing-grid">{billing_html}</div>
-        </section>
-
-        <section class="about-contact-section">
-          <div class="acs-head">
-            <p class="eyebrow">Contact</p>
-            <h2>联系我们</h2>
-            <p>有问题或想合作，欢迎通过以下方式联系：</p>
-          </div>
-          <div class="acs-grid">
-            <div class="acs-card">
-              <div class="acs-icon">QQ</div>
-              <strong>QQ 客服</strong>
-              <p><span class="acs-code">61943181</span></p>
-              <p style="margin-top:6px;color:var(--muted);font-size:13px;">充值、Key、扣费或接入问题都可以联系处理。</p>
-            </div>
-            <div class="acs-card">
-              <div class="acs-icon">DOC</div>
-              <strong>接入文档</strong>
-              <p><a class="acs-link" href="/docs">www.996tokens.com/docs</a></p>
-              <p style="margin-top:6px;color:var(--muted);font-size:13px;">Cursor、Claude Code、OpenAI SDK 接入教程。</p>
-            </div>
-            <div class="acs-card">
-              <div class="acs-icon">API</div>
-              <strong>API Base URL</strong>
-              <p><code class="acs-code">{base}/v1</code></p>
-              <p style="margin-top:6px;color:var(--muted);font-size:13px;">兼容 OpenAI Chat Completions，换一行即接入。</p>
-            </div>
-            <div class="acs-card">
-              <div class="acs-icon">OS</div>
-              <strong>服务声明</strong>
-              <p>996 Tokens 当前只向海外用户开放；如需企业合作、兑换码或异常订单处理，请先联系管理员确认。</p>
-            </div>
-          </div>
-        </section>
-        """,
-        settings=settings,
-        variant="portal" if portal else "public",
-    )
-
-
 def support_page(settings: Settings, *, portal: bool = False) -> str:
     qq = "61943181"
     console = escape(settings.app_base_url.rstrip("/") + "/console")
@@ -1236,7 +1061,7 @@ def newapi_plan_page(settings: Settings) -> str:
           <a class="button primary" href="{newapi}">打开控制台</a>
         </section>
         <section class="feature-grid">
-          <div><h2>官网入口</h2><p>展示首页、价格、文档、状态和关于页面。</p></div>
+          <div><h2>官网入口</h2><p>展示首页、价格、文档、状态和客服页面。</p></div>
           <div><h2>用户控制台</h2><p>承接登录、注册、充值、API Key、用量记录和模型列表。</p></div>
           <div><h2>API 域名</h2><p>提供 OpenAI 兼容调用入口，方便 SDK 和开发工具接入。</p></div>
           <div><h2>服务支持</h2><p>保留人工处理入口，用于充值异常和接入问题。</p></div>
@@ -1612,7 +1437,7 @@ def _model_category_cards() -> str:
 
 def _upstream_strategy_rows() -> str:
     rows = [
-        ("www.996tokens.com", "公开官网", "首页 / 价格 / 文档 / 状态 / 关于", "给访客了解产品和接入方式"),
+        ("www.996tokens.com", "公开官网", "首页 / 价格 / 文档 / 状态 / 客服", "给访客了解产品和接入方式"),
         ("app.996tokens.com", "用户控制台", "登录 / 注册 / 充值 / API Key / 用量", "给注册用户日常使用"),
         ("api.996tokens.com", "API 入口", "OpenAI 兼容接口", "给 SDK 和开发工具调用"),
     ]
@@ -1717,7 +1542,6 @@ def layout(
             ("docs", "/docs", "文档"),
             ("claude", "/docs/claude-code-cli", "Claude Code"),
             ("support", "/support", "客服"),
-            ("about", "/about", "关于"),
         ]
         actions = f"<a class='button primary' href='{escape(app_root)}/console'>返回控制台</a>"
     elif variant == "admin":
@@ -1739,7 +1563,6 @@ def layout(
             ("claude", "/claude-code", "Claude Code"),
             ("status", "/status", "状态"),
             ("support", "/support", "客服"),
-            ("about", "/about", "关于"),
         ]
         actions = (
             f"<a class='button ghost' href='{escape(cfg.login_url)}'>登录</a>"

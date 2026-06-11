@@ -20,7 +20,7 @@ def home_page(settings: Settings, models: Iterable[dict[str, Any]]) -> str:
         <section class="landing-hero">
           <div>
             <p class="eyebrow">AI Coding / RPA / Agent API Gateway</p>
-            <h1>一个 API Key，先开放 Claude、GPT、Gemini 七个核心模型。</h1>
+            <h1>一个 API Key，先开放 Claude、GPT、Gemini 八个核心模型。</h1>
           <p>面向 Claude Code、Cursor、Cline 和各类 Agent 工具，一个账户统一管理余额、API Key 和用量记录。</p>
             <div class="hero-actions">
               <a class="button primary" href="{escape(settings.register_url)}">立即注册</a>
@@ -111,14 +111,14 @@ def pricing_page(models: Iterable[dict[str, Any]], settings: Settings) -> str:
           <div class="pricing-hero">
             <p class="eyebrow">Claude Code API Pricing</p>
             <h1>为高强度 AI 编程准备的模型额度方案</h1>
-            <p>第一版聚焦 Claude、GPT、Gemini 七个核心模型。账户余额和模型单价按 USD 计费，微信支付按固定汇率折算成人民币。</p>
+            <p>第一版聚焦 Claude、GPT、Gemini 八个核心模型。账户余额和模型单价按 USD 计费，微信支付按固定汇率折算成人民币。</p>
             <div class="billing-toggle" aria-label="充值方式">
               <span class="active">额度充值</span>
               <span>微信支付按汇率折算</span>
             </div>
             <div class="hero-stats">
               <span><strong>100</strong> 人同时在线目标</span>
-              <span><strong>7</strong> 个首发模型</span>
+              <span><strong>8</strong> 个首发模型</span>
               <span><strong>USD</strong> 余额与扣费</span>
             </div>
           </div>
@@ -642,13 +642,14 @@ def cursor_guide_page(settings: Settings, *, portal: bool = False) -> str:
         ("1", "注册并获取 API Key", "注册账户后进入控制台 → API Keys，创建一个 Key（只在创建时显示一次，请妥善保存）。"),
         ("2", "打开 Cursor 模型设置", "Cursor → Settings → Cursor Settings → Models，找到 “OpenAI API Key” 区域。"),
         ("3", "填入 Key 并覆盖 Base URL", "勾选 OpenAI API Key 填入你的 Key，展开 “Override OpenAI Base URL”，填入下方平台地址。"),
-        ("4", "添加平台模型名", "在模型列表点 “Add model”，添加 claude-sonnet-4-6、claude-haiku-4-5 等平台模型名，再点 Verify 验证。"),
+        ("4", "添加平台模型名", "在模型列表点 “Add model”，添加 claude-fable-5、claude-sonnet-4-6、claude-haiku-4-5 等平台模型名，再点 Verify 验证。"),
     ]
     step_html = "".join(
         f"<div><strong>{escape(num)}</strong><h2>{escape(title)}</h2><p>{escape(desc)}</p></div>"
         for num, title, desc in steps
     )
     models = [
+        ("claude-fable-5", "Claude Fable 5，复杂编程与高价值 Agent 任务"),
         ("claude-sonnet-4-6", "Claude Sonnet 4.6，复杂重构、长上下文主力"),
         ("claude-haiku-4-5", "Claude Haiku 4.5，轻量快速调用"),
         ("gpt-5.4", "GPT 5.4，通用对话与代码"),
@@ -745,6 +746,7 @@ def claude_code_cli_page(settings: Settings, *, portal: bool = False) -> str:
         ("4", "启动并验证", "cd 进项目目录，运行 claude，用 /status 确认接入成功。", "claude"),
     ]
     models = [
+        ("claude-fable-5", "手动切换", "Claude 5 高质量任务、复杂编程和 Agent", "premium"),
         ("claude-sonnet-4-6", "ANTHROPIC_MODEL", "主力模型，复杂任务与长上下文", "stable"),
         ("claude-haiku-4-5", "ANTHROPIC_SMALL_FAST_MODEL", "轻量快速模型，用于标题/补全等低频调用", "economy"),
         ("claude-opus-4-7", "手动切换", "高价值重任务、架构分析和复杂 Agent", "premium"),
@@ -1072,7 +1074,7 @@ def newapi_plan_page(settings: Settings) -> str:
           <div>
             <p class="eyebrow">Launch Plan</p>
             <h1>部署方案</h1>
-            <p>生产版分为官网、用户控制台和 API 调用入口。第一版面向开发者提供 7 个 Claude / GPT / Gemini 模型。</p>
+            <p>生产版分为官网、用户控制台和 API 调用入口。第一版面向开发者提供 8 个 Claude / GPT / Gemini 模型。</p>
           </div>
           <a class="button primary" href="{newapi}">打开控制台</a>
         </section>
@@ -1105,7 +1107,7 @@ def newapi_plan_page(settings: Settings) -> str:
 2. 配置 www / app / api 三个域名
 3. 开启 HTTPS
 4. 配置登录、注册、充值和 API Key
-5. 只展示 7 个首发模型
+5. 只展示 8 个首发模型
 6. 用 Cherry Studio、Claude Code、Cursor 做接入测试</pre>
         </section>
         <section class="quickstart">
@@ -1443,10 +1445,10 @@ def _provider_mix_cards() -> str:
 
 def _model_category_cards() -> str:
     items = [
-        ("Claude", "claude-opus-4-7、claude-sonnet-4-6、claude-haiku-4-5。"),
+        ("Claude", "claude-fable-5、claude-opus-4-7、claude-sonnet-4-6、claude-haiku-4-5。"),
         ("GPT", "gpt-5.5、gpt-5.4、gpt-5.4-mini。"),
         ("Gemini", "gemini-3.5-flash，负责低延迟轻量请求。"),
-        ("首发范围", "第一版只展示以上 7 个核心模型，后续按用户需求逐步扩展。"),
+        ("首发范围", "第一版只展示以上 8 个核心模型，后续按用户需求逐步扩展。"),
     ]
     return "".join(f"<div><h2>{escape(name)}</h2><p>{escape(desc)}</p></div>" for name, desc in items)
 
@@ -1470,7 +1472,7 @@ def _upstream_strategy_rows() -> str:
 
 def _newapi_route_rows() -> str:
     rows = [
-        ("Claude", "claude-opus-4-7 / claude-sonnet-4-6 / claude-haiku-4-5", "AI 编程、复杂分析、长文本", "Claude Code 和 Cursor 常用"),
+        ("Claude", "claude-fable-5 / claude-opus-4-7 / claude-sonnet-4-6 / claude-haiku-4-5", "AI 编程、复杂分析、长文本", "Claude Code 和 Cursor 常用"),
         ("GPT", "gpt-5.5 / gpt-5.4 / gpt-5.4-mini", "通用对话、代码、Agent", "适合日常开发与自动化任务"),
         ("Gemini", "gemini-3.5-flash", "快速响应、轻量任务", "适合低延迟使用场景"),
     ]

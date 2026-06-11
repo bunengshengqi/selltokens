@@ -16,7 +16,7 @@
 
 | 系列 | 模型 |
 | --- | --- |
-| Claude | `claude-opus-4-7`、`claude-sonnet-4-6`、`claude-haiku-4-5` |
+| Claude | `claude-fable-5`、`claude-opus-4-7`、`claude-sonnet-4-6`、`claude-haiku-4-5` |
 | GPT | `gpt-5.5`、`gpt-5.4`、`gpt-5.4-mini` |
 | Gemini | `gemini-3.5-flash` |
 

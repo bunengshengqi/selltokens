@@ -40,6 +40,7 @@ print(resp.choices[0].message.content)
 
 推荐模型：
 
+- `claude-fable-5`：Claude 5 高质量编程与 Agent 任务
 - `claude-opus-4-7`：高质量重任务
 - `claude-sonnet-4-6`：Claude Code / Cursor 主力
 - `claude-haiku-4-5`：轻量快速调用

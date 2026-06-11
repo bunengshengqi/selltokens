@@ -39,6 +39,16 @@ class LaunchModelSpec:
 
 FIRST_WAVE_MODEL_SPECS: tuple[LaunchModelSpec, ...] = (
     LaunchModelSpec(
+        "claude-fable-5",
+        "Claude Fable 5",
+        "Anthropic",
+        "premium",
+        5.0,
+        25.0,
+        1.6,
+        "Claude 5 系列高质量模型，适合复杂编程、Agent、长上下文和高价值任务。",
+    ),
+    LaunchModelSpec(
         "claude-opus-4-7",
         "Claude Opus 4.7",
         "Anthropic",
